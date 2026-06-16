@@ -14,16 +14,35 @@ export default function CustomersPage() {
 
   const fetchCustomers = async () => {
     setLoading(true)
-    // We get distinct customers from the orders table for now
+    // Derive customers from the orders table, aggregating real order count + spend.
     const { data } = await supabase
       .from('orders')
-      .select('customer_name, customer_email, created_at')
+      .select('customer_name, customer_email, total_amount, created_at')
       .order('created_at', { ascending: false })
-    
+
     if (data) {
-      // Logic to unique by email
-      const unique = Array.from(new Map(data.map(item => [item.customer_email, item])).values())
-      setCustomers(unique)
+      const byEmail = new Map<string, any>()
+      for (const order of data) {
+        const key = order.customer_email
+        const existing = byEmail.get(key)
+        if (existing) {
+          existing.orderCount += 1
+          existing.totalSpent += Number(order.total_amount) || 0
+          // keep the earliest order date as the "joined" date
+          if (new Date(order.created_at) < new Date(existing.created_at)) {
+            existing.created_at = order.created_at
+          }
+        } else {
+          byEmail.set(key, {
+            customer_name: order.customer_name,
+            customer_email: order.customer_email,
+            created_at: order.created_at,
+            orderCount: 1,
+            totalSpent: Number(order.total_amount) || 0,
+          })
+        }
+      }
+      setCustomers(Array.from(byEmail.values()))
     }
     setLoading(false)
   }
@@ -45,7 +64,7 @@ export default function CustomersPage() {
             <div key={idx} className="bg-[#121212] border border-white/5 p-6 rounded-3xl hover:border-primary-brown/30 transition-all group">
               <div className="flex justify-between items-start mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-primary-brown/10 flex items-center justify-center text-primary-brown font-bold text-xl ff-accia">
-                  {customer.customer_name[0]}
+                  {customer.customer_name?.[0]?.toUpperCase() || "?"}
                 </div>
                 <button className="p-2 bg-white/5 rounded-xl opacity-0 group-hover:opacity-100 transition-all">
                   <ArrowUpRight size={18} />
@@ -69,11 +88,11 @@ export default function CustomersPage() {
               <div className="mt-6 pt-6 border-t border-white/5 flex gap-4">
                  <div className="flex-1">
                    <p className="text-[10px] uppercase tracking-widest text-white/30 ff-apfel mb-1">Total Orders</p>
-                   <p className="font-bold ff-accia">1</p>
+                   <p className="font-bold ff-accia">{customer.orderCount}</p>
                  </div>
                  <div className="flex-1 text-right">
                    <p className="text-[10px] uppercase tracking-widest text-white/30 ff-apfel mb-1">Spent</p>
-                   <p className="font-bold ff-accia text-primary-brown">Rs. 1,950</p>
+                   <p className="font-bold ff-accia text-primary-brown">Rs. {customer.totalSpent.toLocaleString()}</p>
                  </div>
               </div>
             </div>

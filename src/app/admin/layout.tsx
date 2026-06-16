@@ -91,7 +91,7 @@ export default function AdminLayout({
         </nav>
 
         <div className="p-4 border-t border-white/5">
-          <button className="w-full flex items-center gap-4 p-3 hover:bg-red-500/10 text-red-400 rounded-xl transition-all">
+          <button onClick={handleLogout} className="w-full flex items-center gap-4 p-3 hover:bg-red-500/10 text-red-400 rounded-xl transition-all">
             <LogOut size={20} />
             {isSidebarOpen && <span className="ff-apfel text-sm">Logout</span>}
           </button>

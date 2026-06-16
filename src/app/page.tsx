@@ -209,9 +209,10 @@ export default function Home() {
               key={product.id}
               id={product.id} 
               name={product.name} 
-              price={product.price} 
+              price={product.price}
               reviews={43}
               imageUrl={product.image_url}
+              description={product.description}
               left={product.left} 
               top={`${product.top}vw`} 
               isBestSeller={product.is_best_seller}

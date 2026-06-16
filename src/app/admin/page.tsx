@@ -48,7 +48,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     const [ordersRes, productsRes] = await Promise.all([
-      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('orders').select('*, order_items(id)').order('created_at', { ascending: false }),
       supabase.from('products').select('id', { count: 'exact' })
     ])
 
@@ -141,12 +141,13 @@ export default function AdminDashboard() {
                 <tr key={order.id} className="hover:bg-white/5 transition-all">
                   <td className="px-6 py-4 font-medium ff-apfel text-primary-brown truncate max-w-[100px]">{order.id}</td>
                   <td className="px-6 py-4 ff-apfel">{order.customer_name}</td>
-                  <td className="px-6 py-4 ff-apfel">-</td>
+                  <td className="px-6 py-4 ff-apfel">{order.order_items?.length ?? 0}</td>
                   <td className="px-6 py-4 ff-apfel">Rs. {order.total_amount}</td>
                   <td className="px-6 py-4">
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ff-apfel
-                      ${order.status === 'Baking' ? 'bg-orange-500/10 text-orange-400' : 
-                        order.status === 'Pending' ? 'bg-blue-500/10 text-blue-400' : 
+                      ${order.status === 'baking' ? 'bg-orange-500/10 text-orange-400' :
+                        order.status === 'pending' ? 'bg-blue-500/10 text-blue-400' :
+                        order.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
                         'bg-green-500/10 text-green-400'}
                     `}>
                       {order.status}

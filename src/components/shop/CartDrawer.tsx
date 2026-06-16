@@ -1,164 +1,223 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useCart } from "@/store/useCart"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { X, ShoppingBag, ArrowRight, Loader2, CheckCircle } from "lucide-react"
+import { Minus, Plus, Trash2, ChevronLeft, ChevronRight, ShoppingBag, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import UserAuthPopup from "./UserAuthPopup"
 
+const DELIVERY_CHARGE = 99
+
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
-  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [showAuthPopup, setShowAuthPopup] = useState(false)
-  const [checkoutError, setCheckoutError] = useState("")
-
-  if (!isOpen) return null
-
+  const [popular, setPopular] = useState<any[]>([])
+  const [popIndex, setPopIndex] = useState(0)
   const router = useRouter()
+
+  // Fetch a few products to surface as "Popular Items"
+  useEffect(() => {
+    if (!isOpen || popular.length > 0) return
+    const fetchPopular = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .order('is_best_seller', { ascending: false })
+        .limit(8)
+      if (data) setPopular(data)
+    }
+    fetchPopular()
+  }, [isOpen, popular.length])
 
   const handleCheckoutClick = async () => {
     setLoadingCheckout(true)
-    setCheckoutError("")
-    
-    // 1. Check if user is logged in
     const { data: { session } } = await supabase.auth.getSession()
-    
+    setLoadingCheckout(false)
+
     if (!session) {
-      setLoadingCheckout(false)
       setShowAuthPopup(true)
       return
     }
-
-    // 2. Go to checkout page
-    setLoadingCheckout(false)
     onClose()
     router.push('/checkout')
   }
 
+  const subtotal = totalPrice()
+  const delivery = items.length > 0 ? DELIVERY_CHARGE : 0
+  const grandTotal = subtotal + delivery
+
   return (
     <>
-      <UserAuthPopup 
-        isOpen={showAuthPopup} 
-        onClose={() => setShowAuthPopup(false)} 
+      <UserAuthPopup
+        isOpen={showAuthPopup}
+        onClose={() => setShowAuthPopup(false)}
         onSuccess={() => {
           setShowAuthPopup(false)
           handleCheckoutClick()
         }}
       />
-      
-      <div className="fixed inset-0 z-[100] flex justify-end">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-        
-        {/* Drawer */}
-        <div className="relative w-full max-w-[35vw] bg-white h-full shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
-          {/* Header */}
-          <div className="p-[2.5vw] border-b border-primary-brown/10 flex justify-between items-center bg-accent-green/20">
-            <div className="flex items-center gap-[1vw]">
-              <ShoppingBag className="text-primary-brown" size={32} />
-              <h2 className="ff-accia text-[2vw] text-primary-brown">Your Basket</h2>
-            </div>
-            <button onClick={onClose} className="p-[0.5vw] hover:bg-white rounded-full transition-all">
-              <X size={24} className="text-primary-brown" />
-            </button>
-          </div>
 
-          {/* Items List */}
-          <div className="flex-1 overflow-y-auto p-[2.5vw] space-y-[2vw]">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-[1.5vw]">
-                <div className="w-[10vw] h-[10vw] bg-primary-brown/5 rounded-full flex items-center justify-center">
-                  <ShoppingBag size={48} className="text-primary-brown/20" />
-                </div>
-                <p className="ff-colville text-[1.2vw] text-primary-brown/60">Your basket is feeling a bit empty...</p>
-                <button onClick={onClose} className="ff-accia text-[1vw] text-primary-brown underline underline-offset-4 font-bold uppercase">Start Shopping</button>
-              </div>
-            ) : (
-              items.map((item) => (
-                <div key={item.id} className="flex gap-[1.5vw] group">
-                  <div className="w-[8vw] h-[8vw] bg-[#ece9e2] rounded-[1vw] overflow-hidden relative border border-primary-brown/10">
-                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+          {/* Drawer panel — 577px / 17.28 ≈ 33.4vw */}
+          <div className="relative w-[33.4vw] min-w-[360px] bg-white h-full rounded-l-[0.87vw] shadow-[0_0_1vw_0.75vw_rgba(0,0,0,0.18)] animate-in slide-in-from-right duration-500 flex flex-col">
+
+            {/* Header */}
+            <div className="flex items-end justify-between px-[1.56vw] pt-[1.6vw] pb-[1.1vw]">
+              <h2 className="ff-accia text-[1.27vw] text-black tracking-[-0.025vw]">Your Cart</h2>
+              {items.length > 0 && (
+                <button
+                  onClick={clearCart}
+                  className="ff-accia text-[1.27vw] text-primary-brown underline decoration-solid tracking-[-0.025vw] hover:opacity-70 transition-opacity"
+                >
+                  Clear cart
+                </button>
+              )}
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-[1.56vw] pb-[1vw]">
+              {items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center gap-[1.2vw] py-[6vw]">
+                  <div className="w-[6vw] h-[6vw] bg-accent-green/40 rounded-full flex items-center justify-center">
+                    <ShoppingBag size={40} className="text-primary-brown/40" />
                   </div>
-                  <div className="flex-1 space-y-[0.5vw]">
-                    <div className="flex justify-between items-start">
-                      <h3 className="ff-accia text-[1.2vw] text-primary-brown font-bold">{item.name}</h3>
-                      <button onClick={() => removeItem(item.id)} className="text-red-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 p-1 rounded">
-                        <X size={16} />
+                  <p className="ff-accia-light text-[1.1vw] text-black/50">Your cart is feeling a bit empty…</p>
+                  <button onClick={onClose} className="ff-accia text-[1vw] text-primary-brown underline underline-offset-4">Start shopping</button>
+                </div>
+              ) : (
+                <div className="space-y-[1.6vw] pt-[0.5vw]">
+                  {items.map((item) => (
+                    <div key={item.id} className="relative flex gap-[1.1vw]">
+                      {/* Thumbnail 90px ≈ 5.2vw */}
+                      <div className="w-[5.2vw] h-[5.2vw] min-w-[64px] min-h-[64px] shrink-0 rounded-[0.58vw] border border-primary-brown overflow-hidden relative bg-[#ece9e2]">
+                        {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" />}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="ff-accia text-[1.85vw] text-black leading-[0.95] tracking-[-0.037vw]">{item.name}</h3>
+                        {item.description && (
+                          <p className="ff-accia-light text-[1.04vw] text-black capitalize leading-[1.15] mt-[0.4vw] line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
+                        <p className="ff-accia text-[1.27vw] text-primary-brown tracking-[-0.025vw] mt-[0.6vw]">Rs. {Number(item.price).toFixed(2)}</p>
+
+                        {/* Quantity stepper — pill, rounded-full */}
+                        <div className="inline-flex items-center justify-between gap-[1vw] border border-black rounded-full h-[2.2vw] min-h-[34px] px-[0.9vw] mt-[0.8vw]">
+                          <button
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                            className="text-primary-brown hover:opacity-60 transition-opacity"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-[1.1vw] h-[1.1vw] min-w-[14px] min-h-[14px]" />
+                          </button>
+                          <span className="ff-accia text-[1.27vw] text-primary-brown leading-none min-w-[1.5vw] text-center">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="text-primary-brown hover:opacity-60 transition-opacity"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-[1.1vw] h-[1.1vw] min-w-[14px] min-h-[14px]" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Trash */}
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="self-start text-black/70 hover:text-red-500 transition-colors pt-[0.6vw]"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="w-[1.39vw] h-[1.39vw] min-w-[18px] min-h-[18px]" />
                       </button>
                     </div>
-                    <p className="ff-colville text-[1vw] text-primary-brown/60">Rs. {item.price}</p>
-                    <div className="flex items-center gap-[1vw] pt-[0.5vw]">
-                      <div className="flex items-center border border-primary-brown/20 rounded-lg overflow-hidden">
-                        <button 
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                          className="px-2 py-1 hover:bg-primary-brown/5 transition-all"
-                        >-</button>
-                        <span className="px-3 py-1 ff-apfel text-[0.9vw] border-x border-primary-brown/20">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="px-2 py-1 hover:bg-primary-brown/5 transition-all"
-                        >+</button>
+                  ))}
+
+                  {/* Popular Items panel */}
+                  {popular.length > 0 && (
+                    <div className="relative border border-primary-brown rounded-[0.7vw] bg-accent-green overflow-hidden mt-[1.4vw]">
+                      <div className="flex items-center justify-between px-[1vw] pt-[1.1vw] pb-[0.6vw]">
+                        <span className="ff-accia text-[1.27vw] text-primary-brown tracking-[-0.025vw]">Popular Items</span>
+                        <div className="flex items-center gap-[0.8vw] text-primary-brown">
+                          <button onClick={() => setPopIndex((i) => Math.max(0, i - 1))} disabled={popIndex === 0} className="disabled:opacity-30 hover:opacity-60 transition-opacity">
+                            <ChevronLeft className="w-[0.9vw] h-[1.4vw] min-w-[12px]" />
+                          </button>
+                          <button onClick={() => setPopIndex((i) => Math.min(popular.length - 1, i + 1))} disabled={popIndex >= popular.length - 1} className="disabled:opacity-30 hover:opacity-60 transition-opacity">
+                            <ChevronRight className="w-[0.9vw] h-[1.4vw] min-w-[12px]" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Carousel track */}
+                      <div className="overflow-hidden px-[0.5vw] pb-[0.5vw]">
+                        <div
+                          className="flex gap-[1vw] transition-transform duration-300"
+                          style={{ transform: `translateX(calc(-${popIndex} * (21.7vw + 1vw)))` }}
+                        >
+                          {popular.map((p) => (
+                            <div key={p.id} className="shrink-0 w-[21.7vw] bg-white rounded-[0.58vw] p-[0.9vw] flex gap-[0.9vw]">
+                              <div className="w-[6.6vw] h-[6.6vw] shrink-0 rounded-[0.7vw] border border-primary-brown overflow-hidden relative bg-[#ece9e2]">
+                                {p.image_url && <Image src={p.image_url} alt={p.name} fill className="object-cover" />}
+                              </div>
+                              <div className="flex-1 min-w-0 flex flex-col">
+                                <h4 className="ff-accia text-[1.27vw] text-black leading-[0.97] tracking-[-0.025vw] line-clamp-2">{p.name}</h4>
+                                {p.description && (
+                                  <p className="ff-accia-light text-[0.81vw] text-black capitalize leading-[1.15] mt-[0.3vw] line-clamp-2">{p.description}</p>
+                                )}
+                                <button
+                                  onClick={() => addItem({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description })}
+                                  className="self-start mt-auto bg-accent-green rounded-[0.35vw] px-[0.7vw] py-[0.25vw] ff-accia-light text-[0.81vw] text-primary-brown capitalize hover:bg-accent-green/70 transition-colors"
+                                >
+                                  Rs. {Number(p.price).toFixed(2)}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              ))
+              )}
+            </div>
+
+            {/* Footer / totals */}
+            {items.length > 0 && (
+              <div className="px-[1.16vw] pb-[1.16vw] pt-[0.8vw] bg-white border-t border-primary-brown/10">
+                <div className="flex justify-between items-center">
+                  <span className="ff-accia-light text-[1.27vw] text-black capitalize">Subtotal</span>
+                  <span className="ff-accia-light text-[1.27vw] text-black">Rs. {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center mt-[0.6vw]">
+                  <span className="ff-accia-light text-[1.27vw] text-black capitalize">Delivery charges</span>
+                  <span className="ff-accia-light text-[1.27vw] text-black">Rs. {delivery.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center mt-[0.7vw]">
+                  <span className="ff-accia-medium text-[1.27vw] text-black">Grand total</span>
+                  <span className="ff-accia-medium text-[1.27vw] text-black">Rs. {grandTotal.toFixed(2)}</span>
+                </div>
+
+                <button
+                  onClick={handleCheckoutClick}
+                  disabled={loadingCheckout}
+                  className="w-full bg-primary-brown rounded-[0.81vw] h-[3.7vw] min-h-[48px] mt-[1.2vw] flex items-center justify-center hover:bg-primary-brown/90 transition-all disabled:opacity-60"
+                >
+                  {loadingCheckout
+                    ? <Loader2 className="animate-spin text-white" size={22} />
+                    : <span className="ff-accia-medium text-[1.85vw] text-white">Checkout</span>}
+                </button>
+              </div>
             )}
           </div>
-
-          {/* Footer */}
-          {items.length > 0 && (
-            <div className="p-[2.5vw] bg-white border-t border-primary-brown/10 space-y-[1.5vw]">
-              {checkoutError && (
-                <p className="text-red-500 text-[1vw] ff-apfel bg-red-50 p-2 rounded-lg text-center">{checkoutError}</p>
-              )}
-              <div className="flex justify-between items-end">
-                <span className="ff-colville-light text-[1.2vw] text-primary-brown/60 uppercase tracking-widest">Subtotal</span>
-                <span className="ff-accia text-[1.8vw] text-primary-brown font-bold text-right leading-none">Rs. {totalPrice()}</span>
-              </div>
-              <p className="ff-colville-light text-[0.8vw] text-primary-brown/40">Shipping and taxes calculated at checkout.</p>
-              <button 
-                onClick={handleCheckoutClick}
-                disabled={loadingCheckout}
-                className="w-full bg-primary-brown text-white py-[1.2vw] rounded-[1vw] ff-accia text-[1.2vw] hover:bg-primary-brown/90 transition-all flex items-center justify-center gap-2 group"
-              >
-                {loadingCheckout ? <Loader2 className="animate-spin" size={20} /> : (
-                  <>
-                    Checkout Now
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-all" />
-                  </>
-                )}
-              </button>
-            </div>
-          )}
         </div>
-
-        {/* Mini Checkout Confirmation Modal (Mock) */}
-        {isCheckingOut && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-dark/90 backdrop-blur-xl" onClick={() => setIsCheckingOut(false)}></div>
-            <div className="relative bg-white p-[4vw] rounded-[3vw] text-center space-y-[2vw] max-w-[30vw] animate-in zoom-in-95 duration-500">
-              <div className="w-[6vw] h-[6vw] bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle size={48} className="text-green-500" />
-              </div>
-              <h3 className="ff-accia text-[2vw] text-primary-brown">Order Confirmed!</h3>
-              <p className="ff-colville-light text-[1.1vw] text-primary-brown/60">Thank you for your order. We're getting the oven ready!</p>
-              <button 
-                onClick={() => {
-                  setIsCheckingOut(false)
-                  onClose()
-                }}
-                className="bg-primary-brown text-white px-[3vw] py-[1vw] rounded-[1vw] ff-accia text-[1.2vw]"
-              >
-                Sweet!
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </>
   )
 }

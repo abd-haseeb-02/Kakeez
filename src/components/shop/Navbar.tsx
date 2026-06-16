@@ -7,36 +7,54 @@ import UserAuthPopup from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
 import { useCart } from "@/store/useCart"
 import { supabase } from "@/lib/supabase"
-import { ShieldAlert } from "lucide-react"
+import { ShieldAlert, LogOut, User as UserIcon } from "lucide-react"
 
 export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
   const totalItems = useCart(state => state.totalItems())
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user?.email === "admin@kakeez.com") {
-        setIsAdmin(true)
-      }
+  const applySession = (session: any) => {
+    if (session?.user) {
+      setUser({
+        email: session.user.email ?? null,
+        name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Account",
+      })
+      setIsAdmin(session.user.email === "admin@kakeez.com")
+    } else {
+      setUser(null)
+      setIsAdmin(false)
     }
-    checkAdmin()
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => applySession(session))
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.email === "admin@kakeez.com") {
-        setIsAdmin(true)
-      } else {
-        setIsAdmin(false)
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session)
     })
 
     return () => {
       subscription.unsubscribe()
     }
   }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setIsAccountOpen(false)
+  }
+
+  const handleAccountClick = () => {
+    if (user) {
+      setIsAccountOpen((o) => !o)
+    } else {
+      setIsAuthOpen(true)
+    }
+  }
 
   return (
     <>
@@ -76,11 +94,36 @@ export default function Navbar() {
             <Image src="/assets/icon-search.svg" alt="search" width={23} height={23} className="w-full h-full" />
           </div>
           
-          <div 
-            onClick={() => setIsAuthOpen(true)}
-            className="w-[1.3310vw] h-[1.3310vw] cursor-pointer hover:opacity-70 transition-opacity flex items-center justify-center"
-          >
-            <Image src="/assets/icon-person.svg" alt="account" width={23} height={23} className="w-full h-full" />
+          <div className="relative">
+            <div
+              onClick={handleAccountClick}
+              className="w-[1.3310vw] h-[1.3310vw] cursor-pointer hover:opacity-70 transition-opacity flex items-center justify-center"
+            >
+              <Image src="/assets/icon-person.svg" alt="account" width={23} height={23} className="w-full h-full" />
+            </div>
+
+            {user && isAccountOpen && (
+              <>
+                <div className="fixed inset-0 z-[59]" onClick={() => setIsAccountOpen(false)} />
+                <div className="absolute right-0 top-[2.2vw] z-[60] w-[16vw] min-w-[200px] bg-white rounded-[0.8vw] shadow-xl border border-primary-brown/10 overflow-hidden">
+                  <div className="px-[1.2vw] py-[1vw] border-b border-primary-brown/10 flex items-center gap-[0.6vw]">
+                    <div className="w-[2vw] h-[2vw] min-w-[28px] min-h-[28px] rounded-full bg-primary-brown/10 flex items-center justify-center text-primary-brown ff-accia">
+                      <UserIcon size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="ff-accia text-[0.95vw] text-primary-brown truncate leading-tight">{user.name}</p>
+                      <p className="ff-apfel text-[0.75vw] text-primary-brown/50 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-[0.6vw] px-[1.2vw] py-[0.9vw] text-left text-red-500 hover:bg-red-50 transition-all ff-apfel text-[0.85vw]"
+                  >
+                    <LogOut size={15} /> Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Cart Button wrapper */}

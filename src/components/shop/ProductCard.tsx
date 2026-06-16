@@ -10,6 +10,7 @@ interface ProductCardProps {
   price: number
   reviews: number
   imageUrl?: string
+  description?: string
   isBestSeller?: boolean
   layoutType?: 'standard' | 'add-to-cart' | 'buy-now'
   left: string
@@ -22,6 +23,7 @@ export default function ProductCard({
   price,
   reviews,
   imageUrl = "/assets/product.svg",
+  description,
   isBestSeller = false,
   layoutType = 'standard',
   left,
@@ -29,9 +31,9 @@ export default function ProductCard({
 }: ProductCardProps) {
   const addItem = useCart(state => state.addItem)
   const router = useRouter()
-  
+
   const handleAddToCart = () => {
-    addItem({ id, name, price, quantity: 1, image: imageUrl })
+    addItem({ id, name, price, quantity: 1, image: imageUrl, description })
   }
 
   const goToProduct = () => {
