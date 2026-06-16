@@ -132,7 +132,7 @@ export default function CheckoutPage() {
           <CheckCircle className="text-primary-brown w-[4vw] h-[4vw]" />
         </div>
         <h1 className="ff-accia text-[3.5vw] text-primary-brown">Order Confirmed!</h1>
-        <p className="ff-accia-light text-[1.3vw] text-black/60">Thank you for your order. We're getting the oven ready!</p>
+        <p className="ff-accia-light text-[1.3vw] text-black/60">Thank you for your order. We are getting the oven ready!</p>
         <button onClick={() => router.push("/")} className="mt-[1vw] bg-primary-brown text-white px-[3vw] py-[1vw] rounded-[0.8vw] ff-accia text-[1.4vw] hover:bg-primary-brown/90 transition-all">
           Continue Shopping
         </button>
@@ -148,7 +148,7 @@ export default function CheckoutPage() {
       <Navbar />
 
       {/* Green panel with form + summary */}
-      <div className="relative mx-auto mt-[10.07vw] w-[83.9vw] bg-accent-green rounded-[1.4vw] px-[1.45vw] pt-[3.76vw] pb-[5vw]">
+      <div className="relative mx-auto mt-[clamp(122px,8.8vw,150px)] w-[83.9vw] bg-accent-green rounded-[1.4vw] px-[1.45vw] pt-[3.76vw] pb-[5vw]">
         {/* drip bottom edge */}
         <div className="absolute left-0 bottom-[-9vw] w-full h-[14.4vw] pointer-events-none" style={{ transform: "scaleY(-1)" }}>
           <Image src="/assets/union-drip.svg" alt="" fill className="block w-full h-full object-fill" />

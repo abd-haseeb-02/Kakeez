@@ -10,25 +10,35 @@ import UserAuthPopup from "./UserAuthPopup"
 
 const DELIVERY_CHARGE = 99
 
+type PopularProduct = {
+  id: string
+  name: string
+  price: number
+  image_url: string | null
+  description: string | null
+}
+
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [showAuthPopup, setShowAuthPopup] = useState(false)
-  const [popular, setPopular] = useState<any[]>([])
+  const [popular, setPopular] = useState<PopularProduct[]>([])
   const [popIndex, setPopIndex] = useState(0)
   const router = useRouter()
 
-  // Fetch a few products to surface as "Popular Items"
   useEffect(() => {
     if (!isOpen || popular.length > 0) return
+
     const fetchPopular = async () => {
       const { data } = await supabase
-        .from('products')
-        .select('*')
-        .order('is_best_seller', { ascending: false })
+        .from("products")
+        .select("id, name, price, image_url, description")
+        .order("is_best_seller", { ascending: false })
         .limit(8)
-      if (data) setPopular(data)
+
+      if (data) setPopular(data as PopularProduct[])
     }
+
     fetchPopular()
   }, [isOpen, popular.length])
 
@@ -41,8 +51,9 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
       setShowAuthPopup(true)
       return
     }
+
     onClose()
-    router.push('/checkout')
+    router.push("/checkout")
   }
 
   const subtotal = totalPrice()
@@ -62,118 +73,122 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-          {/* Drawer panel — 577px / 17.28 ≈ 33.4vw */}
-          <div className="relative w-[33.4vw] min-w-[360px] bg-white h-full rounded-l-[0.87vw] shadow-[0_0_1vw_0.75vw_rgba(0,0,0,0.18)] animate-in slide-in-from-right duration-500 flex flex-col">
-
-            {/* Header */}
-            <div className="flex items-end justify-between px-[1.56vw] pt-[1.6vw] pb-[1.1vw]">
-              <h2 className="ff-accia text-[1.27vw] text-black tracking-[-0.025vw]">Your Cart</h2>
+          <div className="relative flex h-full w-[min(92vw,430px)] flex-col rounded-l-[14px] bg-white shadow-[0_0_18px_8px_rgba(0,0,0,0.16)] animate-in slide-in-from-right duration-500 md:w-[clamp(390px,27vw,470px)]">
+            <div className="flex items-end justify-between px-[clamp(18px,1.35vw,24px)] pt-[clamp(18px,1.35vw,24px)] pb-[clamp(14px,1vw,18px)]">
+              <h2 className="ff-accia text-[clamp(19px,1.05vw,22px)] text-black">Your Cart</h2>
               {items.length > 0 && (
                 <button
                   onClick={clearCart}
-                  className="ff-accia text-[1.27vw] text-primary-brown underline decoration-solid tracking-[-0.025vw] hover:opacity-70 transition-opacity"
+                  className="ff-accia text-[clamp(17px,0.95vw,20px)] text-primary-brown underline decoration-solid hover:opacity-70 transition-opacity"
                 >
                   Clear cart
                 </button>
               )}
             </div>
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-[1.56vw] pb-[1vw]">
+            <div className="flex-1 overflow-y-auto px-[clamp(18px,1.35vw,24px)] pb-[18px]">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center gap-[1.2vw] py-[6vw]">
-                  <div className="w-[6vw] h-[6vw] bg-accent-green/40 rounded-full flex items-center justify-center">
-                    <ShoppingBag size={40} className="text-primary-brown/40" />
+                <div className="flex h-full flex-col items-center justify-center gap-5 py-20 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-accent-green/40">
+                    <ShoppingBag size={36} className="text-primary-brown/40" />
                   </div>
-                  <p className="ff-accia-light text-[1.1vw] text-black/50">Your cart is feeling a bit empty…</p>
-                  <button onClick={onClose} className="ff-accia text-[1vw] text-primary-brown underline underline-offset-4">Start shopping</button>
+                  <p className="ff-accia-light text-[18px] text-black/50">Your cart is feeling a bit empty...</p>
+                  <button onClick={onClose} className="ff-accia text-[17px] text-primary-brown underline underline-offset-4">
+                    Start shopping
+                  </button>
                 </div>
               ) : (
-                <div className="space-y-[1.6vw] pt-[0.5vw]">
+                <div className="space-y-6 pt-2">
                   {items.map((item) => (
-                    <div key={item.id} className="relative flex gap-[1.1vw]">
-                      {/* Thumbnail 90px ≈ 5.2vw */}
-                      <div className="w-[5.2vw] h-[5.2vw] min-w-[64px] min-h-[64px] shrink-0 rounded-[0.58vw] border border-primary-brown overflow-hidden relative bg-[#ece9e2]">
+                    <div key={item.id} className="relative flex gap-4">
+                      <div className="relative h-[78px] w-[78px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
                         {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" />}
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h3 className="ff-accia text-[1.85vw] text-black leading-[0.95] tracking-[-0.037vw]">{item.name}</h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="ff-accia text-[clamp(22px,1.3vw,26px)] leading-[0.98] text-black">{item.name}</h3>
                         {item.description && (
-                          <p className="ff-accia-light text-[1.04vw] text-black capitalize leading-[1.15] mt-[0.4vw] line-clamp-2">
+                          <p className="ff-accia-light mt-1.5 line-clamp-2 text-[15px] capitalize leading-[1.25] text-black">
                             {item.description}
                           </p>
                         )}
-                        <p className="ff-accia text-[1.27vw] text-primary-brown tracking-[-0.025vw] mt-[0.6vw]">Rs. {Number(item.price).toFixed(2)}</p>
+                        <p className="ff-accia mt-2 text-[18px] text-primary-brown">Rs. {Number(item.price).toFixed(2)}</p>
 
-                        {/* Quantity stepper — pill, rounded-full */}
-                        <div className="inline-flex items-center justify-between gap-[1vw] border border-black rounded-full h-[2.2vw] min-h-[34px] px-[0.9vw] mt-[0.8vw]">
+                        <div className="mt-2.5 inline-flex h-9 items-center justify-between gap-3 rounded-full border border-black px-3">
                           <button
                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                             className="text-primary-brown hover:opacity-60 transition-opacity"
                             aria-label="Decrease quantity"
                           >
-                            <Minus className="w-[1.1vw] h-[1.1vw] min-w-[14px] min-h-[14px]" />
+                            <Minus className="h-4 w-4" />
                           </button>
-                          <span className="ff-accia text-[1.27vw] text-primary-brown leading-none min-w-[1.5vw] text-center">{item.quantity}</span>
+                          <span className="ff-accia min-w-5 text-center text-[18px] leading-none text-primary-brown">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="text-primary-brown hover:opacity-60 transition-opacity"
                             aria-label="Increase quantity"
                           >
-                            <Plus className="w-[1.1vw] h-[1.1vw] min-w-[14px] min-h-[14px]" />
+                            <Plus className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
 
-                      {/* Trash */}
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="self-start text-black/70 hover:text-red-500 transition-colors pt-[0.6vw]"
+                        className="self-start pt-2 text-black/70 hover:text-red-500 transition-colors"
                         aria-label="Remove item"
                       >
-                        <Trash2 className="w-[1.39vw] h-[1.39vw] min-w-[18px] min-h-[18px]" />
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
 
-                  {/* Popular Items panel */}
                   {popular.length > 0 && (
-                    <div className="relative border border-primary-brown rounded-[0.7vw] bg-accent-green overflow-hidden mt-[1.4vw]">
-                      <div className="flex items-center justify-between px-[1vw] pt-[1.1vw] pb-[0.6vw]">
-                        <span className="ff-accia text-[1.27vw] text-primary-brown tracking-[-0.025vw]">Popular Items</span>
-                        <div className="flex items-center gap-[0.8vw] text-primary-brown">
-                          <button onClick={() => setPopIndex((i) => Math.max(0, i - 1))} disabled={popIndex === 0} className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-                            <ChevronLeft className="w-[0.9vw] h-[1.4vw] min-w-[12px]" />
+                    <div className="relative mt-6 overflow-hidden rounded-xl border border-primary-brown bg-accent-green">
+                      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                        <span className="ff-accia text-[19px] text-primary-brown">Popular Items</span>
+                        <div className="flex items-center gap-3 text-primary-brown">
+                          <button
+                            onClick={() => setPopIndex((i) => Math.max(0, i - 1))}
+                            disabled={popIndex === 0}
+                            className="disabled:opacity-30 hover:opacity-60 transition-opacity"
+                            aria-label="Previous popular item"
+                          >
+                            <ChevronLeft className="h-5 w-4" />
                           </button>
-                          <button onClick={() => setPopIndex((i) => Math.min(popular.length - 1, i + 1))} disabled={popIndex >= popular.length - 1} className="disabled:opacity-30 hover:opacity-60 transition-opacity">
-                            <ChevronRight className="w-[0.9vw] h-[1.4vw] min-w-[12px]" />
+                          <button
+                            onClick={() => setPopIndex((i) => Math.min(popular.length - 1, i + 1))}
+                            disabled={popIndex >= popular.length - 1}
+                            className="disabled:opacity-30 hover:opacity-60 transition-opacity"
+                            aria-label="Next popular item"
+                          >
+                            <ChevronRight className="h-5 w-4" />
                           </button>
                         </div>
                       </div>
 
-                      {/* Carousel track */}
-                      <div className="overflow-hidden px-[0.5vw] pb-[0.5vw]">
+                      <div className="overflow-hidden px-2 pb-2">
                         <div
-                          className="flex gap-[1vw] transition-transform duration-300"
-                          style={{ transform: `translateX(calc(-${popIndex} * (21.7vw + 1vw)))` }}
+                          className="flex gap-3 transition-transform duration-300"
+                          style={{ transform: `translateX(calc(-${popIndex} * (300px + 12px)))` }}
                         >
                           {popular.map((p) => (
-                            <div key={p.id} className="shrink-0 w-[21.7vw] bg-white rounded-[0.58vw] p-[0.9vw] flex gap-[0.9vw]">
-                              <div className="w-[6.6vw] h-[6.6vw] shrink-0 rounded-[0.7vw] border border-primary-brown overflow-hidden relative bg-[#ece9e2]">
+                            <div key={p.id} className="flex w-[300px] max-w-[calc(92vw-52px)] shrink-0 gap-3 rounded-[10px] bg-white p-3">
+                              <div className="relative h-[82px] w-[82px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
                                 {p.image_url && <Image src={p.image_url} alt={p.name} fill className="object-cover" />}
                               </div>
-                              <div className="flex-1 min-w-0 flex flex-col">
-                                <h4 className="ff-accia text-[1.27vw] text-black leading-[0.97] tracking-[-0.025vw] line-clamp-2">{p.name}</h4>
+                              <div className="flex min-w-0 flex-1 flex-col">
+                                <h4 className="ff-accia line-clamp-2 text-[18px] leading-[1.05] text-black">{p.name}</h4>
                                 {p.description && (
-                                  <p className="ff-accia-light text-[0.81vw] text-black capitalize leading-[1.15] mt-[0.3vw] line-clamp-2">{p.description}</p>
+                                  <p className="ff-accia-light mt-1 line-clamp-2 text-[12px] capitalize leading-[1.2] text-black">
+                                    {p.description}
+                                  </p>
                                 )}
                                 <button
-                                  onClick={() => addItem({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description })}
-                                  className="self-start mt-auto bg-accent-green rounded-[0.35vw] px-[0.7vw] py-[0.25vw] ff-accia-light text-[0.81vw] text-primary-brown capitalize hover:bg-accent-green/70 transition-colors"
+                                  onClick={() => addItem({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description || undefined })}
+                                  className="ff-accia-light mt-auto self-start rounded-md bg-accent-green px-3 py-1 text-[12px] capitalize text-primary-brown hover:bg-accent-green/70 transition-colors"
                                 >
                                   Rs. {Number(p.price).toFixed(2)}
                                 </button>
@@ -188,30 +203,29 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
               )}
             </div>
 
-            {/* Footer / totals */}
             {items.length > 0 && (
-              <div className="px-[1.16vw] pb-[1.16vw] pt-[0.8vw] bg-white border-t border-primary-brown/10">
-                <div className="flex justify-between items-center">
-                  <span className="ff-accia-light text-[1.27vw] text-black capitalize">Subtotal</span>
-                  <span className="ff-accia-light text-[1.27vw] text-black">Rs. {subtotal.toFixed(2)}</span>
+              <div className="border-t border-primary-brown/10 bg-white px-[clamp(18px,1.35vw,24px)] pt-4 pb-[clamp(18px,1.35vw,24px)]">
+                <div className="flex items-center justify-between">
+                  <span className="ff-accia-light text-[18px] text-black capitalize">Subtotal</span>
+                  <span className="ff-accia-light text-[18px] text-black">Rs. {subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center mt-[0.6vw]">
-                  <span className="ff-accia-light text-[1.27vw] text-black capitalize">Delivery charges</span>
-                  <span className="ff-accia-light text-[1.27vw] text-black">Rs. {delivery.toFixed(2)}</span>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="ff-accia-light text-[18px] text-black capitalize">Delivery charges</span>
+                  <span className="ff-accia-light text-[18px] text-black">Rs. {delivery.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center mt-[0.7vw]">
-                  <span className="ff-accia-medium text-[1.27vw] text-black">Grand total</span>
-                  <span className="ff-accia-medium text-[1.27vw] text-black">Rs. {grandTotal.toFixed(2)}</span>
+                <div className="mt-2.5 flex items-center justify-between">
+                  <span className="ff-accia-medium text-[19px] text-black">Grand total</span>
+                  <span className="ff-accia-medium text-[19px] text-black">Rs. {grandTotal.toFixed(2)}</span>
                 </div>
 
                 <button
                   onClick={handleCheckoutClick}
                   disabled={loadingCheckout}
-                  className="w-full bg-primary-brown rounded-[0.81vw] h-[3.7vw] min-h-[48px] mt-[1.2vw] flex items-center justify-center hover:bg-primary-brown/90 transition-all disabled:opacity-60"
+                  className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-primary-brown hover:bg-primary-brown/90 transition-all disabled:opacity-60"
                 >
                   {loadingCheckout
                     ? <Loader2 className="animate-spin text-white" size={22} />
-                    : <span className="ff-accia-medium text-[1.85vw] text-white">Checkout</span>}
+                    : <span className="ff-accia-medium text-[24px] text-white">Checkout</span>}
                 </button>
               </div>
             )}

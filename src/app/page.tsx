@@ -8,6 +8,23 @@ import Footer from "@/components/shop/Footer"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
+import cakesIcon from "../../cakes.png"
+import cookiesIcon from "../../cookies.png"
+import cupcakesIcon from "../../cupcakes.png"
+import customizedCakesIcon from "../../customized cakes.png"
+
+const CATEGORY_ICONS = {
+  "simple cakes": cakesIcon,
+  "customized cake": customizedCakesIcon,
+  "customized cakes": customizedCakesIcon,
+  cookies: cookiesIcon,
+  "cup cakes": cupcakesIcon,
+  cupcakes: cupcakesIcon,
+}
+
+function getCategoryIcon(name: string) {
+  return CATEGORY_ICONS[name.trim().toLowerCase() as keyof typeof CATEGORY_ICONS]
+}
 
 export default function Home() {
   const [categories, setCategories] = useState<any[]>([])
@@ -169,6 +186,7 @@ export default function Home() {
       <div className="absolute left-[8.1vw] top-[134vw] flex items-center gap-[3vw] z-30 flex-wrap max-w-[80vw]">
         {categoryLayouts.map((layout) => {
           const isActive = activeCategory === layout.category.id;
+          const categoryIcon = getCategoryIcon(layout.category.name)
           
           const handleScroll = () => {
             setActiveCategory(layout.category.id);
@@ -178,20 +196,27 @@ export default function Home() {
 
           if (isActive) {
             return (
-              <button key={layout.category.id} onClick={handleScroll} className="relative flex items-center gap-[1vw] bg-white rounded-full px-[2vw] h-[3.4vw] shrink-0 shadow-sm border border-primary-brown/10 hover:opacity-90 transition-all cursor-pointer">
-                <div className="w-[1.6vw] h-[1.6vw] flex-shrink-0">
-                  <Image src="/assets/cakes-icon.svg" alt="" width={100} height={100} className="w-full h-full object-contain" />
-                </div>
-                <span className="ff-colville text-[1.27vw] text-[#936939] underline decoration-solid tracking-[-0.0255vw] whitespace-nowrap uppercase">
+              <button key={layout.category.id} onClick={handleScroll} className="relative flex items-center gap-[1vw] bg-white rounded-full px-[2vw] h-[3.4vw] shrink-0 shadow-sm border border-primary-brown/10 hover:bg-primary-brown hover:text-white hover:border-primary-brown hover:shadow-md transition-all cursor-pointer group">
+                {categoryIcon && (
+                  <div className="relative w-[1.75vw] h-[1.75vw] flex-shrink-0">
+                    <Image src={categoryIcon} alt="" fill sizes="2vw" className="object-contain" />
+                  </div>
+                )}
+                <span className="ff-colville text-[1.27vw] text-[#936939] group-hover:text-white tracking-[-0.0255vw] whitespace-nowrap uppercase transition-colors">
                   {layout.category.name}
                 </span>
               </button>
             )
           }
-          
+           
           return (
-            <button key={layout.category.id} onClick={handleScroll} className="ff-colville text-[1.27vw] text-[#936939] underline decoration-solid tracking-[-0.0255vw] whitespace-nowrap uppercase hover:opacity-80 transition-opacity shrink-0 cursor-pointer">
-              {layout.category.name}
+            <button key={layout.category.id} onClick={handleScroll} className="flex items-center gap-[0.8vw] rounded-full border border-transparent px-[1.2vw] py-[0.75vw] ff-colville text-[1.27vw] text-[#936939] tracking-[-0.0255vw] whitespace-nowrap uppercase hover:bg-white hover:border-primary-brown/10 hover:shadow-sm transition-all shrink-0 cursor-pointer">
+              {categoryIcon && (
+                <span className="relative block w-[1.55vw] h-[1.55vw] flex-shrink-0">
+                  <Image src={categoryIcon} alt="" fill sizes="2vw" className="object-contain" />
+                </span>
+              )}
+              <span>{layout.category.name}</span>
             </button>
           )
         })}
@@ -235,38 +260,14 @@ export default function Home() {
         </div>
       ))}
 
-      {/* Promo Banners positioned dynamically below everything else */}
-      <div className="absolute w-[40.7289vw] h-[31.8621vw] rounded-[0.9744vw] overflow-hidden z-20" style={{ left: '8.1019vw', top: `${bottomTop + 14.1}vw` }}>
-        <Image src="/assets/banner-left.png" alt="" fill className="object-cover" />
-      </div>
-      <div className="absolute w-[40.7289vw] h-[31.8621vw] rounded-[0.9744vw] overflow-hidden z-20" style={{ left: '51.1696vw', top: `${bottomTop + 14.1}vw` }}>
-        <Image src="/assets/banner-right.png" alt="" fill className="object-cover" />
-      </div>
-      <div className="absolute -translate-x-1/2 ff-apfel text-[2.3385vw] text-white text-center tracking-[-0.0468vw] whitespace-nowrap leading-[3.4103vw] z-30" style={{ left: '37.3819vw', top: `${bottomTop + 16.1}vw` }}>Bakery</div>
-      <div className="absolute -translate-x-1/2 ff-apfel-satt text-[5.5539vw] text-white text-center tracking-[-0.1111vw] whitespace-nowrap leading-[6.1385vw] z-30" style={{ left: '37.3333vw', top: `${bottomTop + 19.5}vw` }}>Big Sale</div>
-      <div className="absolute -translate-x-1/2 ff-colville text-[1.5590vw] text-white text-center tracking-[-0.0312vw] whitespace-nowrap leading-[1.5590vw] z-30" style={{ left: '37.3791vw', top: `${bottomTop + 31.8}vw` }}>Limited Time Offer</div>
-      <div className="absolute w-[12.7156vw] h-[2.6795vw] z-30" style={{ left: '30.9994vw', top: `${bottomTop + 27.1}vw` }}>
-        <Image src="/assets/badge-25.svg" alt="" width={220} height={46} className="block w-full h-full" />
-      </div>
-      <div className="absolute -translate-x-1/2 ff-apfel text-[1.9487vw] text-[#262729] text-center tracking-[-0.0390vw] leading-[2.1436vw] z-30" style={{ left: '37.3576vw', top: `${bottomTop + 27.4}vw` }}>25% OFF</div>
-      <div className="absolute w-[6.0411vw] h-[6.0411vw] bg-[#936939] rounded-[3.0205vw] flex flex-col items-center justify-center z-30" style={{ left: '47.0284vw', top: `${bottomTop + 28.4}vw` }}>
-        <p className="ff-apfel-fett text-[1.4855vw] text-white text-center leading-[1.3865vw] whitespace-nowrap">UP T0<br/>30%</p>
-      </div>
-
-      <div className="absolute -translate-x-1/2 ff-apfel text-[2.3385vw] text-white text-center tracking-[-0.0468vw] whitespace-nowrap leading-[3.4103vw] z-30" style={{ left: '79.9132vw', top: `${bottomTop + 16.1}vw` }}>Winter Sale</div>
-      <div className="absolute -translate-x-1/2 ff-apfel-satt text-[5.5539vw] text-white text-center tracking-[-0.1111vw] whitespace-nowrap leading-[6.1385vw] z-30" style={{ left: '79.8889vw', top: `${bottomTop + 19.5}vw` }}>50% Off</div>
-      <div className="absolute w-[9.9873vw] h-[3.0205vw] -translate-x-1/2 bg-[#e1eab4] rounded-[0.2436vw] flex items-center justify-center overflow-hidden z-30" style={{ left: '79.9132vw', top: `${bottomTop + 27.1}vw` }}>
-        <span className="ff-accia text-[1.0417vw] text-black text-center uppercase tracking-[0.0208vw] whitespace-nowrap">Order now</span>
-      </div>
-
-      <div className="absolute -translate-x-1/2 ff-accia text-[3.1250vw] text-[#262729] text-center tracking-[-0.0625vw] whitespace-nowrap leading-[3.4103vw] z-20" style={{ left: '49.9711vw', top: `${bottomTop + 52.9}vw` }}>Follow @kakeezbakers</div>
+      <div className="absolute -translate-x-1/2 ff-accia text-[3.1250vw] text-[#262729] text-center tracking-[-0.0625vw] whitespace-nowrap leading-[3.4103vw] z-20" style={{ left: '49.9711vw', top: `${bottomTop + 24.8}vw` }}>Follow @kakeezbakers</div>
       
       {/* Gallery Placeholders */}
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '8.1019vw', top: `${bottomTop + 58.8}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '25.0561vw', top: `${bottomTop + 58.8}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '42.0098vw', top: `${bottomTop + 58.8}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '58.9641vw', top: `${bottomTop + 58.8}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '75.9184vw', top: `${bottomTop + 58.8}vw` }}></div>
+      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '8.1019vw', top: `${bottomTop + 30.7}vw` }}></div>
+      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '25.0561vw', top: `${bottomTop + 30.7}vw` }}></div>
+      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '42.0098vw', top: `${bottomTop + 30.7}vw` }}></div>
+      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '58.9641vw', top: `${bottomTop + 30.7}vw` }}></div>
+      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '75.9184vw', top: `${bottomTop + 30.7}vw` }}></div>
 
       {/* Decorative Vectors - Top Layer */}
       <div className="absolute w-[67.4527vw] h-[27.5701vw] z-10 pointer-events-none" style={{ left: '-33.7384vw', top: `${bottomTop + 33.6}vw`, transform:'rotate(180deg) scaleY(-1)' }}>
@@ -284,9 +285,9 @@ export default function Home() {
       {/* Adjust frame height manually using CSS for the dynamic length */}
       <style dangerouslySetInnerHTML={{__html: `
         body { background-color: #ffffff; }
-        .frame { height: ${bottomTop + 106.3}vw !important; background-color: #ffffff; }
+        .frame { height: ${bottomTop + 78.2}vw !important; background-color: #ffffff; }
       `}} />
-      <Footer topOffset={bottomTop + 83.3} />
+      <Footer topOffset={bottomTop + 55.2} />
     </div>
   )
 }
