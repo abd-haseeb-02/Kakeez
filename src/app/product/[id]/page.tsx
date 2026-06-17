@@ -37,25 +37,53 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     const fetchProduct = async () => {
       setLoading(true)
 
-      const { data } = await supabase
+      // New schema: project the joined shape back to the legacy Product type
+      // so the rest of this page stays unchanged. Phase 2 redesigns the page
+      // around the variations picker, at which point this shim goes away.
+      const { data: row } = await supabase
         .from("products")
-        .select("*, categories(name)")
+        .select("*, product_categories(category_id, categories(name)), product_images(storage_path, position, is_featured)")
         .eq("id", id)
-        .single<Product>()
+        .eq("status", "published")
+        .single<any>()
 
-      if (data) {
-        setProduct(data)
+      if (row) {
+        const hero = row.product_images?.find((i: any) => i.is_featured) ?? row.product_images?.[0]
+        const firstCat = row.product_categories?.[0]
+        const mapped: Product = {
+          id: row.id,
+          name: row.name,
+          price: (row.base_price_minor ?? 0) / 100,
+          description: row.description,
+          image_url: hero?.storage_path ?? null,
+          category_id: firstCat?.category_id ?? null,
+          categories: firstCat?.categories ? { name: firstCat.categories.name } : null,
+        }
+        setProduct(mapped)
 
-        if (data.category_id) {
+        if (mapped.category_id) {
           const { data: rel } = await supabase
             .from("products")
-            .select("*, categories(name)")
-            .eq("category_id", data.category_id)
-            .neq("id", data.id)
+            .select("*, product_categories!inner(category_id), product_images(storage_path, position, is_featured)")
+            .eq("product_categories.category_id", mapped.category_id)
+            .eq("status", "published")
+            .neq("id", row.id)
             .limit(3)
-            .returns<Product[]>()
 
-          setRelated(rel ?? [])
+          setRelated(
+            (rel ?? []).map((r: any): Product => {
+              const rHero = r.product_images?.find((i: any) => i.is_featured) ?? r.product_images?.[0]
+              return {
+                id: r.id,
+                name: r.name,
+                price: (r.base_price_minor ?? 0) / 100,
+                description: r.description,
+                image_url: rHero?.storage_path ?? null,
+                category_id: mapped.category_id,
+                categories: mapped.categories,
+              }
+            })
+          )
         } else {
           setRelated([])
         }

@@ -14,11 +14,21 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     setLoading(true)
+    // New schema: order_items now carries an immutable product_name_snapshot
+    // taken at checkout, so we don't have to join back to products at all.
+    // total_amount → total_minor (integer paisa); divide by 100 for display.
     const { data } = await supabase
       .from('orders')
-      .select('*, order_items(*, products(name))')
+      .select('*, order_items(id, product_name_snapshot, quantity, unit_price_minor_snapshot)')
       .order('created_at', { ascending: false })
-    if (data) setOrders(data)
+    if (data) {
+      setOrders(
+        (data as any[]).map((o) => ({
+          ...o,
+          total_amount: (o.total_minor ?? 0) / 100,
+        }))
+      )
+    }
     setLoading(false)
   }
 
@@ -35,10 +45,15 @@ export default function OrdersPage() {
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'pending': return <Clock size={16} className="text-blue-400" />
-      case 'baking': return <Loader2 size={16} className="text-orange-400 animate-spin" />
-      case 'delivered': return <CheckCircle size={16} className="text-green-400" />
-      case 'cancelled': return <XCircle size={16} className="text-red-400" />
+      case 'pending_confirmation': return <Clock size={16} className="text-blue-400" />
+      case 'confirmed':            return <Clock size={16} className="text-blue-500" />
+      case 'preparing':            return <Loader2 size={16} className="text-orange-400 animate-spin" />
+      case 'ready_for_dispatch':   return <Truck size={16} className="text-orange-300" />
+      case 'out_for_delivery':     return <Truck size={16} className="text-blue-400" />
+      case 'delivered':            return <CheckCircle size={16} className="text-green-400" />
+      case 'failed_delivery':      return <XCircle size={16} className="text-amber-400" />
+      case 'cancelled':            return <XCircle size={16} className="text-red-400" />
+      case 'disputed':             return <XCircle size={16} className="text-purple-400" />
       default: return <Clock size={16} />
     }
   }
@@ -87,15 +102,20 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <select 
+                      <select
                         value={order.status}
                         onChange={(e) => updateStatus(order.id, e.target.value)}
                         className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs outline-none focus:border-primary-brown transition-all"
                       >
-                        <option value="pending">Pending</option>
-                        <option value="baking">Baking</option>
+                        <option value="pending_confirmation">Pending Confirmation</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="preparing">Preparing</option>
+                        <option value="ready_for_dispatch">Ready for Dispatch</option>
+                        <option value="out_for_delivery">Out for Delivery</option>
                         <option value="delivered">Delivered</option>
+                        <option value="failed_delivery">Failed Delivery</option>
                         <option value="cancelled">Cancelled</option>
+                        <option value="disputed">Disputed</option>
                       </select>
                     </td>
                   </tr>

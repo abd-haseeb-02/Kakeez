@@ -30,13 +30,30 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
     if (!isOpen || popular.length > 0) return
 
     const fetchPopular = async () => {
+      // New schema: price → base_price_minor (paisa); image_url → product_images.
+      // Project back to the local PopularProduct shape so the rest of the drawer
+      // stays unchanged.
       const { data } = await supabase
         .from("products")
-        .select("id, name, price, image_url, description")
+        .select("id, name, base_price_minor, description, product_images(storage_path, position, is_featured)")
+        .eq("status", "published")
         .order("is_best_seller", { ascending: false })
         .limit(8)
 
-      if (data) setPopular(data as PopularProduct[])
+      if (data) {
+        setPopular(
+          (data as any[]).map((p) => {
+            const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+            return {
+              id: p.id,
+              name: p.name,
+              price: (p.base_price_minor ?? 0) / 100,
+              image_url: hero?.storage_path ?? null,
+              description: p.description ?? null,
+            }
+          })
+        )
+      }
     }
 
     fetchPopular()

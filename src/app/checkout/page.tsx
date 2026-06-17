@@ -8,9 +8,13 @@ import Image from "next/image"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
 import { Loader2, CheckCircle, Minus, Plus, Trash2, ChevronLeft, ChevronRight, Banknote, Gift } from "lucide-react"
+import { placeOrder } from "./actions"
 
+// Estimated delivery — server (delivery_methods) is the source of truth at
+// checkout. This is purely for the right-side summary preview.
 const DELIVERY_CHARGE = 99
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// Client-side promo preview only. The server `create_order` RPC currently
+// ignores p_promo_code; real discount application lands in Phase 5 (coupons).
 const PROMOS: Record<string, number> = { KAKEEZ10: 0.1, WELCOME: 0.05 }
 
 export default function CheckoutPage() {
@@ -56,8 +60,28 @@ export default function CheckoutPage() {
   }, [router])
 
   useEffect(() => {
-    supabase.from("products").select("*").order("is_best_seller", { ascending: false }).limit(8)
-      .then(({ data }) => { if (data) setPopular(data) })
+    // Same new-schema → legacy-shape projection used elsewhere (homepage,
+    // cart drawer, product detail). image_url + price are derived.
+    supabase
+      .from("products")
+      .select("id, name, base_price_minor, description, is_best_seller, product_images(storage_path, position, is_featured)")
+      .eq("status", "published")
+      .order("is_best_seller", { ascending: false })
+      .limit(8)
+      .then(({ data }) => {
+        if (data) {
+          setPopular(
+            (data as any[]).map((p) => {
+              const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+              return {
+                ...p,
+                image_url: hero?.storage_path ?? null,
+                price: (p.base_price_minor ?? 0) / 100,
+              }
+            })
+          )
+        }
+      })
   }, [])
 
   const subtotal = totalPrice()
@@ -84,37 +108,36 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (!user || items.length === 0) return
     setLoading(true)
+    setPromoMsg("")
 
-    const { data: orderData, error: orderError } = await supabase
-      .from("orders")
-      .insert([{
-        customer_name: name || user.email?.split("@")[0] || "Customer",
-        customer_email: user.email,
-        total_amount: grandTotal,
-        status: "pending",
-      }])
-      .select()
+    // Send ONLY identifiers + qty to the server. The `create_order` RPC
+    // re-reads prices from products/variations — see ECOMMERCE_CMS_PLAN.md
+    // §G.X.1. Any localStorage edit a user might have made to `price` is
+    // ignored on the server.
+    const cart = items.map((item) => ({
+      productId: item.id,
+      variationId: item.variationId ?? null,
+      quantity: item.quantity,
+      customMessage: item.customMessage,
+    }))
 
-    if (orderError || !orderData?.[0]) {
-      console.error(orderError)
-      setPromoMsg("Could not place order. Please try again.")
+    const result = await placeOrder({
+      cart,
+      address: {
+        recipient_name: name || user.email?.split("@")[0] || "Customer",
+        phone_e164: phone,
+        line1: address,
+        city: "Karachi",
+        instructions,
+      },
+      promoCode: appliedPromo?.code,
+      isGift,
+    })
+
+    if (!result.ok) {
+      setPromoMsg(result.message)
       setLoading(false)
       return
-    }
-
-    const orderId = orderData[0].id
-    const orderItems = items
-      .filter((item) => UUID_RE.test(item.id)) // only real DB products satisfy the FK
-      .map((item) => ({
-        order_id: orderId,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price,
-      }))
-
-    if (orderItems.length > 0) {
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItems)
-      if (itemsError) console.warn("Order items insert failed:", itemsError.message)
     }
 
     clearCart()

@@ -33,7 +33,12 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           console.log('New Order!', payload)
-          setLiveOrders(prev => [payload.new, ...prev].slice(0, 10))
+          // Project the realtime payload to the legacy render shape.
+          const projected = {
+            ...(payload.new as any),
+            total_amount: ((payload.new as any).total_minor ?? 0) / 100,
+          }
+          setLiveOrders(prev => [projected, ...prev].slice(0, 10))
           setNewOrderAlert(true)
           fetchDashboardData() // Refresh stats on new order
           setTimeout(() => setNewOrderAlert(false), 5000)
@@ -53,12 +58,17 @@ export default function AdminDashboard() {
     ])
 
     if (ordersRes.data) {
-      const orders = ordersRes.data
+      // New schema: total_minor (paisa, integer). Project to total_amount
+      // (rupees, number) so the existing render code stays the same.
+      const orders = (ordersRes.data as any[]).map((o) => ({
+        ...o,
+        total_amount: (o.total_minor ?? 0) / 100,
+      }))
       setLiveOrders(orders.slice(0, 10))
-      
+
       const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0)
       const uniqueCustomers = new Set(orders.map(o => o.customer_email)).size
-      
+
       setStats([
         { label: "Total Revenue", value: `Rs. ${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "Live", color: "text-green-400" },
         { label: "Active Orders", value: orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length.toString(), icon: ShoppingBag, trend: "Live", color: "text-blue-400" },

@@ -52,18 +52,30 @@ export default function Home() {
         setCategories(orderedCategories)
         if (orderedCategories.length > 0) setActiveCategory(orderedCategories[0].id)
         
-        // Fetch products for each category and set initial pagination
+        // Fetch products for each category and set initial pagination.
+        // New schema: category link is M:M via product_categories; the legacy
+        // image_url + price columns are gone (base_price_minor in paisa now,
+        // image in product_images). We project back to the legacy shape so
+        // ProductCard stays unchanged this phase — Phase 2 revamps the cards.
         const productsMap: Record<string, any[]> = {}
         const initialCounts: Record<string, number> = {}
         for (const cat of orderedCategories) {
           const { data: prodData } = await supabase
             .from('products')
-            .select('*')
-            .eq('category_id', cat.id)
+            .select('*, product_categories!inner(category_id), product_images(storage_path, position, is_featured)')
+            .eq('product_categories.category_id', cat.id)
+            .eq('status', 'published')
             .order('created_at', { ascending: false })
-          
+
           if (prodData) {
-            productsMap[cat.id] = prodData
+            productsMap[cat.id] = prodData.map((p: any) => {
+              const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+              return {
+                ...p,
+                image_url: hero?.storage_path ?? null,
+                price: (p.base_price_minor ?? 0) / 100,
+              }
+            })
           }
           initialCounts[cat.id] = 6 // Show 6 products initially per category
         }
