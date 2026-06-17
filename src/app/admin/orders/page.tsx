@@ -1,15 +1,53 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { ShoppingBag, Search, Filter, Loader2, CheckCircle, Clock, Truck, XCircle } from "lucide-react"
+import { useToast } from "@/components/ui/Toast"
+import { formatPkr } from "@/lib/money"
+import { Loader2, CheckCircle, Clock, Truck, XCircle, ExternalLink } from "lucide-react"
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => {
     fetchOrders()
+
+    // Phase 3: orders list now subscribes to realtime INSERT + UPDATE so
+    // status changes from elsewhere (rider RPCs, customer cancel, other
+    // admin tabs) reflect live without a refresh. The dashboard also
+    // subscribes; that's fine — two subscriptions, one shared topic.
+    const channel = supabase
+      .channel('admin-orders-list')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        const o = payload.new as any
+        setOrders((prev) => [{ ...o, total_amount: (o.total_minor ?? 0) / 100, order_items: [] }, ...prev])
+        toast.push({
+          kind: 'info',
+          title: `New order ${o.order_number ?? '#' + o.id?.slice(0, 8)}`,
+          body: `${formatPkr(o.total_minor ?? 0)} — ${o.customer_name ?? 'customer'}`,
+        })
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+        const next = payload.new as any
+        const prev = payload.old as any
+        setOrders((cur) => cur.map((o) => o.id === next.id ? { ...o, ...next, total_amount: (next.total_minor ?? 0) / 100 } : o))
+        if (prev?.status !== next?.status) {
+          toast.push({
+            kind: next.status === 'delivered' ? 'success' : next.status === 'cancelled' || next.status === 'failed_delivery' ? 'warn' : 'info',
+            title: `Order ${next.order_number ?? '#' + next.id.slice(0, 8)}`,
+            body: `${prev?.status ?? '—'} → ${next?.status}`,
+          })
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+    // toast.push and router are stable refs from their providers; safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchOrders = async () => {
@@ -33,14 +71,27 @@ export default function OrdersPage() {
   }
 
   const updateStatus = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId)
-    
-    if (!error) {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+    // Phase 3: direct UPDATE on orders is REVOKE'd from authenticated. Status
+    // changes now go through update_order_status RPC which validates the
+    // transition against order_status_transitions and writes an audit row.
+    const { error } = await supabase.rpc('update_order_status', {
+      p_order_id: orderId,
+      p_to_status: newStatus,
+      p_reason: null,
+    })
+    if (error) {
+      const code = error.message?.split(':')[0]?.trim() ?? error.message
+      toast.push({
+        kind: 'warn',
+        title: 'Could not change status',
+        body: code === 'invalid_transition' ? 'That status change is not allowed from the current state.' : (error.message ?? 'Unknown error'),
+      })
+      return
     }
+    // The optimistic local update will be confirmed by the realtime UPDATE
+    // handler above (the same channel sees our own write), but applying it
+    // immediately keeps the dropdown snappy.
+    setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: newStatus } : o))
   }
 
   const getStatusIcon = (status: string) => {
@@ -85,8 +136,13 @@ export default function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-white/5 transition-all">
-                    <td className="px-6 py-4 ff-apfel text-primary-brown truncate max-w-[100px]">{order.id}</td>
+                  <tr key={order.id} className="hover:bg-white/5 transition-all cursor-pointer" onClick={() => router.push(`/admin/orders/${order.id}`)}>
+                    <td className="px-6 py-4 ff-apfel text-primary-brown">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs">{order.order_number ?? order.id?.slice(0, 8)}</span>
+                        <ExternalLink size={12} className="text-white/30" />
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="ff-apfel">{order.customer_name}</div>
                       <div className="text-xs text-white/30">{order.customer_email}</div>
@@ -94,17 +150,18 @@ export default function OrdersPage() {
                     <td className="px-6 py-4 ff-apfel">
                       {order.order_items?.length || 0} items
                     </td>
-                    <td className="px-6 py-4 ff-apfel text-green-400">Rs. {order.total_amount}</td>
+                    <td className="px-6 py-4 ff-apfel text-green-400">{formatPkr((order.total_minor ?? order.total_amount * 100) ?? 0)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(order.status)}
-                        <span className="capitalize text-sm ff-apfel">{order.status}</span>
+                        <span className="capitalize text-sm ff-apfel">{order.status.replace(/_/g, ' ')}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <select
                         value={order.status}
-                        onChange={(e) => updateStatus(order.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => { e.stopPropagation(); updateStatus(order.id, e.target.value) }}
                         className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs outline-none focus:border-primary-brown transition-all"
                       >
                         <option value="pending_confirmation">Pending Confirmation</option>

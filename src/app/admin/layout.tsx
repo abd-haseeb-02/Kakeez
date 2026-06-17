@@ -15,6 +15,7 @@ import {
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import { ToastProvider } from "@/components/ui/Toast"
 
 export default function AdminLayout({
   children,
@@ -26,17 +27,28 @@ export default function AdminLayout({
   const router = useRouter()
 
   useEffect(() => {
+    // Phase 0+ moved the admin gate from hard-coded email to role-based:
+    // a profiles row with role='admin' (or 'staff') is the source of truth.
+    // RLS protects writes regardless, but bouncing non-admins out at the
+    // shell level avoids confusing "permission denied" errors deeper in.
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push("/admin/login")
-      } else if (session.user.email !== "admin@kakeez.com") {
-        // Not an admin user, boot them out
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .maybeSingle()
+      const role = profile?.role ?? 'customer'
+      if (role !== 'admin' && role !== 'staff') {
         await supabase.auth.signOut()
         router.push("/admin/login")
-      } else {
-        setLoading(false)
+        return
       }
+      setLoading(false)
     }
     checkAuth()
   }, [router])
@@ -63,6 +75,7 @@ export default function AdminLayout({
   ]
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-[#0a0a0a] text-white flex overflow-hidden">
       {/* Sidebar */}
       <aside 
@@ -118,5 +131,6 @@ export default function AdminLayout({
         </div>
       </main>
     </div>
+    </ToastProvider>
   )
 }

@@ -1,20 +1,21 @@
 "use client"
 
-import { 
-  TrendingUp, 
-  Users, 
-  ShoppingBag, 
+import {
+  TrendingUp,
+  Users,
+  ShoppingBag,
   DollarSign,
   ArrowUpRight,
   Clock,
-  Bell
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { useToast } from "@/components/ui/Toast"
+import { formatPkr } from "@/lib/money"
 
 export default function AdminDashboard() {
   const [liveOrders, setLiveOrders] = useState<any[]>([])
-  const [newOrderAlert, setNewOrderAlert] = useState(false)
+  const toast = useToast()
   const [stats, setStats] = useState([
     { label: "Total Revenue", value: "Rs. 0", icon: DollarSign, trend: "Live", color: "text-green-400" },
     { label: "Active Orders", value: "0", icon: ShoppingBag, trend: "Live", color: "text-blue-400" },
@@ -32,16 +33,18 @@ export default function AdminDashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
-          console.log('New Order!', payload)
           // Project the realtime payload to the legacy render shape.
           const projected = {
             ...(payload.new as any),
             total_amount: ((payload.new as any).total_minor ?? 0) / 100,
           }
           setLiveOrders(prev => [projected, ...prev].slice(0, 10))
-          setNewOrderAlert(true)
+          toast.push({
+            kind: 'info',
+            title: `New order ${projected.order_number ?? '#' + projected.id?.slice(0, 8)}`,
+            body: `${formatPkr(projected.total_minor ?? 0)} — ${projected.customer_name ?? 'customer'}`,
+          })
           fetchDashboardData() // Refresh stats on new order
-          setTimeout(() => setNewOrderAlert(false), 5000)
         }
       )
       .subscribe()
@@ -80,18 +83,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 relative">
-      {/* Realtime Alert Banner */}
-      {newOrderAlert && (
-        <div className="fixed top-24 right-8 bg-primary-brown text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce z-50 border border-white/20">
-          <Bell className="animate-ring" />
-          <div className="ff-apfel">
-            <p className="font-bold">New Order Received!</p>
-            <p className="text-xs opacity-80">Check the dashboard for details.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Page Header */}
+      {/* Page Header — new-order banner moved to the global ToastProvider so
+          both the dashboard and the orders list now share the same UX. */}
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold ff-accia text-primary-brown">Overview</h1>
