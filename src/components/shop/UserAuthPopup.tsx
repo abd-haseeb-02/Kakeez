@@ -1,8 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { X, Mail, Lock, Loader2, User, Phone, MapPin } from "lucide-react"
+
+const MIN_PASSWORD = 8
 
 export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess?: () => void }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -31,24 +34,53 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
         onClose()
       }
     } else {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
+      // Phase 4: enforce min length client-side; Phase 5 will raise the
+      // Supabase project's password policy server-side too.
+      if (password.length < MIN_PASSWORD) {
+        setError(`Password must be at least ${MIN_PASSWORD} characters.`)
+        setLoading(false)
+        return
+      }
+      const { data: signupData, error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           data: {
             full_name: fullName,
             phone: phone,
-            address: address
-          }
-        }
+            address: address,
+          },
+        },
       })
       if (error) {
         setError(error.message)
         setLoading(false)
-      } else {
-        if (onSuccess) onSuccess()
-        onClose()
+        return
       }
+      // handle_new_user trigger created a profiles row with role='customer';
+      // sync phone + persist the initial address so the customer doesn't
+      // have to retype them on first checkout. Best-effort: failures here
+      // don't undo the signup.
+      const userId = signupData?.user?.id
+      if (userId) {
+        await supabase.from('profiles').update({
+          full_name: fullName || null,
+          phone_e164: phone || null,
+        }).eq('id', userId)
+
+        if (address?.trim()) {
+          await supabase.from('addresses').insert({
+            user_id: userId,
+            recipient_name: fullName,
+            phone_e164: phone || '+92',
+            line1: address.trim(),
+            city: 'Karachi',
+            is_default_shipping: true,
+          })
+        }
+      }
+      if (onSuccess) onSuccess()
+      onClose()
     }
   }
 
@@ -129,15 +161,23 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
               </div>
               <div className="relative">
                 <Lock className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-primary-brown/40" size={18} />
-                <input 
+                <input
                   required
                   type="password"
-                  placeholder="Password"
+                  minLength={isLogin ? undefined : MIN_PASSWORD}
+                  placeholder={isLogin ? "Password" : `Password (${MIN_PASSWORD}+ characters)`}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw]"
                 />
               </div>
+              {isLogin && (
+                <div className="text-right">
+                  <Link href="/forgot-password" onClick={onClose} className="ff-apfel text-[0.85vw] text-primary-brown/70 hover:text-primary-brown underline-offset-2 underline">
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
             </div>
 
             <button 

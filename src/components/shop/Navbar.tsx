@@ -8,7 +8,7 @@ import UserAuthPopup from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
 import { useCart } from "@/store/useCart"
 import { supabase } from "@/lib/supabase"
-import { Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon } from "lucide-react"
+import { Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, LayoutGrid } from "lucide-react"
 
 export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
@@ -17,14 +17,24 @@ export default function Navbar() {
   const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const totalItems = useCart(state => state.totalItems())
+  const clearCart = useCart(state => state.clearCart)
 
-  const applySession = (session: Session | null) => {
+  const applySession = async (session: Session | null) => {
     if (session?.user) {
       setUser({
         email: session.user.email ?? null,
         name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Account",
       })
-      setIsAdmin(session.user.email === "admin@kakeez.com")
+      // Phase 4: role-based admin gate via profiles, not hard-coded email.
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', session.user.id)
+        .maybeSingle()
+      if (profile?.full_name) {
+        setUser((prev) => prev ? { ...prev, name: profile.full_name as string } : prev)
+      }
+      setIsAdmin(profile?.role === 'admin' || profile?.role === 'staff')
     } else {
       setUser(null)
       setIsAdmin(false)
@@ -34,14 +44,20 @@ export default function Navbar() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => applySession(session))
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes — clear cart on sign-out so the next visitor
+    // on a shared device doesn't inherit items.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        clearCart()
+      }
       applySession(session)
     })
 
     return () => {
       subscription.unsubscribe()
     }
+    // clearCart from zustand persist is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleLogout = async () => {
@@ -121,6 +137,13 @@ export default function Navbar() {
                       <p className="ff-apfel text-xs text-primary-brown/50 truncate">{user.email}</p>
                     </div>
                   </div>
+                  <Link
+                    href="/account"
+                    onClick={() => setIsAccountOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-primary-brown hover:bg-primary-brown/5 transition-all ff-apfel text-sm border-b border-primary-brown/10"
+                  >
+                    <LayoutGrid size={15} /> My account
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-500 hover:bg-red-50 transition-all ff-apfel text-sm"
