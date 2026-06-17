@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
-import { Loader2, CheckCircle, Minus, Plus, Trash2, ChevronLeft, ChevronRight, Banknote, CreditCard, Gift } from "lucide-react"
+import { Loader2, CheckCircle, Minus, Plus, Trash2, ChevronLeft, ChevronRight, Banknote, Gift } from "lucide-react"
 
 const DELIVERY_CHARGE = 99
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -28,7 +28,8 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("")
   const [isGift, setIsGift] = useState(false)
   const [instructions, setInstructions] = useState("")
-  const [payment, setPayment] = useState<"cod" | "card">("cod")
+  // Payment method is locked to COD at launch (see ECOMMERCE_CMS_PLAN.md §G.X).
+  // The schema is shaped so adding JazzCash/Easypaisa later is additive.
 
   // summary state
   const [popular, setPopular] = useState<any[]>([])
@@ -207,23 +208,14 @@ export default function CheckoutPage() {
               className="w-full h-[8.62vw] mt-[0.6vw] bg-white border border-primary-brown/30 rounded-[0.7vw] px-[1vw] py-[0.8vw] outline-none focus:border-primary-brown transition-all ff-accia-light text-[1.04vw] text-black placeholder:text-black/35 resize-none"
             />
 
-            {/* Payment method */}
-            <label className={`${labelCls} block mt-[1.4vw]`}>Select Payment Method</label>
-            <div className="mt-[0.6vw] bg-white rounded-[0.7vw] min-h-[8.62vw] p-[1.1vw] flex items-center gap-[0.8vw]">
-              <button
-                onClick={() => setPayment("cod")}
-                className={`flex items-center gap-[0.6vw] h-[2.66vw] min-h-[40px] rounded-[0.6vw] px-[1vw] border transition-all ${payment === "cod" ? "border-primary-brown bg-accent-green/40" : "border-primary-brown/20 bg-white"}`}
-              >
-                <Banknote className="w-[1.4vw] h-[1.4vw] text-primary-brown" />
-                <span className="ff-accia text-[1.04vw] text-black whitespace-nowrap">Cash On Delivery</span>
-              </button>
-              <button
-                onClick={() => setPayment("card")}
-                className={`flex items-center gap-[0.6vw] h-[2.66vw] min-h-[40px] rounded-[0.6vw] px-[1vw] border transition-all ${payment === "card" ? "border-primary-brown bg-accent-green/40" : "border-primary-brown/20 bg-white"}`}
-              >
-                <CreditCard className="w-[1.4vw] h-[1.4vw] text-primary-brown" />
-                <span className="ff-accia text-[1.04vw] text-black whitespace-nowrap">Cards, Jazzcash, Easypaisa</span>
-              </button>
+            {/* Payment method — COD only at launch (see ECOMMERCE_CMS_PLAN.md §G.X.8). */}
+            <label className={`${labelCls} block mt-[1.4vw]`}>Payment Method</label>
+            <div className="mt-[0.6vw] bg-white rounded-[0.7vw] p-[1.1vw] flex items-center gap-[0.8vw] border border-primary-brown/30">
+              <Banknote className="w-[1.4vw] h-[1.4vw] text-primary-brown shrink-0" />
+              <div>
+                <div className="ff-accia text-[1.04vw] text-black">Cash on Delivery</div>
+                <div className="ff-accia-light text-[0.9vw] text-black/60">Pay the rider in cash when your order arrives. Please keep exact change ready.</div>
+              </div>
             </div>
           </div>
 

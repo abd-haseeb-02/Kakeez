@@ -79,7 +79,25 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab !== "general" && (
+          {activeTab === "payments" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <h2 className="text-2xl font-bold ff-accia text-white">Payments</h2>
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3 ff-apfel text-amber-300 font-bold uppercase text-xs tracking-widest">
+                  <CreditCard size={18} />
+                  Cash on Delivery only — at launch
+                </div>
+                <p className="ff-apfel text-white/70 leading-relaxed">
+                  Online payment providers (Card, JazzCash, Easypaisa) are not enabled yet. To enable them, contact engineering.
+                </p>
+                <p className="ff-apfel text-white/50 text-sm leading-relaxed">
+                  COD-specific controls — daily order caps, first-order value limit, blocklist — will live under <span className="text-primary-brown">Operations → COD Risk</span>.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab !== "general" && activeTab !== "payments" && (
             <div className="flex flex-col items-center justify-center py-20 text-white/20">
                {(() => {
                  const currentTab = tabs.find(t => t.id === activeTab)
