@@ -12,10 +12,11 @@ import {
   ChevronRight,
   Menu,
   Loader2,
+  Sparkles,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { ToastProvider } from "@/components/ui/Toast"
 
 export default function AdminLayout({
@@ -25,9 +26,15 @@ export default function AdminLayout({
 }) {
   const [isSidebarOpen, setSidebarOpen] = useState(true)
   const [loading, setLoading] = useState(true)
+  const pathname = usePathname()
   const router = useRouter()
+  const isLoginPage = pathname === "/admin/login"
 
   useEffect(() => {
+    if (isLoginPage) {
+      return
+    }
+
     // Phase 0+ moved the admin gate from hard-coded email to role-based:
     // a profiles row with role='admin' (or 'staff') is the source of truth.
     // RLS protects writes regardless, but bouncing non-admins out at the
@@ -52,11 +59,15 @@ export default function AdminLayout({
       setLoading(false)
     }
     checkAuth()
-  }, [router])
+  }, [isLoginPage, router])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/admin/login")
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>
   }
 
   if (loading) {
@@ -78,16 +89,25 @@ export default function AdminLayout({
 
   return (
     <ToastProvider>
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex overflow-hidden">
+    <div className="admin-modern">
+    <div className="admin-shell overflow-hidden">
       {/* Sidebar */}
       <aside 
         className={`${
           isSidebarOpen ? "w-64" : "w-20"
-        } bg-[#121212] border-r border-white/5 transition-all duration-300 flex flex-col`}
+        } admin-sidebar transition-all duration-300 flex flex-col`}
       >
-        <div className="p-6 flex items-center justify-between">
-          {isSidebarOpen && <span className="ff-accia text-xl font-bold text-primary-brown">KAKEEZ ADMIN</span>}
-          <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg">
+        <div className="p-5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="admin-brand-mark ff-accia">K</div>
+            {isSidebarOpen && (
+              <div className="min-w-0">
+                <span className="ff-accia block text-xl font-bold text-primary-brown leading-none">Kakeez</span>
+                <span className="ff-apfel text-[11px] uppercase tracking-[0.18em] text-white/35">Admin studio</span>
+              </div>
+            )}
+          </div>
+          <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded-lg text-white/60 hover:text-white transition-all">
             <Menu size={20} />
           </button>
         </div>
@@ -97,16 +117,25 @@ export default function AdminLayout({
             <Link 
               key={item.label}
               href={item.href}
-              className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl group transition-all"
+              className={`admin-nav-link ${pathname === item.href ? "admin-nav-link-active" : ""} flex items-center gap-4 p-3 rounded-xl group transition-all`}
+              title={item.label}
             >
-              <item.icon size={20} className="text-primary-brown" />
+              <item.icon size={20} className={pathname === item.href ? "text-primary-brown" : "text-white/45 group-hover:text-primary-brown"} />
               {isSidebarOpen && <span className="ff-apfel text-sm">{item.label}</span>}
             </Link>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
-          <button onClick={handleLogout} className="w-full flex items-center gap-4 p-3 hover:bg-red-500/10 text-red-400 rounded-xl transition-all">
+        <div className="p-4 border-t border-white/5 space-y-3">
+          {isSidebarOpen && (
+            <div className="admin-pill rounded-xl px-3 py-3">
+              <div className="flex items-center gap-2 ff-apfel text-[11px] uppercase tracking-[0.12em]">
+                <Sparkles size={13} />
+                Live operations
+              </div>
+            </div>
+          )}
+          <button onClick={handleLogout} className="w-full flex items-center gap-4 p-3 hover:bg-red-500/10 text-red-300 rounded-xl transition-all">
             <LogOut size={20} />
             {isSidebarOpen && <span className="ff-apfel text-sm">Logout</span>}
           </button>
@@ -114,24 +143,29 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-[#0a0a0a]">
-        <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-[#0a0a0a]/50 backdrop-blur-xl sticky top-0 z-10">
+      <main className="admin-main overflow-y-auto">
+        <header className="admin-topbar h-20 px-8 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-2 text-sm text-white/50">
             <span className="ff-apfel">Admin</span>
             <ChevronRight size={14} />
-            <span className="text-white ff-apfel">Dashboard</span>
+            <span className="text-white ff-apfel">{menuItems.find((item) => item.href === pathname)?.label ?? "Dashboard"}</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary-brown flex items-center justify-center font-bold">
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 ff-apfel text-xs text-white/60">
+              <span className="h-2 w-2 rounded-full bg-[#b8d87c]" />
+              Secure session
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary-brown flex items-center justify-center font-bold shadow-lg shadow-black/20">
               A
             </div>
           </div>
         </header>
 
-        <div className="p-8">
+        <div className="admin-content">
           {children}
         </div>
       </main>
+    </div>
     </div>
     </ToastProvider>
   )

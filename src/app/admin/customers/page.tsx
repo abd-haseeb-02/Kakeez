@@ -50,6 +50,7 @@ export default function CustomersPage() {
   return (
     <div className="space-y-8">
       <div>
+        <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Customer intelligence</p>
         <h1 className="text-3xl font-bold ff-accia text-primary-brown">Customers</h1>
         <p className="text-white/50 ff-apfel mt-1">Manage your bakery's growing community.</p>
       </div>
@@ -61,7 +62,7 @@ export default function CustomersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {customers.map((customer, idx) => (
-            <div key={idx} className="bg-[#121212] border border-white/5 p-6 rounded-3xl hover:border-primary-brown/30 transition-all group">
+            <div key={idx} className="admin-card p-6 rounded-3xl transition-all group">
               <div className="flex justify-between items-start mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-primary-brown/10 flex items-center justify-center text-primary-brown font-bold text-xl ff-accia">
                   {customer.customer_name?.[0]?.toUpperCase() || "?"}

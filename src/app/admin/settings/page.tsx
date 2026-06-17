@@ -17,6 +17,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
+        <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Store configuration</p>
         <h1 className="text-3xl font-bold ff-accia text-primary-brown">Settings</h1>
         <p className="text-white/50 ff-apfel mt-1">Configure your bakeshop's preferences and security.</p>
       </div>
@@ -41,7 +42,7 @@ export default function SettingsPage() {
         </aside>
 
         {/* Tab Content */}
-        <main className="flex-1 bg-[#121212] border border-white/5 rounded-3xl p-10">
+        <main className="admin-card flex-1 rounded-3xl p-10">
           {activeTab === "general" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
               <h2 className="text-2xl font-bold ff-accia text-white">General Settings</h2>

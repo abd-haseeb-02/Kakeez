@@ -50,7 +50,7 @@ export default function Hero() {
 
   return (
     <div
-      className="absolute left-[1.7361vw] top-[6.5vw] z-10 h-[50.7311vw] w-[96.5278vw] md:top-[var(--hero-nav-height)] md:h-[calc(100vh-var(--hero-nav-height))]"
+      className="relative z-10 mx-auto h-[clamp(430px,calc(100vh-var(--hero-nav-height)),760px)] w-[calc(100%_-_32px)] max-w-[1390px] overflow-hidden"
       style={{ "--hero-nav-height": HERO_NAV_HEIGHT } as CSSProperties}
     >
         <svg className="block w-full h-full" viewBox="0 0 1668 876.633" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -107,16 +107,16 @@ export default function Hero() {
           </g>
         </svg>
 
-      <button type="button" onClick={goToNext} aria-label="Next hero slide" className="absolute right-[1.7vw] top-1/2 z-20 h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 hover:opacity-80 transition-opacity">
+      <button type="button" onClick={goToNext} aria-label="Next hero slide" className="absolute right-[clamp(14px,1.7vw,28px)] top-1/2 z-20 h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 hover:opacity-80 transition-opacity">
         <Image src="/assets/arrow-right.svg" alt="next" width={50} height={100} className="block w-full h-full" />
       </button>
-      <button type="button" onClick={goToPrevious} aria-label="Previous hero slide" className="absolute left-[1.7vw] top-1/2 z-20 flex h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 items-center justify-center hover:opacity-80 transition-opacity">
+      <button type="button" onClick={goToPrevious} aria-label="Previous hero slide" className="absolute left-[clamp(14px,1.7vw,28px)] top-1/2 z-20 flex h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 items-center justify-center hover:opacity-80 transition-opacity">
         <div className="h-full w-full" style={{ transform:'rotate(180deg) scaleY(-1)' }}>
           <Image src="/assets/arrow-left.svg" alt="prev" width={50} height={100} className="block w-full h-full" />
         </div>
       </button>
 
-      <div className="absolute bottom-[clamp(18px,2.2vw,34px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[0.75vw]">
+      <div className="absolute bottom-[clamp(18px,2.2vw,34px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(8px,0.75vw,14px)]">
         {SLIDES.map((item, index) => (
           <button
             key={`${item.id}-dot`}
@@ -124,7 +124,7 @@ export default function Hero() {
             onClick={() => setActiveSlide(index)}
             aria-label={`Go to hero slide ${index + 1}`}
             aria-current={index === activeSlide}
-            className={`h-[0.78vw] min-h-[10px] w-[0.78vw] min-w-[10px] rounded-full border border-[#936939] shadow-sm transition-all ${
+            className={`h-[clamp(10px,0.78vw,14px)] w-[clamp(10px,0.78vw,14px)] rounded-full border border-[#936939] shadow-sm transition-all ${
               index === activeSlide ? "bg-[#936939] scale-125" : "bg-white/90"
             }`}
           />

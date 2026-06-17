@@ -243,30 +243,30 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     <div className="relative min-h-screen w-full overflow-hidden bg-white">
       <Navbar />
 
-      <main className="pt-[clamp(122px,8.8vw,150px)]">
-        <section className="relative mx-auto w-[min(1180px,calc(100vw-40px))] rounded-[clamp(16px,1.2vw,22px)] bg-accent-green px-[clamp(18px,2.2vw,34px)] pb-[clamp(54px,5vw,78px)] pt-[clamp(20px,2.4vw,38px)]">
+      <main className="pt-[118px] lg:pt-[130px]">
+        <section className="relative mx-auto w-[calc(100%_-_32px)] max-w-[1390px] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green px-[clamp(18px,2.125rem,34px)] pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)]">
           <div className="absolute bottom-[-74px] left-0 h-[118px] w-full pointer-events-none sm:bottom-[-82px] sm:h-[132px]" style={{ transform: "scaleY(-1)" }}>
             <Image src="/assets/union-drip.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
-          <div className="relative grid gap-[clamp(24px,3.6vw,58px)] lg:grid-cols-[minmax(360px,540px)_minmax(320px,430px)] lg:items-start lg:justify-center">
-            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1vw,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm">
+          <div className="relative grid gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(360px,540px)_minmax(320px,430px)] lg:items-start lg:justify-center">
+            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm">
               <Image src={hero} alt={product.name} fill className="object-cover" priority />
             </div>
 
-            <div className="w-full pt-[clamp(2px,0.7vw,10px)]">
-              <h1 className="ff-accia text-[clamp(34px,3vw,48px)] text-primary-brown leading-[1.02]">{product.name}</h1>
+            <div className="w-full pt-[clamp(2px,0.625rem,10px)]">
+              <h1 className="ff-accia text-[clamp(34px,3rem,48px)] text-primary-brown leading-[1.02]">{product.name}</h1>
 
               {product.product_categories?.[0]?.categories?.name ? (
-                <p className="ff-accia-light mt-2 text-[clamp(15px,1.05vw,17px)] text-primary-brown/80">
+                <p className="ff-accia-light mt-2 text-[clamp(15px,1.0625rem,17px)] text-primary-brown/80">
                   {product.product_categories[0].categories.name}
                 </p>
               ) : null}
 
-              <p className="ff-colville mt-5 text-[clamp(23px,1.55vw,28px)] text-primary-brown">{priceLabel}</p>
+              <p className="ff-colville mt-5 text-[clamp(23px,1.75rem,28px)] text-primary-brown">{priceLabel}</p>
 
               {product.description ? (
-                <p className="ff-accia-light mt-3 max-w-[42rem] text-[clamp(16px,1.05vw,18px)] leading-[1.45] text-black/80 capitalize">{product.description}</p>
+                <p className="ff-accia-light mt-3 max-w-[42rem] text-[clamp(16px,1.125rem,18px)] leading-[1.45] text-black/80 capitalize">{product.description}</p>
               ) : null}
 
               {/* Variation picker (renders only when the product has attributes) */}
@@ -274,7 +274,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 <div className="mt-6 space-y-4">
                   {productAttributes.map((attr) => (
                     <div key={attr.id}>
-                      <p className="ff-accia text-[clamp(16px,1.1vw,18px)] text-black">{attr.label}</p>
+                      <p className="ff-accia text-[clamp(16px,1.125rem,18px)] text-black">{attr.label}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {attr.values.map((val) => {
                           const isPicked = picked[attr.id] === val.id
@@ -304,7 +304,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 </div>
               )}
 
-              <label className="ff-accia mt-6 block text-[clamp(18px,1.25vw,21px)] text-black" htmlFor="product-instructions">
+              <label className="ff-accia mt-6 block text-[clamp(18px,1.3125rem,21px)] text-black" htmlFor="product-instructions">
                 Special Instructions
               </label>
               <textarea
@@ -312,11 +312,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
                 placeholder="Please enter instructions about this item"
-                className="ff-accia-light mt-3 h-[132px] w-full resize-none rounded-[10px] border border-primary-brown/30 bg-white px-4 py-3 text-[clamp(15px,0.95vw,16px)] text-black/70 outline-none transition-all placeholder:text-black/35 focus:border-primary-brown"
+                className="ff-accia-light mt-3 h-[132px] w-full resize-none rounded-[10px] border border-primary-brown/30 bg-white px-4 py-3 text-[clamp(15px,1rem,16px)] text-black/70 outline-none transition-all placeholder:text-black/35 focus:border-primary-brown"
               />
 
-              <p className="ff-accia mt-6 text-[clamp(18px,1.25vw,21px)] text-black">Quantity:</p>
-              <div className="mt-3 flex h-[46px] w-[clamp(140px,10vw,170px)] items-center justify-between rounded-[10px] border border-primary-brown bg-white px-4">
+              <p className="ff-accia mt-6 text-[clamp(18px,1.3125rem,21px)] text-black">Quantity:</p>
+              <div className="mt-3 flex h-[46px] w-[clamp(140px,10.625rem,170px)] items-center justify-between rounded-[10px] border border-primary-brown bg-white px-4">
                 <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="text-primary-brown transition-opacity hover:opacity-60" aria-label="Decrease">
                   <Minus className="h-4 w-4" />
                 </button>
@@ -331,7 +331,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 disabled={!canAddToCart}
                 className="mt-5 flex h-[52px] w-full items-center justify-center rounded-[10px] bg-primary-brown px-4 transition-all hover:bg-primary-brown/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="ff-accia text-[clamp(18px,1.2vw,21px)] tracking-[0.02em] text-white">
+                <span className="ff-accia text-[clamp(18px,1.3125rem,21px)] tracking-[0.02em] text-white">
                   {canAddToCart
                     ? `ADD TO CART - ${formatPkr(finalPriceMinor * quantity)}`
                     : `Pick ${productAttributes.find((a) => !picked[a.id])?.label ?? 'options'}`}
@@ -348,8 +348,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   <Gift className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="ff-accia text-[clamp(16px,1vw,18px)] text-black">Is this a gift?</p>
-                  <p className="ff-accia-light mt-1 text-[clamp(13px,0.85vw,15px)] leading-[1.25] text-black/60">If checked, all prices will be removed from the paying slip</p>
+                  <p className="ff-accia text-[clamp(16px,1.125rem,18px)] text-black">Is this a gift?</p>
+                  <p className="ff-accia-light mt-1 text-[clamp(13px,0.9375rem,15px)] leading-[1.25] text-black/60">If checked, all prices will be removed from the paying slip</p>
                 </div>
               </button>
             </div>
@@ -357,11 +357,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         </section>
 
         {hasRelated ? (
-          <section className="mx-auto mt-[clamp(105px,9vw,142px)] w-[min(1180px,calc(100vw-40px))]">
-            <h2 className="ff-accia text-center text-[clamp(36px,3.2vw,52px)] leading-none text-primary-brown">
+          <section className="mx-auto mt-[clamp(105px,8.875rem,142px)] w-[calc(100%_-_32px)] max-w-[1390px]">
+            <h2 className="ff-accia text-center text-[clamp(36px,3.25rem,52px)] leading-none text-primary-brown">
               You May Also Like
             </h2>
-            <div className="mt-[clamp(28px,3vw,42px)] grid gap-5 md:grid-cols-3">
+            <div className="mt-[clamp(28px,2.625rem,42px)] grid gap-5 md:grid-cols-3">
               {related.slice(0, 3).map((item) => {
                 const rHero = (item.product_images?.find((i) => i.is_featured) ?? item.product_images?.[0])?.storage_path ?? "/assets/product.svg"
                 return (
@@ -374,8 +374,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                       <Image src={rHero} alt={item.name} fill className="object-cover" />
                     </div>
                     <div className="px-5 py-5 text-center">
-                      <h3 className="ff-accia text-[clamp(23px,1.7vw,30px)] leading-[1.05] text-primary-brown">{item.name}</h3>
-                      <p className="ff-colville mt-2 text-[clamp(18px,1.2vw,22px)] text-primary-brown">{formatPkr(item.base_price_minor)}</p>
+                      <h3 className="ff-accia text-[clamp(23px,1.875rem,30px)] leading-[1.05] text-primary-brown">{item.name}</h3>
+                      <p className="ff-colville mt-2 text-[clamp(18px,1.375rem,22px)] text-primary-brown">{formatPkr(item.base_price_minor)}</p>
                     </div>
                   </div>
                 )
@@ -384,7 +384,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           </section>
         ) : null}
 
-        <div className="mt-[clamp(56px,6vw,96px)] pb-6">
+        <div className="mt-[clamp(56px,6rem,96px)] pb-6">
           <Footer variant="flow" />
         </div>
       </main>

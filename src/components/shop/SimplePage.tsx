@@ -6,22 +6,22 @@ import Footer from "./Footer"
 
 export default function SimplePage({ title, subtitle, body }: { title: string; subtitle?: string; body?: string }) {
   return (
-    <div className="relative bg-white w-full overflow-hidden" style={{ minHeight: "60vw" }}>
+    <div className="relative min-h-screen w-full overflow-hidden bg-white">
       <Navbar />
 
-      <div className="flex flex-col items-center justify-center text-center px-[8vw] pt-[clamp(122px,8.8vw,150px)] pb-[10vw] gap-[1.5vw]">
-        {subtitle && <p className="ff-accia text-[1vw] text-primary-brown uppercase tracking-[0.2em]">— {subtitle}</p>}
-        <h1 className="ff-accia text-[4vw] text-primary-brown leading-[1.05]">{title}</h1>
-        <p className="ff-accia-light text-[1.3vw] text-black/60 max-w-[45vw]">
+      <div className="mx-auto flex w-[min(860px,calc(100%_-_32px))] flex-col items-center justify-center gap-[clamp(18px,1.5vw,28px)] px-4 pb-[clamp(72px,8vw,140px)] pt-[clamp(122px,8.8vw,150px)] text-center">
+        {subtitle && <p className="ff-accia text-[clamp(14px,1vw,17px)] uppercase tracking-[0.2em] text-primary-brown">- {subtitle}</p>}
+        <h1 className="ff-accia text-[clamp(44px,4vw,72px)] leading-[1.05] text-primary-brown">{title}</h1>
+        <p className="max-w-[680px] ff-accia-light text-[clamp(17px,1.3vw,24px)] text-black/60">
           {body || "This page is freshly out of the oven soon. In the meantime, browse our best sellers and treat yourself."}
         </p>
-        <Link href="/" className="mt-[1vw] bg-primary-brown text-white px-[3vw] py-[1vw] rounded-[0.8vw] ff-accia text-[1.3vw] hover:bg-primary-brown/90 transition-all">
+        <Link href="/" className="mt-[clamp(8px,1vw,18px)] rounded-[10px] bg-primary-brown px-[clamp(28px,3vw,52px)] py-[clamp(12px,1vw,18px)] ff-accia text-[clamp(17px,1.3vw,23px)] text-white transition-all hover:bg-primary-brown/90">
           Back to Shop
         </Link>
       </div>
 
-      <div className="relative w-full h-[20.5vw] mt-[6vw]">
-        <Footer topOffset={0} />
+      <div className="pb-6">
+        <Footer variant="flow" />
       </div>
     </div>
   )

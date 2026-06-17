@@ -1,13 +1,14 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import Navbar from "@/components/shop/Navbar"
-import Hero from "@/components/shop/Hero"
-import ProductCard from "@/components/shop/ProductCard"
 import Footer from "@/components/shop/Footer"
+import Hero from "@/components/shop/Hero"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { Loader2 } from "lucide-react"
+import { Loader2, ShoppingCart } from "lucide-react"
+import { useCart } from "@/store/useCart"
 import cakesIcon from "../../cakes.png"
 import cookiesIcon from "../../cookies.png"
 import cupcakesIcon from "../../cupcakes.png"
@@ -32,6 +33,7 @@ export default function Home() {
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const addItem = useCart((state) => state.addItem)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,216 +93,163 @@ export default function Home() {
     return <div className="min-h-screen bg-white flex items-center justify-center"><Loader2 className="animate-spin text-primary-brown" size={40} /></div>
   }
 
-  // Calculate layout dynamically to preserve the exact vw coordinates
-  const leftPositions = ["8.1094vw", "36.8131vw", "65.5168vw"]
-  
-  let currentTop = 145; // Start position for first category title (below tabs)
-  
   const categoryLayouts = categories.map((category) => {
-    const allProducts = productsByCategory[category.id] || [];
-    const visibleCount = visibleCounts[category.id] || 6;
-    const products = allProducts.slice(0, visibleCount);
-    const hasMore = allProducts.length > visibleCount;
-
-    const titleTop = currentTop;
-    const rowStartTop = titleTop + 6.77;
-    
-    const productPositions = products.map((product, index) => {
-      const row = Math.floor(index / 3);
-      const col = index % 3;
-      return {
-        ...product,
-        left: leftPositions[col],
-        top: rowStartTop + (row * 44.85)
-      }
-    });
-
-    const numRows = Math.ceil(products.length / 3) || 1; // at least 1 row space
-    let nextTop = rowStartTop + (numRows * 44.85);
-
-    let buttonTop = null;
-    if (hasMore) {
-      buttonTop = nextTop + 2;
-      nextTop += 10; // add space for the button before next category
-    } else {
-      nextTop += 7; // add standard gap before next category
-    }
-
-    currentTop = nextTop;
+    const allProducts = productsByCategory[category.id] || []
+    const visibleCount = visibleCounts[category.id] || 6
 
     return {
       category,
-      titleTop,
-      productPositions,
-      hasMore,
-      buttonTop
+      products: allProducts.slice(0, visibleCount),
+      hasMore: allProducts.length > visibleCount,
     }
-  });
-
-  const bottomTop = currentTop;
-
-  // The green background needs to start at 122vw and go all the way down to bottomTop
-  const greenBgHeight = bottomTop - 122.6852 + 10; // padding at the bottom
+  })
 
   return (
-    <div className="frame bg-white">
-      {/* Decorative Vectors - Bottom Layer */}
-      <div className="absolute left-[-57.5231vw] top-[72.0341vw] w-[67.4527vw] h-[27.5701vw]" style={{ transform:'rotate(180deg) scaleY(-1)' }}>
-        <Image src="/assets/vector15.svg" alt="" fill className="block w-full h-full" />
-      </div>
-      <div className="absolute left-[70.0914vw] top-[56.4387vw] w-[72.8486vw] h-[49.7782vw] flex items-center justify-center">
-        <div className="w-[67.4527vw] h-[27.5701vw]" style={{ transform:'rotate(159.14deg) scaleY(-1)' }}>
-          <Image src="/assets/vector16.svg" alt="" fill className="block w-full h-full" />
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <Hero />
 
-      {/* Welcome Section */}
-      <div className="absolute left-[8.1019vw] top-[73.5532vw] w-[23.6108vw] h-[31.2397vw] border-[0.1157vw] border-[#936939] border-solid rounded-[0.6944vw] overflow-hidden">
-        <Image src="/assets/welcome-1.png" alt="" fill className="object-cover" />
-      </div>
-      <div className="absolute left-[68.2870vw] top-[77.9514vw] w-[23.6108vw] h-[31.2397vw] border-[0.1157vw] border-[#936939] border-solid rounded-[0.6944vw] overflow-hidden">
-        <Image src="/assets/welcome-2.png" alt="" fill className="object-cover" />
-      </div>
-      <div className="absolute left-[64.1782vw] top-[71.7014vw] w-[10.7615vw] h-[10.7615vw] flex items-center justify-center">
-        <div style={{ transform:'rotate(-4.86deg)' }}>
-          <div className="w-[9.9537vw] h-[9.9537vw] border-[0.1234vw] border-[#936939] border-solid rounded-[4.9769vw] overflow-hidden relative">
-            <Image src="/assets/badge-circle.png" alt="" fill className="object-cover" />
+      <main className="pt-[clamp(76px,8vw,118px)]">
+        <Hero />
+
+        <section className="mx-auto grid w-[min(1190px,calc(100%_-_32px))] items-center gap-[clamp(28px,4vw,64px)] py-[clamp(56px,7vw,118px)] lg:grid-cols-[minmax(220px,340px)_1fr_minmax(220px,340px)]">
+          <div className="relative aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2]">
+            <Image src="/assets/welcome-1.png" alt="" fill className="object-cover" />
           </div>
-        </div>
-      </div>
-      <div className="absolute left-[45.3125vw] top-[77.1042vw] w-[9.3188vw] -translate-x-1/2 ff-accia text-[0.8691vw] text-[#936939] text-center" style={{ left:'49.9716vw' }}>— WELCOME TO</div>
-      <div className="absolute left-[49.9786vw] top-[78.5041vw] -translate-x-1/2 text-center tracking-[-0.0625vw] whitespace-nowrap leading-[3.3799vw]">
-        <span className="ff-accia text-[3.1250vw] text-[#936939]">KAKEEZ</span><span className="ff-accia text-[3.1250vw] text-[#262729]"> Bakeshop</span>
-      </div>
-      <div className="absolute left-[36.1476vw] top-[84.3414vw] w-[27.6667vw] flex flex-col items-center gap-[0.8691vw] ff-accia text-[0.9259vw] text-[#262729] text-center tracking-[-0.0278vw] leading-[1.5188vw]">
-        <p className="w-[25.9285vw]">At Kakeez, we believe every celebration deserves a centerpiece as delicious as it is beautiful.</p>
-        <p className="w-[25.9285vw]">We specialize in custom, artisanal baking - from grand wedding cakes to rich, fudgy brownies. We pour our passion into every recipe to craft unforgettable memories, ensuring that truly, Every Bite Matters.</p>
-      </div>
-      <div className="absolute left-[44.5023vw] top-[98.1481vw] w-[10.9375vw] h-[2.8935vw] bg-white border-[0.1157vw] border-[#936939] border-solid rounded-[0.2894vw]"></div>
-      <div className="absolute left-[49.9711vw] top-[98.9005vw] -translate-x-1/2 ff-accia text-[1.0417vw] text-[#936939] text-center uppercase tracking-[0.0208vw] whitespace-nowrap">Learn More</div>
 
-      {/* Green Section Background (Now dynamically sized to cover all products) */}
-      <div className="absolute left-[1.7361vw] top-[110.4167vw] w-[96.5278vw] h-[145.0231vw] bg-[#e1eab4] z-0"></div>
-      <div className="absolute left-[1.7361vw] top-[110.8218vw] w-[96.5278vw] h-[26.1362vw] z-0">
-        <Image src="/assets/union-drip.svg" alt="" fill className="block w-full h-full" />
-      </div>
-      <div className="absolute left-[1.7361vw] top-[122.6852vw] w-[96.5278vw] bg-[#e1eab4] rounded-bl-[2.0255vw] rounded-br-[2.0255vw] z-0" style={{ height: `${greenBgHeight}vw` }}></div>
-      <div className="absolute left-[-21.9907vw] top-[108.0729vw] w-[134.4039vw] h-[23.0510vw] z-10 pointer-events-none">
-        <Image src="/assets/vector13.svg" alt="" fill className="block w-full h-full" />
-      </div>
-
-      <div className="absolute left-[50.0000vw] top-[122.6852vw] -translate-x-1/2 ff-accia text-[3.7616vw] text-[#936939] text-center leading-[1.1] whitespace-nowrap z-20">Shop Best Sellers</div>
-      
-      {/* Dynamic Category Pills */}
-      <div className="absolute left-[8.1vw] top-[134vw] flex items-center gap-[3vw] z-30 flex-wrap max-w-[80vw]">
-        {categoryLayouts.map((layout) => {
-          const isActive = activeCategory === layout.category.id;
-          const categoryIcon = getCategoryIcon(layout.category.name)
-          
-          const handleScroll = () => {
-            setActiveCategory(layout.category.id);
-            const scrollTargetTop = layout.titleTop ? layout.titleTop - 5 : 130;
-            window.scrollTo({ top: (scrollTargetTop * window.innerWidth) / 100, behavior: 'smooth' });
-          }
-
-          if (isActive) {
-            return (
-              <button key={layout.category.id} onClick={handleScroll} className="relative flex items-center gap-[1vw] bg-white rounded-full px-[2vw] h-[3.4vw] shrink-0 shadow-sm border border-primary-brown/10 hover:bg-primary-brown hover:text-white hover:border-primary-brown hover:shadow-md transition-all cursor-pointer group">
-                {categoryIcon && (
-                  <div className="relative w-[1.75vw] h-[1.75vw] flex-shrink-0">
-                    <Image src={categoryIcon} alt="" fill sizes="2vw" className="object-contain" />
-                  </div>
-                )}
-                <span className="ff-colville text-[1.27vw] text-[#936939] group-hover:text-white tracking-[-0.0255vw] whitespace-nowrap uppercase transition-colors">
-                  {layout.category.name}
-                </span>
-              </button>
-            )
-          }
-           
-          return (
-            <button key={layout.category.id} onClick={handleScroll} className="flex items-center gap-[0.8vw] rounded-full border border-transparent px-[1.2vw] py-[0.75vw] ff-colville text-[1.27vw] text-[#936939] tracking-[-0.0255vw] whitespace-nowrap uppercase hover:bg-white hover:border-primary-brown/10 hover:shadow-sm transition-all shrink-0 cursor-pointer">
-              {categoryIcon && (
-                <span className="relative block w-[1.55vw] h-[1.55vw] flex-shrink-0">
-                  <Image src={categoryIcon} alt="" fill sizes="2vw" className="object-contain" />
-                </span>
-              )}
-              <span>{layout.category.name}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Dynamic Product Rows */}
-      {categoryLayouts.map((layout) => (
-        <div key={layout.category.id} className="z-20 relative">
-          <div className="absolute -translate-x-1/2 ff-accia text-[3.7616vw] text-[#936939] text-center leading-[1.1] whitespace-nowrap uppercase z-20" style={{ left: '49.9711vw', top: `${layout.titleTop}vw` }}>
-            {layout.category.name}
-          </div>
-          
-          {layout.productPositions.map((product) => (
-            <ProductCard
-              key={product.id}
-              id={product.id}
-              slug={product.slug}
-              name={product.name}
-              price={product.price}
-              reviews={43}
-              imageUrl={product.image_url}
-              description={product.description}
-              left={product.left}
-              top={`${product.top}vw`}
-              isBestSeller={product.is_best_seller}
-              layoutType="buy-now" // Forces the dual button layout as requested earlier
-            />
-          ))}
-
-          {/* View All Button for this category */}
-          {layout.hasMore && layout.buttonTop && (
-            <div 
-              className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity z-30" 
-              style={{ top: `${layout.buttonTop}vw` }} 
-              onClick={() => setVisibleCounts(prev => ({ ...prev, [layout.category.id]: prev[layout.category.id] + 6 }))}
-            >
-              <div className="w-auto px-[2vw] h-[2.8935vw] bg-white border-[0.1157vw] border-[#936939] border-solid rounded-[0.2894vw] flex items-center justify-center">
-                <span className="ff-accia text-[1.0417vw] text-[#936939] uppercase tracking-[0.0208vw] whitespace-nowrap">View More {layout.category.name}</span>
-              </div>
+          <div className="mx-auto max-w-[620px] text-center">
+            <p className="ff-accia text-sm uppercase tracking-[0.08em] text-primary-brown">Welcome to</p>
+            <h2 className="ff-accia mt-2 text-[clamp(38px,4.4vw,72px)] leading-none">
+              <span className="text-primary-brown">KAKEEZ</span> <span className="text-[#262729]">Bakeshop</span>
+            </h2>
+            <div className="ff-accia mt-5 space-y-3 text-[clamp(16px,1.2vw,20px)] leading-[1.45] text-[#262729]">
+              <p>At Kakeez, we believe every celebration deserves a centerpiece as delicious as it is beautiful.</p>
+              <p>We specialize in custom, artisanal baking - from grand wedding cakes to rich, fudgy brownies. We pour our passion into every recipe to craft unforgettable memories.</p>
             </div>
-          )}
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[340px]">
+            <div className="absolute -left-[clamp(26px,4vw,62px)] -top-[clamp(24px,3vw,48px)] z-10 h-[clamp(82px,8vw,138px)] w-[clamp(82px,8vw,138px)]">
+              <Image src="/assets/badge-circle.png" alt="" fill sizes="138px" className="object-contain" />
+            </div>
+            <div className="relative aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2]">
+              <Image src="/assets/welcome-2.png" alt="" fill className="object-cover" />
+            </div>
+          </div>
+        </section>
+
+        <section className="relative mx-auto w-[calc(100%_-_32px)] max-w-[1390px] bg-accent-green pb-[clamp(88px,7rem,112px)] pt-[clamp(168px,13rem,208px)]">
+          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 h-[clamp(128px,12rem,192px)] w-[min(1800px,132%)] -translate-x-1/2">
+            <Image src="/assets/vector13.svg" alt="" fill className="block h-full w-full object-fill" />
+          </div>
+          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+            <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
+          </div>
+
+          <div className="relative z-10 mx-auto w-[calc(100%_-_32px)]">
+            <h2 className="ff-accia text-center text-[clamp(38px,4.6vw,72px)] leading-none text-primary-brown">Shop Best Sellers</h2>
+
+            <div className="mt-7 flex snap-x gap-3 overflow-x-auto pb-3">
+              {categoryLayouts.map((layout) => {
+                const categoryIcon = getCategoryIcon(layout.category.name)
+                const isActive = activeCategory === layout.category.id
+
+                return (
+                  <button
+                    key={layout.category.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategory(layout.category.id)
+                      document.getElementById(`mobile-category-${layout.category.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }}
+                    className={`flex shrink-0 snap-start items-center gap-2 rounded-full border px-4 py-2.5 transition-all ${
+                      isActive ? "border-primary-brown bg-white shadow-sm" : "border-primary-brown/10 bg-white/45"
+                    }`}
+                  >
+                    {categoryIcon && (
+                      <span className="relative block h-7 w-7 shrink-0">
+                        <Image src={categoryIcon} alt="" fill sizes="28px" className="object-contain" />
+                      </span>
+                    )}
+                    <span className="ff-colville text-[15px] uppercase text-primary-brown">{layout.category.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mt-[clamp(36px,4vw,64px)] space-y-[clamp(48px,6vw,92px)]">
+              {categoryLayouts.map((layout) => {
+                return (
+                  <section key={layout.category.id} id={`mobile-category-${layout.category.id}`} className="scroll-mt-24">
+                    <h3 className="ff-accia text-center text-[clamp(34px,4vw,62px)] uppercase leading-none text-primary-brown">
+                      {layout.category.name}
+                    </h3>
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                      {layout.products.map((product) => (
+                        <article
+                          key={product.id}
+                          className="overflow-hidden rounded-[14px] border border-primary-brown bg-white transition-all hover:shadow-lg"
+                        >
+                          <Link href={`/product/${product.slug ?? product.id}`} className="block">
+                            <div className="relative aspect-square bg-[#ece9e2]">
+                              <Image src={product.image_url || "/assets/product.svg"} alt={product.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
+                            </div>
+                          </Link>
+                          <div className="px-4 py-5 text-center">
+                            <Link href={`/product/${product.slug ?? product.id}`} className="block">
+                              <h4 className="ff-accia text-[clamp(25px,2.3vw,34px)] leading-[1.04] text-primary-brown">{product.name}</h4>
+                              <p className="ff-colville mt-2 text-[clamp(18px,1.5vw,24px)] text-primary-brown">Rs. {Number(product.price).toLocaleString()}</p>
+                            </Link>
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                              <Link
+                                href={`/product/${product.slug ?? product.id}`}
+                                className="flex h-11 items-center justify-center rounded-[10px] border border-primary-brown ff-accia text-[15px] uppercase text-primary-brown transition-colors hover:bg-primary-brown/5"
+                              >
+                                Buy Now
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => addItem({ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description })}
+                                className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary-brown px-3 ff-accia text-[15px] uppercase text-white transition-colors hover:bg-primary-brown/90"
+                              >
+                                <ShoppingCart className="h-4 w-4" /> Add
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+
+                    {layout.hasMore && (
+                      <div className="mt-7 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setVisibleCounts((prev) => ({ ...prev, [layout.category.id]: prev[layout.category.id] + 6 }))}
+                          className="rounded-[8px] border border-primary-brown bg-white px-6 py-3 ff-accia text-[16px] uppercase tracking-[0.02em] text-primary-brown transition-opacity hover:opacity-75"
+                        >
+                          View More {layout.category.name}
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-[min(1390px,calc(100%_-_32px))] py-[clamp(56px,7vw,110px)] text-center">
+          <h2 className="ff-accia text-[clamp(38px,4vw,64px)] leading-none text-[#262729]">Follow @kakeezbakers</h2>
+          <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-5">
+            {[0, 1, 2, 3, 4].map((item) => (
+              <div key={item} className="aspect-[0.84] rounded-[12px] border border-primary-brown/10 bg-[#ece9e2]" />
+            ))}
+          </div>
+        </section>
+
+        <div className="pb-6">
+          <Footer variant="flow" />
         </div>
-      ))}
-
-      <div className="absolute -translate-x-1/2 ff-accia text-[3.1250vw] text-[#262729] text-center tracking-[-0.0625vw] whitespace-nowrap leading-[3.4103vw] z-20" style={{ left: '49.9711vw', top: `${bottomTop + 24.8}vw` }}>Follow @kakeezbakers</div>
-      
-      {/* Gallery Placeholders */}
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '8.1019vw', top: `${bottomTop + 30.7}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '25.0561vw', top: `${bottomTop + 30.7}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '42.0098vw', top: `${bottomTop + 30.7}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '58.9641vw', top: `${bottomTop + 30.7}vw` }}></div>
-      <div className="absolute w-[15.9797vw] h-[19.0003vw] rounded-[0.6944vw] bg-[#ece9e2] z-20 border border-primary-brown/10" style={{ left: '75.9184vw', top: `${bottomTop + 30.7}vw` }}></div>
-
-      {/* Decorative Vectors - Top Layer */}
-      <div className="absolute w-[67.4527vw] h-[27.5701vw] z-10 pointer-events-none" style={{ left: '-33.7384vw', top: `${bottomTop + 33.6}vw`, transform:'rotate(180deg) scaleY(-1)' }}>
-        <Image src="/assets/vector15.svg" alt="" fill className="block w-full h-full" />
-      </div>
-      <div className="absolute w-[72.8486vw] h-[49.7782vw] flex items-center justify-center z-10 pointer-events-none" style={{ left: '70.0914vw', top: `${bottomTop + 22.5}vw` }}>
-        <div className="w-[67.4527vw] h-[27.5701vw]" style={{ transform:'rotate(159.14deg) scaleY(-1)' }}>
-          <Image src="/assets/vector16.svg" alt="" fill className="block w-full h-full" />
-        </div>
-      </div>
-      <div className="absolute w-[96.5567vw] h-[23.0324vw] z-10 pointer-events-none" style={{ left: '1.7072vw', top: `${bottomTop - 3.6}vw` }}>
-        <Image src="/assets/vector14.svg" alt="" fill className="block w-full h-full" />
-      </div>
-
-      {/* Adjust frame height manually using CSS for the dynamic length */}
-      <style dangerouslySetInnerHTML={{__html: `
-        body { background-color: #ffffff; }
-        .frame { height: ${bottomTop + 78.2}vw !important; background-color: #ffffff; }
-      `}} />
-      <Footer topOffset={bottomTop + 55.2} />
+      </main>
     </div>
   )
 }

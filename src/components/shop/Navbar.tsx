@@ -8,7 +8,7 @@ import UserAuthPopup from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
 import { useCart } from "@/store/useCart"
 import { supabase } from "@/lib/supabase"
-import { Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, LayoutGrid } from "lucide-react"
+import { Menu, Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, LayoutGrid, X } from "lucide-react"
 
 export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
@@ -16,6 +16,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const totalItems = useCart(state => state.totalItems())
   const clearCart = useCart(state => state.clearCart)
 
@@ -78,28 +79,39 @@ export default function Navbar() {
       <UserAuthPopup isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-5 md:h-[clamp(84px,6.9vw,118px)] md:px-[clamp(24px,7.75vw,148px)]">
+      <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-4 md:px-5 lg:h-[clamp(84px,6.9vw,118px)] lg:px-[clamp(24px,7.75vw,148px)]">
         
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((open) => !open)}
+          className="flex h-11 w-11 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:hidden"
+        >
+          {isMenuOpen ? <X className="h-6 w-6" strokeWidth={1.8} /> : <Menu className="h-6 w-6" strokeWidth={1.8} />}
+        </button>
+
         {/* Left Links */}
-        <div className="hidden items-center gap-[clamp(28px,4vw,76px)] ff-colville-medium text-[clamp(16px,1.1vw,21px)] text-[#936939] uppercase md:flex">
+        <div className="hidden items-center gap-[clamp(28px,4vw,76px)] ff-colville-medium text-[clamp(16px,1.1vw,21px)] text-[#936939] uppercase lg:flex">
           <Link href="/menu" className="hover:opacity-70 transition-opacity">Menu</Link>
           <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact</Link>
           <Link href="/catering" className="hover:opacity-70 transition-opacity">Catering</Link>
         </div>
 
         {/* Central Logo */}
-        <div className="absolute left-1/2 top-1/2 h-[72px] w-[52px] -translate-x-1/2 -translate-y-1/2 md:h-[clamp(88px,6.2vw,112px)] md:w-[clamp(62px,4.4vw,80px)]">
+        <div className="absolute left-1/2 top-1/2 h-[72px] w-[52px] -translate-x-1/2 -translate-y-1/2 lg:h-[clamp(88px,6.2vw,112px)] lg:w-[clamp(62px,4.4vw,80px)]">
           <Link href="/" className="relative block h-full w-full hover:opacity-90 transition-opacity" aria-label="Kakeez home">
             <Image src="/assets/LOGO.png" alt="Kakeez" fill className="object-contain drop-shadow-sm" priority />
           </Link>
         </div>
 
         {/* Right Actions */}
-        <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-[clamp(18px,2.1vw,40px)]">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 lg:ml-0 lg:gap-[clamp(18px,2.1vw,40px)]">
           {isAdmin && (
             <Link 
               href="/admin" 
-              className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full border border-red-200 ff-apfel text-sm font-bold hover:bg-red-100 transition-all shadow-sm whitespace-nowrap"
+              className="hidden items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full border border-red-200 ff-apfel text-sm font-bold hover:bg-red-100 transition-all shadow-sm whitespace-nowrap sm:flex"
             >
               <ShieldAlert size={14} />
               Admin
@@ -109,9 +121,9 @@ export default function Navbar() {
           <button
             type="button"
             aria-label="Search"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 md:h-11 md:w-11"
+            className="hidden h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 sm:flex lg:h-11 lg:w-11"
           >
-            <Search className="h-5 w-5 md:h-[22px] md:w-[22px]" strokeWidth={2} />
+            <Search className="h-5 w-5 lg:h-[22px] lg:w-[22px]" strokeWidth={2} />
           </button>
           
           <div className="relative">
@@ -119,9 +131,9 @@ export default function Navbar() {
               type="button"
               aria-label={user ? "Open account menu" : "Sign in"}
               onClick={handleAccountClick}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 md:h-11 md:w-11"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-11 lg:w-11"
             >
-              <UserIcon className="h-5 w-5 md:h-[22px] md:w-[22px]" strokeWidth={1.8} />
+              <UserIcon className="h-5 w-5 lg:h-[22px] lg:w-[22px]" strokeWidth={1.8} />
             </button>
 
             {user && isAccountOpen && (
@@ -160,9 +172,9 @@ export default function Navbar() {
             type="button"
             aria-label="Open cart"
             onClick={() => setIsCartOpen(true)}
-            className="relative flex h-11 w-14 items-center justify-center rounded-lg bg-[#936939] text-white transition-colors hover:bg-primary-brown/90 md:h-[50px] md:w-[64px]"
+            className="relative flex h-11 w-12 items-center justify-center rounded-lg bg-[#936939] text-white transition-colors hover:bg-primary-brown/90 sm:w-14 lg:h-[50px] lg:w-[64px]"
           >
-            <ShoppingCart className="h-[22px] w-[22px] md:h-[25px] md:w-[25px]" strokeWidth={2} />
+            <ShoppingCart className="h-[22px] w-[22px] lg:h-[25px] lg:w-[25px]" strokeWidth={2} />
             
             {totalItems > 0 && (
               <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold text-[#936939] shadow-sm ff-apfel">
@@ -172,6 +184,24 @@ export default function Navbar() {
           </button>
         </div>
       </nav>
+
+      {isMenuOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/15 lg:hidden" onClick={() => setIsMenuOpen(false)} />
+          <div className="absolute left-3 right-3 top-[84px] z-50 overflow-hidden rounded-[14px] border border-primary-brown/15 bg-white shadow-2xl lg:hidden">
+            <div className="grid divide-y divide-primary-brown/10 ff-colville-medium text-[18px] uppercase text-[#936939]">
+              <Link href="/menu" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Menu</Link>
+              <Link href="/contact" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Contact</Link>
+              <Link href="/catering" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Catering</Link>
+              {isAdmin && (
+                <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 px-5 py-4 text-red-600 transition-colors hover:bg-red-50">
+                  <ShieldAlert size={16} /> Admin
+                </Link>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 }

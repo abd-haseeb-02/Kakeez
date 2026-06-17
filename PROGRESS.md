@@ -1,7 +1,7 @@
 # Kakeez — Build Progress
 
-**Last updated:** 2026-06-17
-**Head:** [`9216dfb`](https://github.com/abd-haseeb-02/Kakeez/commit/9216dfb) (Phase 4 part 2)
+**Last updated:** 2026-06-18
+**Head:** `master` after the storefront/admin UI stabilization sprint
 **Live Supabase project:** `kakeez-bakeshop` (`crzqqvbvaguttrkzvpqh`, Postgres 17, ACTIVE_HEALTHY)
 
 This file is the single index for everything that's been built since the
@@ -23,6 +23,7 @@ The plan that drives all this is [`ECOMMERCE_CMS_PLAN.md`](./ECOMMERCE_CMS_PLAN.
 | 2     | part 1   | `d92d9bc`      | [`docs/phases/PHASE_2.md`](./docs/phases/PHASE_2.md)         |
 | 3     | LIVE     | `107de8b`      | [`docs/phases/PHASE_3.md`](./docs/phases/PHASE_3.md)         |
 | 4     | part 1+2 | `19b21e8` + `9216dfb` | [`docs/phases/PHASE_4.md`](./docs/phases/PHASE_4.md)  |
+| UI/admin stabilization | done | current commit | This file + `WOOCOMMERCE_CMS_PLAN.md` |
 | 5     | not started | —           | (Phase 5 plan in `ECOMMERCE_CMS_PLAN.md` §F Phase 5)         |
 | 6     | not started | —           | (Phase 6 plan in `ECOMMERCE_CMS_PLAN.md` §F Phase 6)         |
 
@@ -43,6 +44,64 @@ in the phase doc.
   — rotate via Studio).
 - **15 migrations** total in the repo (5 legacy + the orphan
   `20260619000000` drift capture + 9 Phase 0–4 migrations).
+
+## 2026-06-18 UI/admin stabilization sprint
+
+This was a product-polish sprint on top of the Phase 0-4 foundation,
+not a schema-roadmap phase.
+
+Completed:
+
+- Pulled the latest `master` safely after preserving the local
+  untracked migration that blocked the merge.
+- Added realtime order support with
+  `supabase/migrations/20260617044152_enable_orders_realtime.sql`.
+- Fixed the local admin login/reset path for the dummy admin email
+  case, without depending on a real inbox.
+- Reworked the admin UI into a dark, modern operations console while
+  preserving the existing data behavior.
+- Restored the home hero as a slider: the mask stays fixed while the
+  slide image and text move.
+- Rebuilt the home page into one responsive layout instead of separate
+  desktop/mobile artboards.
+- Added root image assets to the category tabs, removed the old tab
+  underline treatment, and added hover states.
+- Removed the sale/banner section above `Follow @kakeezbakers`.
+- Restored the product-grid green panel with white side margins and
+  top/bottom decorative SVG layers.
+- Made the navbar responsive with a mobile menu while preserving the
+  desktop visual size.
+- Tightened the cart drawer sizing while keeping the existing design
+  language.
+- Reworked checkout responsiveness.
+- Aligned the single product page max width with the home/footer width,
+  removed the legacy single-product hero/category banner, fixed the
+  duplicate-image gallery behavior, and removed old `vw` sizing from
+  the product page itself.
+
+Verified:
+
+- `npm run build` passes.
+- Browser checks confirmed the home hero slider, welcome imagery,
+  product-grid panel width, and single-product width alignment at
+  desktop sizes.
+
+Still not done:
+
+- `npm run lint` is still not confirmed green; lint/types cleanup
+  remains tracked as open audit work.
+- The storefront is still largely Client Component based. Product
+  `notFound()`, dynamic metadata, sitemap, server-rendered catalog
+  queries, and SEO structured data remain future work.
+- Full WooCommerce-depth CMS features are not complete: multi-image
+  galleries, variable-product editor, category/attribute management UI,
+  coupons, delivery zones, taxes, reporting, and deeper staff workflows
+  remain on the roadmap.
+- Checkout economics are still not fully server-previewed with coupons,
+  taxes, delivery zones, or delivery slots.
+- The legacy `ProductCard` component still contains absolute `vw`
+  sizing for any old caller, although the current home grid no longer
+  uses it.
 
 ## How money flows now (Phase 1 invariants)
 

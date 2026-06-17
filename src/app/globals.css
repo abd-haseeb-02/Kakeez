@@ -54,27 +54,192 @@ body {
 .ff-apfel-satt { font-family: var(--apfel); font-weight: 600; }
 .ff-apfel-fett { font-family: var(--apfel); font-weight: 700; }
 
-/* The artboard frame from the original design */
-.frame {
+/* Admin cockpit visual system */
+.admin-modern {
+  --admin-bg: #090806;
+  --admin-panel: rgba(24, 22, 18, 0.82);
+  --admin-panel-strong: rgba(32, 29, 24, 0.94);
+  --admin-line: rgba(255, 255, 255, 0.09);
+  --admin-line-strong: rgba(197, 143, 76, 0.28);
+  --admin-muted: rgba(255, 255, 255, 0.52);
+  --admin-faint: rgba(255, 255, 255, 0.28);
+  --admin-gold: #c58f4c;
+  --admin-green: #b8d87c;
+  --admin-red: #ff6f61;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(197, 143, 76, 0.10), transparent 260px),
+    linear-gradient(135deg, #090806 0%, #11100c 42%, #17120d 100%);
+  color: #f7efe3;
+}
+
+.admin-modern * {
+  letter-spacing: 0;
+}
+
+.admin-modern ::selection {
+  background: rgba(197, 143, 76, 0.35);
+  color: #fff;
+}
+
+.admin-modern .admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-modern .admin-sidebar {
+  border-right: 1px solid var(--admin-line);
+  background: rgba(10, 9, 7, 0.88);
+  backdrop-filter: blur(18px);
+  box-shadow: 18px 0 50px rgba(0, 0, 0, 0.22);
+}
+
+.admin-modern .admin-brand-mark {
+  display: grid;
+  height: 42px;
+  width: 42px;
+  place-items: center;
+  border: 1px solid rgba(197, 143, 76, 0.32);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(197, 143, 76, 0.22), rgba(255, 255, 255, 0.04));
+  color: var(--admin-gold);
+  font-weight: 700;
+}
+
+.admin-modern .admin-nav-link {
   position: relative;
-  width: 100vw;
-  height: 448.2639vw;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.admin-modern .admin-nav-link:hover {
+  border-color: rgba(197, 143, 76, 0.18);
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff;
+}
+
+.admin-modern .admin-nav-link-active {
+  border-color: rgba(197, 143, 76, 0.34);
+  background: linear-gradient(90deg, rgba(197, 143, 76, 0.22), rgba(197, 143, 76, 0.055));
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--admin-gold);
+}
+
+.admin-modern .admin-main {
+  min-width: 0;
+  flex: 1;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 180px),
+    var(--admin-bg);
+}
+
+.admin-modern .admin-topbar {
+  border-bottom: 1px solid var(--admin-line);
+  background: rgba(9, 8, 6, 0.72);
+  backdrop-filter: blur(20px);
+}
+
+.admin-modern .admin-content {
+  width: min(100%, 1440px);
   margin: 0 auto;
-  background: #fff;
-  overflow: hidden;
+  padding: clamp(24px, 2.3vw, 36px);
 }
 
-.frame p {
-  margin: 0;
+.admin-modern h1 {
+  color: #f8ead7 !important;
+  font-size: clamp(30px, 2.4vw, 44px) !important;
+  line-height: 1 !important;
 }
 
-/* Mobile responsive override */
-@media (max-width: 768px) {
-  .frame {
-    height: auto;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-  }
-  /* We will handle mobile classes separately in components */
+.admin-modern h2,
+.admin-modern h3 {
+  color: #f7efe3;
+}
+
+.admin-modern .text-primary-brown {
+  color: var(--admin-gold) !important;
+}
+
+.admin-modern .bg-primary-brown {
+  background: linear-gradient(135deg, #9c6f3b, #c58f4c) !important;
+}
+
+.admin-modern .border-primary-brown {
+  border-color: rgba(197, 143, 76, 0.55) !important;
+}
+
+.admin-modern .bg-\[\#121212\],
+.admin-modern .bg-white\/5 {
+  background: var(--admin-panel) !important;
+}
+
+.admin-modern .border-white\/5,
+.admin-modern .border-white\/10 {
+  border-color: var(--admin-line) !important;
+}
+
+.admin-modern .rounded-2xl,
+.admin-modern .rounded-3xl {
+  border-radius: 14px !important;
+}
+
+.admin-modern table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-modern thead tr {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.admin-modern tbody tr {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.admin-modern tbody tr:hover {
+  background: rgba(197, 143, 76, 0.075) !important;
+}
+
+.admin-modern input,
+.admin-modern select,
+.admin-modern textarea {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: var(--admin-line) !important;
+  color: #fff !important;
+}
+
+.admin-modern input:focus,
+.admin-modern select:focus,
+.admin-modern textarea:focus {
+  border-color: rgba(197, 143, 76, 0.72) !important;
+  box-shadow: 0 0 0 3px rgba(197, 143, 76, 0.12);
+}
+
+.admin-modern select option {
+  color: #f7efe3;
+  background: #17120d;
+}
+
+.admin-modern .admin-card {
+  border: 1px solid var(--admin-line);
+  background: var(--admin-panel);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.admin-modern .admin-card:hover {
+  border-color: var(--admin-line-strong);
+}
+
+.admin-modern .admin-pill {
+  border: 1px solid rgba(197, 143, 76, 0.22);
+  background: rgba(197, 143, 76, 0.10);
+  color: #f3c98b;
+}
+
+.admin-login-screen {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, #090806 0%, #13100c 55%, #1d1308 100%);
+  color: #f7efe3;
 }

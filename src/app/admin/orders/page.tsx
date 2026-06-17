@@ -112,6 +112,7 @@ export default function OrdersPage() {
   return (
     <div className="space-y-8">
       <div>
+        <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Kitchen queue</p>
         <h1 className="text-3xl font-bold ff-accia text-primary-brown">Order Management</h1>
         <p className="text-white/50 ff-apfel mt-1">Track and fulfill your bakery orders in real-time.</p>
       </div>
@@ -121,7 +122,7 @@ export default function OrdersPage() {
           <Loader2 className="animate-spin text-primary-brown" size={40} />
         </div>
       ) : (
-        <div className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden">
+        <div className="admin-card rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>

@@ -85,12 +85,13 @@ export default function AdminDashboard() {
     <div className="space-y-8 relative">
       {/* Page Header — new-order banner moved to the global ToastProvider so
           both the dashboard and the orders list now share the same UX. */}
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-end gap-6">
         <div>
+          <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Today&apos;s command center</p>
           <h1 className="text-3xl font-bold ff-accia text-primary-brown">Overview</h1>
-          <p className="text-white/50 ff-apfel mt-1">Welcome back, Admin! Here's what's happening today.</p>
+          <p className="text-white/50 ff-apfel mt-2">Live store health, active orders, and catalog pulse.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-green-400 bg-green-400/10 px-3 py-2 rounded-full ff-apfel">
+        <div className="flex items-center gap-2 text-xs text-[#b8d87c] bg-[#b8d87c]/10 px-4 py-2 rounded-full ff-apfel border border-[#b8d87c]/20">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           System Live
         </div>
@@ -99,31 +100,31 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-[#121212] border border-white/5 p-6 rounded-2xl hover:border-primary-brown/30 transition-all">
+          <div key={stat.label} className="admin-card p-6 rounded-2xl transition-all">
             <div className="flex justify-between items-start">
-              <div className={`p-3 bg-white/5 rounded-xl ${stat.color}`}>
+              <div className={`p-3 bg-white/5 rounded-xl ${stat.color} border border-white/10`}>
                 <stat.icon size={24} />
               </div>
-              <span className="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full ff-apfel">
+              <span className="text-xs font-medium text-[#b8d87c] bg-[#b8d87c]/10 px-2 py-1 rounded-full ff-apfel border border-[#b8d87c]/15">
                 {stat.trend}
               </span>
             </div>
             <div className="mt-4">
               <p className="text-white/50 text-sm ff-apfel">{stat.label}</p>
-              <h3 className="text-2xl font-bold mt-1 ff-accia">{stat.value}</h3>
+              <h3 className="text-3xl font-bold mt-1 ff-accia">{stat.value}</h3>
             </div>
           </div>
         ))}
       </div>
 
       {/* Recent Orders Section */}
-      <div className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden">
+      <div className="admin-card rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-white/5 flex justify-between items-center">
           <h2 className="text-xl font-bold ff-accia flex items-center gap-2">
             <Clock className="text-primary-brown" size={20} />
             Recent Orders
           </h2>
-          <button className="text-sm text-primary-brown hover:underline ff-apfel flex items-center gap-1">
+          <button className="admin-pill text-sm rounded-full px-3 py-1.5 ff-apfel flex items-center gap-1">
             View All <ArrowUpRight size={14} />
           </button>
         </div>

@@ -365,6 +365,7 @@ export default function ProductsPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
+          <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Catalog control</p>
           <h1 className="text-3xl font-bold ff-accia text-primary-brown">Products</h1>
           <p className="text-white/50 ff-apfel mt-1">Manage your bakery inventory and categories.</p>
         </div>
@@ -587,7 +588,7 @@ export default function ProductsPage() {
             const img = heroImage(product)
             const catName = primaryCategoryName(product)
             return (
-              <div key={product.id} className="bg-[#121212] border border-white/5 rounded-2xl overflow-hidden group hover:border-primary-brown/30 transition-all flex flex-col">
+              <div key={product.id} className="admin-card rounded-2xl overflow-hidden group transition-all flex flex-col">
                 <div className="h-48 bg-white/5 relative border-b border-white/10">
                   {img
                     ? <img src={img} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />

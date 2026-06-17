@@ -206,6 +206,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       <div className="flex justify-between items-start">
         <div>
           <button onClick={() => router.push('/admin/orders')} className="ff-apfel text-sm text-white/50 hover:text-white flex items-center gap-2 mb-3"><ArrowLeft size={14} /> Back to orders</button>
+          <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Order detail</p>
           <h1 className="text-3xl font-bold ff-accia text-primary-brown">Order {order.order_number}</h1>
           <p className="text-white/40 ff-apfel text-xs mt-1 font-mono">{order.id}</p>
         </div>
@@ -224,7 +225,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       )}
 
       {/* Status transitions row */}
-      <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 space-y-3">
+      <div className="admin-card rounded-2xl p-6 space-y-3">
         <p className="ff-apfel text-xs uppercase tracking-widest text-white/30">Transition status</p>
         {allowedNextStatuses.length === 0 ? (
           <p className="ff-apfel text-sm text-white/40">Terminal state — no further transitions allowed.</p>
@@ -368,7 +369,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
 function Panel({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 space-y-3">
+    <div className="admin-card rounded-2xl p-6 space-y-3">
       <p className="ff-apfel text-xs uppercase tracking-widest text-white/30">{title}</p>
       <div>{children}</div>
     </div>

@@ -305,6 +305,6 @@ state for each row:
 | Admin order management working        | Partial                   | **Pass** — Phase 3 valid-transition gating        |
 | Auth flows working                    | Partial                   | **Pass** — forgot/reset + cart-clear + min 8      |
 | SEO ready                             | Fail                      | NOT YET — Phase 6                                 |
-| Mobile ready                          | Needs manual verification | Still needs manual verification — Phase 6 layout pass |
+| Mobile ready                          | Needs manual verification | Partial - 2026-06-18 pass covered navbar, home, checkout, single product, and footer; full device QA still pending |
 | Error states ready                    | Fail                      | Partial — Phase 6 will add `error.tsx` + `not-found.tsx` |
 | Production env vars ready             | Needs manual verification | Use `.env.example` as the checklist               |
