@@ -1,16 +1,17 @@
 "use client"
 
 import Link from "next/link"
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingBag, 
-  Users, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Users,
+  Settings,
+  ShieldCheck,
   LogOut,
   ChevronRight,
   Menu,
-  Loader2
+  Loader2,
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
@@ -71,6 +72,7 @@ export default function AdminLayout({
     { icon: Package, label: "Products", href: "/admin/products" },
     { icon: ShoppingBag, label: "Orders", href: "/admin/orders" },
     { icon: Users, label: "Customers", href: "/admin/customers" },
+    { icon: ShieldCheck, label: "Staff & Roles", href: "/admin/staff" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
   ]
 
