@@ -28,14 +28,14 @@ CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
 
--- Dedicated role for SECURITY DEFINER RPCs (F.0 risk #7). All RPCs declare
--- this as OWNER so they don't inherit `postgres` or `service_role` privileges.
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'kakeez_rpc_executor') THEN
-    CREATE ROLE kakeez_rpc_executor NOLOGIN;
-  END IF;
-END $$;
+-- NOTE on F.0 risk #7 (kakeez_rpc_executor role) — DEFERRED to a follow-up
+-- migration. Supabase's grant chain rejects WITH ADMIN OPTION back to the
+-- creator (0LP01) and a plain GRANT runs into membership detection quirks
+-- with cli_login_postgres. Phase 0 ships SECURITY DEFINER RPCs owned by
+-- `postgres` (which `service_role` already had) — strictly no worse than the
+-- pre-rebuild status, since the old RLS used SECURITY DEFINER too. Phase 4
+-- introduces the dedicated executor role as part of the broader auth/role
+-- hardening pass.
 
 -- ============================================================================
 -- 2. Identity & roles
@@ -688,7 +688,8 @@ CREATE TABLE public.store_settings (
 );
 
 -- ============================================================================
--- 13. Phase-0 RPC stubs (SECURITY DEFINER, owner kakeez_rpc_executor).
+-- 13. Phase-0 RPC stubs (SECURITY DEFINER, owner postgres — see note above on
+-- deferred kakeez_rpc_executor role).
 -- Bodies land in Phase 1 / 3. Returning 'NOT IMPLEMENTED' so the policy
 -- surface is correct from day 1.
 -- ============================================================================
@@ -703,7 +704,6 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   RAISE EXCEPTION 'NOT IMPLEMENTED — create_order body lands in Phase 1' USING ERRCODE = 'P0001';
 END $$;
-ALTER FUNCTION public.create_order(jsonb,jsonb,text,text,boolean) OWNER TO kakeez_rpc_executor;
 REVOKE ALL ON FUNCTION public.create_order(jsonb,jsonb,text,text,boolean) FROM PUBLIC;
 
 CREATE OR REPLACE FUNCTION public.update_order_status(
@@ -713,7 +713,6 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   RAISE EXCEPTION 'NOT IMPLEMENTED — update_order_status body lands in Phase 3' USING ERRCODE = 'P0001';
 END $$;
-ALTER FUNCTION public.update_order_status(uuid,text,text) OWNER TO kakeez_rpc_executor;
 REVOKE ALL ON FUNCTION public.update_order_status(uuid,text,text) FROM PUBLIC;
 
 CREATE OR REPLACE FUNCTION public.confirm_custom_order_quote(p_request_id uuid)
@@ -722,7 +721,6 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   RAISE EXCEPTION 'NOT IMPLEMENTED — confirm_custom_order_quote body lands in Phase 2' USING ERRCODE = 'P0001';
 END $$;
-ALTER FUNCTION public.confirm_custom_order_quote(uuid) OWNER TO kakeez_rpc_executor;
 REVOKE ALL ON FUNCTION public.confirm_custom_order_quote(uuid) FROM PUBLIC;
 
 -- ============================================================================

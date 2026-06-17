@@ -78,8 +78,13 @@ DROP FUNCTION IF EXISTS public.is_admin();
 
 -- Drop any handle_new_user trigger/function that may have come from the
 -- unmanaged profiles work in Studio. The new schema installs its own.
-DROP TRIGGER IF EXISTS handle_new_user ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
+-- The Supabase quickstart template names the trigger `on_auth_user_created`
+-- (confirmed on this remote); we also defensively drop `handle_new_user` in
+-- case future quickstart versions rename it. CASCADE on the function drop
+-- catches any other unknown dependents we don't have names for.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS handle_new_user      ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 5. Remove the seeded default admin (committed credential `admin@kakeez.com` /
