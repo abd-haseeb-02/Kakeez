@@ -242,16 +242,17 @@ export default function Home() {
           </div>
           
           {layout.productPositions.map((product) => (
-            <ProductCard 
+            <ProductCard
               key={product.id}
-              id={product.id} 
-              name={product.name} 
+              id={product.id}
+              slug={product.slug}
+              name={product.name}
               price={product.price}
               reviews={43}
               imageUrl={product.image_url}
               description={product.description}
-              left={product.left} 
-              top={`${product.top}vw`} 
+              left={product.left}
+              top={`${product.top}vw`}
               isBestSeller={product.is_best_seller}
               layoutType="buy-now" // Forces the dual button layout as requested earlier
             />

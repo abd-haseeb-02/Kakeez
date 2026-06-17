@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 interface ProductCardProps {
   id: string
+  slug?: string                // Phase 2: SEO-friendly route key. Falls back to id.
   name: string
   price: number
   reviews: number
@@ -19,6 +20,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   id,
+  slug,
   name,
   price,
   reviews,
@@ -37,7 +39,7 @@ export default function ProductCard({
   }
 
   const goToProduct = () => {
-    router.push(`/product/${id}`)
+    router.push(`/product/${slug ?? id}`)
   }
 
   const cardStyle = { left, top }
