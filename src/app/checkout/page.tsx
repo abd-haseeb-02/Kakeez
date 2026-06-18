@@ -13,9 +13,6 @@ import { placeOrder } from "./actions"
 // Estimated delivery — server (delivery_methods) is the source of truth at
 // checkout. This is purely for the right-side summary preview.
 const DELIVERY_CHARGE = 99
-// Client-side promo preview only. The server `create_order` RPC currently
-// ignores p_promo_code; real discount application lands in Phase 5 (coupons).
-const PROMOS: Record<string, number> = { KAKEEZ10: 0.1, WELCOME: 0.05 }
 
 export default function CheckoutPage() {
   const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
@@ -39,8 +36,12 @@ export default function CheckoutPage() {
   const [popular, setPopular] = useState<any[]>([])
   const [popIndex, setPopIndex] = useState(0)
   const [promo, setPromo] = useState("")
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; rate: number } | null>(null)
+  // Server-validated coupon — Phase 5. Carries the discount_minor returned
+  // by validate_coupon_for_cart so the summary preview matches what the
+  // create_order RPC will compute (single source of truth).
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountMinor: number } | null>(null)
   const [promoMsg, setPromoMsg] = useState("")
+  const [applyingPromo, setApplyingPromo] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -85,19 +86,45 @@ export default function CheckoutPage() {
   }, [])
 
   const subtotal = totalPrice()
-  const discount = appliedPromo ? Math.round(subtotal * appliedPromo.rate) : 0
+  const discount = appliedPromo ? appliedPromo.discountMinor / 100 : 0
   const delivery = items.length > 0 ? DELIVERY_CHARGE : 0
   const grandTotal = Math.max(0, subtotal - discount) + delivery
 
-  const applyPromo = () => {
-    const code = promo.trim().toUpperCase()
-    if (PROMOS[code]) {
-      setAppliedPromo({ code, rate: PROMOS[code] })
-      setPromoMsg(`Promo ${code} applied — ${PROMOS[code] * 100}% off!`)
-    } else {
+  // Phase 5: real coupon validation. Calls validate_coupon_for_cart RPC
+  // which gates on status / window / min_order / per-user limits, etc.
+  // The customer sees the live server-computed discount before they
+  // submit; create_order will re-validate at order time as a backstop.
+  const applyPromo = async () => {
+    const code = promo.trim()
+    if (!code) { setAppliedPromo(null); setPromoMsg(""); return }
+    if (items.length === 0) { setAppliedPromo(null); setPromoMsg("Add an item before applying a code."); return }
+
+    setApplyingPromo(true)
+    setPromoMsg("")
+    const subtotalMinor = Math.round(subtotal * 100)
+    const { data, error } = await supabase.rpc('validate_coupon_for_cart', {
+      p_code: code,
+      p_subtotal_minor: subtotalMinor,
+    })
+    setApplyingPromo(false)
+
+    if (error) {
       setAppliedPromo(null)
-      setPromoMsg("Invalid promo code.")
+      setPromoMsg(error.message ?? 'Could not check that code.')
+      return
     }
+    const row = (data as { code: string; type: string; discount_minor: number }[] | null)?.[0]
+    if (!row) {
+      setAppliedPromo(null)
+      setPromoMsg("Invalid or expired promo code.")
+      return
+    }
+    setAppliedPromo({ code: row.code, discountMinor: row.discount_minor })
+    setPromoMsg(
+      row.type === 'free_shipping'
+        ? `Promo ${row.code} applied — free delivery!`
+        : `Promo ${row.code} applied — Rs. ${(row.discount_minor / 100).toFixed(2)} off!`
+    )
   }
 
   const handleEditAddress = () => {
@@ -311,7 +338,7 @@ export default function CheckoutPage() {
             <label className="mt-4 block ff-accia text-[18px] text-black lg:mt-[clamp(12px,1vw,20px)] lg:text-[clamp(16px,1.1vw,20px)]">To apply promo code</label>
             <div className="mt-2 flex gap-2 lg:mt-[clamp(6px,0.5vw,10px)] lg:gap-[clamp(6px,0.5vw,10px)]">
               <input value={promo} onChange={(e) => setPromo(e.target.value)} placeholder="Promo code" className="h-10 flex-1 rounded-[10px] border border-primary-brown/30 bg-white px-3 ff-accia-light text-[15px] outline-none focus:border-primary-brown lg:h-[clamp(36px,2.4vw,46px)] lg:rounded-[clamp(8px,0.6vw,12px)] lg:px-[clamp(10px,0.8vw,16px)] lg:text-[clamp(14px,0.95vw,16px)]" />
-              <button onClick={applyPromo} className="rounded-[10px] bg-primary-brown px-4 ff-accia text-[15px] text-white transition-all hover:bg-primary-brown/90 lg:rounded-[clamp(8px,0.6vw,12px)] lg:px-[clamp(12px,1vw,18px)] lg:text-[clamp(14px,0.95vw,16px)]">Apply</button>
+              <button onClick={applyPromo} disabled={applyingPromo} className="rounded-[10px] bg-primary-brown px-4 ff-accia text-[15px] text-white transition-all hover:bg-primary-brown/90 disabled:opacity-60 lg:rounded-[clamp(8px,0.6vw,12px)] lg:px-[clamp(12px,1vw,18px)] lg:text-[clamp(14px,0.95vw,16px)]">{applyingPromo ? <Loader2 size={14} className="animate-spin inline" /> : 'Apply'}</button>
             </div>
             {promoMsg && <p className={`mt-2 ff-accia-light text-[14px] lg:mt-[clamp(5px,0.4vw,8px)] lg:text-[clamp(13px,0.85vw,15px)] ${appliedPromo ? "text-green-700" : "text-red-500"}`}>{promoMsg}</p>}
 

@@ -1,16 +1,42 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Loader2, Lock, ShieldCheck } from "lucide-react"
 
+// Honors the ?next= param set by proxy.ts when an unauthed request hits
+// /admin/*. Only paths under /admin are accepted as the post-login redirect
+// — anything else falls back to /admin to avoid open-redirect cleverness.
+function safeNext(raw: string | null): string {
+  if (!raw) return '/admin'
+  if (!raw.startsWith('/admin')) return '/admin'
+  return raw
+}
+
+// Next 16 requires useSearchParams() to live inside a Suspense boundary
+// so the page can still be statically prerendered. The form is the only
+// part that needs the param, so we isolate it here.
 export default function AdminLogin() {
+  return (
+    <Suspense fallback={
+      <div className="admin-login-screen flex items-center justify-center p-4">
+        <Loader2 className="animate-spin text-primary-brown" size={28} />
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
+  )
+}
+
+function AdminLoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = safeNext(searchParams.get('next'))
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +52,7 @@ export default function AdminLogin() {
       setError("Invalid credentials. Please try again.")
       setLoading(false)
     } else {
-      router.push("/admin")
+      router.push(next)
     }
   }
 
