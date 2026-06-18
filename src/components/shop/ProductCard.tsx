@@ -9,7 +9,8 @@ interface ProductCardProps {
   slug?: string                // Phase 2: SEO-friendly route key. Falls back to id.
   name: string
   price: number
-  reviews: number
+  reviews?: number             // Phase 6: real product.rating_count from DB (was hardcoded 43)
+  ratingAvg?: number
   imageUrl?: string
   description?: string
   isBestSeller?: boolean
@@ -23,7 +24,7 @@ export default function ProductCard({
   slug,
   name,
   price,
-  reviews,
+  reviews = 0,
   imageUrl = "/assets/product.svg",
   description,
   isBestSeller = false,

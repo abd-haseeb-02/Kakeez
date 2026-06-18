@@ -10,6 +10,7 @@ import Footer from "@/components/shop/Footer"
 import { supabase } from "@/lib/supabase"
 import { useCart } from "@/store/useCart"
 import { formatPkr } from "@/lib/money"
+import { Star } from "lucide-react"
 
 // Phase 2: route is now /product/[slug] (matches the slugs ETL'd from the
 // 88 legacy products into the new schema). For backward compatibility with
@@ -23,8 +24,19 @@ type ProductRow = {
   description: string | null
   base_price_minor: number
   is_perishable: boolean
+  rating_avg?: number | null
+  rating_count?: number | null
   product_categories?: { category_id: string; categories?: { name: string; slug: string } | null }[]
   product_images?: { storage_path: string; position: number; is_featured: boolean }[]
+}
+
+type ReviewRow = {
+  id: string
+  rating: number
+  title: string | null
+  body: string | null
+  verified_purchase: boolean
+  created_at: string
 }
 
 type VariationRow = {
@@ -47,6 +59,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: param } = React.use(params)
   const [product, setProduct] = useState<ProductRow | null>(null)
+  const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [variations, setVariations] = useState<VariationRow[]>([])
   const [productAttributes, setProductAttributes] = useState<AttributeWithValues[]>([])
   const [related, setRelated] = useState<ProductRow[]>([])
@@ -67,7 +80,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       let row: any | null = null
       const slugRes = await supabase
         .from("products")
-        .select("id, slug, name, description, base_price_minor, is_perishable, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
+        .select("id, slug, name, description, base_price_minor, is_perishable, rating_avg, rating_count, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
         .eq("slug", param)
         .eq("status", "published")
         .maybeSingle()
@@ -77,7 +90,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       } else if (UUID_RE.test(param)) {
         const idRes = await supabase
           .from("products")
-          .select("id, slug, name, description, base_price_minor, is_perishable, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
+          .select("id, slug, name, description, base_price_minor, is_perishable, rating_avg, rating_count, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
           .eq("id", param)
           .eq("status", "published")
           .maybeSingle()
@@ -94,6 +107,17 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       }
 
       setProduct(row as ProductRow)
+
+      // Phase 6: published reviews. RLS allows anon to read where
+      // status='published', so this works for signed-out visitors too.
+      const { data: revRes } = await supabase
+        .from('product_reviews')
+        .select('id, rating, title, body, verified_purchase, created_at')
+        .eq('product_id', row.id)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      setReviews((revRes as ReviewRow[]) ?? [])
 
       // Fetch variations + the attributes this product uses. If neither
       // returns rows the picker stays hidden — current 88 ETL products have
@@ -238,6 +262,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   const priceLabel = formatPkr(finalPriceMinor)
   const hasRelated = related.length > 0
+  const ratingAvg = product.rating_avg ?? 0
+  const ratingCount = product.rating_count ?? 0
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-white">
@@ -262,6 +288,23 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                   {product.product_categories[0].categories.name}
                 </p>
               ) : null}
+
+              {ratingCount > 0 && (
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        size={14}
+                        className={n <= Math.round(ratingAvg) ? 'text-amber-400 fill-amber-400' : 'text-primary-brown/15'}
+                      />
+                    ))}
+                  </div>
+                  <span className="ff-apfel text-xs text-primary-brown/70">
+                    {ratingAvg.toFixed(1)} · {ratingCount} review{ratingCount === 1 ? '' : 's'}
+                  </span>
+                </div>
+              )}
 
               <p className="ff-colville mt-5 text-[clamp(23px,1.75rem,28px)] text-primary-brown">{priceLabel}</p>
 
@@ -355,6 +398,43 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </div>
           </div>
         </section>
+
+        {reviews.length > 0 && (
+          <section className="mx-auto mt-[clamp(70px,6vw,110px)] w-[calc(100%_-_32px)] max-w-[1180px]">
+            <div className="flex items-baseline justify-between gap-4 flex-wrap mb-6">
+              <h2 className="ff-accia text-[clamp(28px,2.4rem,40px)] leading-none text-primary-brown">
+                Customer reviews
+              </h2>
+              {ratingCount > 0 && (
+                <p className="ff-apfel text-sm text-primary-brown/70">
+                  Average {ratingAvg.toFixed(1)} of 5 across {ratingCount} review{ratingCount === 1 ? '' : 's'}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {reviews.map((r) => (
+                <article key={r.id} className="rounded-2xl border border-primary-brown/15 bg-white p-5">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star key={n} size={14}
+                          className={n <= r.rating ? 'text-amber-400 fill-amber-400' : 'text-primary-brown/15'} />
+                      ))}
+                    </div>
+                    {r.verified_purchase && (
+                      <span className="ff-apfel text-[10px] uppercase tracking-widest bg-accent-green/50 text-primary-brown px-2 py-0.5 rounded">
+                        Verified purchase
+                      </span>
+                    )}
+                  </div>
+                  {r.title && <p className="ff-accia text-primary-brown mt-3">{r.title}</p>}
+                  {r.body && <p className="ff-accia-light text-sm text-black/70 mt-1 leading-relaxed whitespace-pre-wrap">{r.body}</p>}
+                  <p className="ff-apfel text-[11px] text-black/30 mt-3">{new Date(r.created_at).toLocaleDateString()}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         {hasRelated ? (
           <section className="mx-auto mt-[clamp(105px,8.875rem,142px)] w-[calc(100%_-_32px)] max-w-[1390px]">
