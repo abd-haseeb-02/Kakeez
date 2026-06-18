@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
-import { User, MapPin, ShoppingBag, LogOut, Loader2 } from "lucide-react"
+import { User, MapPin, ShoppingBag, Heart, LogOut, Loader2 } from "lucide-react"
 import { useCart } from "@/store/useCart"
 
 // Customer account shell. Auth-gated at the client (server protection lands
@@ -16,6 +16,7 @@ import { useCart } from "@/store/useCart"
 const SECTIONS = [
   { href: '/account',           label: 'Overview',  icon: User },
   { href: '/account/orders',    label: 'Orders',    icon: ShoppingBag },
+  { href: '/account/wishlist',  label: 'Wishlist',  icon: Heart },
   { href: '/account/addresses', label: 'Addresses', icon: MapPin },
   { href: '/account/profile',   label: 'Profile',   icon: User },
 ]

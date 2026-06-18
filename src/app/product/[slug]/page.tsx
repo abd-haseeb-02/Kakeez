@@ -10,7 +10,7 @@ import Footer from "@/components/shop/Footer"
 import { supabase } from "@/lib/supabase"
 import { useCart } from "@/store/useCart"
 import { formatPkr } from "@/lib/money"
-import { Star } from "lucide-react"
+import { Star, Heart } from "lucide-react"
 
 // Phase 2: route is now /product/[slug] (matches the slugs ETL'd from the
 // 88 legacy products into the new schema). For backward compatibility with
@@ -60,6 +60,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const { slug: param } = React.use(params)
   const [product, setProduct] = useState<ProductRow | null>(null)
   const [reviews, setReviews] = useState<ReviewRow[]>([])
+  const [wishlisted, setWishlisted] = useState(false)
+  const [wishBusy, setWishBusy] = useState(false)
   const [variations, setVariations] = useState<VariationRow[]>([])
   const [productAttributes, setProductAttributes] = useState<AttributeWithValues[]>([])
   const [related, setRelated] = useState<ProductRow[]>([])
@@ -118,6 +120,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         .order('created_at', { ascending: false })
         .limit(20)
       setReviews((revRes as ReviewRow[]) ?? [])
+
+      // Wishlist state. RLS scopes wishlist_items to the signed-in user;
+      // anon visitors just see false (no row).
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: wl } = await supabase
+          .from('wishlists')
+          .select('id, wishlist_items!inner(product_id)')
+          .eq('user_id', user.id)
+          .eq('wishlist_items.product_id', row.id)
+          .maybeSingle()
+        setWishlisted(!!wl)
+      }
 
       // Fetch variations + the attributes this product uses. If neither
       // returns rows the picker stays hidden — current 88 ETL products have
@@ -222,6 +237,38 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   const canAddToCart = productAttributes.length === 0 || selectedVariation !== null
 
+  // Wishlist toggle. Upserts the parent wishlist row (one per user) and
+  // either inserts or deletes the wishlist_items row. RLS already scopes
+  // both tables to the owner — no RPC needed.
+  const toggleWishlist = async () => {
+    if (!product) return
+    setWishBusy(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/?next=' + encodeURIComponent(`/product/${product.slug}`))
+        return
+      }
+      // Make sure a wishlist row exists for this user.
+      await supabase.from('wishlists').upsert({ user_id: user.id }, { onConflict: 'user_id' })
+      const { data: wl } = await supabase.from('wishlists').select('id').eq('user_id', user.id).maybeSingle()
+      if (!wl) return
+      if (wishlisted) {
+        await supabase.from('wishlist_items').delete()
+          .eq('wishlist_id', wl.id).eq('product_id', product.id)
+        setWishlisted(false)
+      } else {
+        await supabase.from('wishlist_items').upsert(
+          { wishlist_id: wl.id, product_id: product.id },
+          { onConflict: 'wishlist_id,product_id' }
+        )
+        setWishlisted(true)
+      }
+    } finally {
+      setWishBusy(false)
+    }
+  }
+
   const handleAddToCart = () => {
     if (!product) return
     if (productAttributes.length > 0 && !selectedVariation) return
@@ -306,7 +353,23 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 </div>
               )}
 
-              <p className="ff-colville mt-5 text-[clamp(23px,1.75rem,28px)] text-primary-brown">{priceLabel}</p>
+              <div className="mt-5 flex items-center gap-3">
+                <p className="ff-colville text-[clamp(23px,1.75rem,28px)] text-primary-brown">{priceLabel}</p>
+                <button
+                  type="button"
+                  onClick={toggleWishlist}
+                  disabled={wishBusy}
+                  aria-pressed={wishlisted}
+                  aria-label={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                  className={`h-10 w-10 rounded-full border flex items-center justify-center transition-all disabled:opacity-50 ${
+                    wishlisted
+                      ? 'bg-primary-brown/10 border-primary-brown text-primary-brown'
+                      : 'bg-white border-primary-brown/30 text-primary-brown/60 hover:border-primary-brown'
+                  }`}
+                >
+                  <Heart size={16} className={wishlisted ? 'fill-primary-brown' : ''} />
+                </button>
+              </div>
 
               {product.description ? (
                 <p className="ff-accia-light mt-3 max-w-[42rem] text-[clamp(16px,1.125rem,18px)] leading-[1.45] text-black/80 capitalize">{product.description}</p>
