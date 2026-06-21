@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
-import { X, Mail, Lock, Loader2, User, Phone, MapPin } from "lucide-react"
+import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2 } from "lucide-react"
 import PhoneVerificationPanel from "@/components/account/PhoneVerificationPanel"
 
 const MIN_PASSWORD = 8
@@ -21,6 +21,10 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false)
 
   if (!isOpen) return null
+
+  const fieldClass =
+    "h-12 w-full rounded-[10px] border border-primary-brown/20 bg-white/75 pl-11 pr-4 ff-apfel text-[15px] text-primary-brown outline-none transition-colors placeholder:text-primary-brown/40 focus:border-primary-brown focus:bg-white"
+  const iconClass = "absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-primary-brown/45"
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,27 +96,39 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-[30vw] min-w-[350px] bg-white rounded-[2vw] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-        <button onClick={onClose} className="absolute right-[1.5vw] top-[1.5vw] text-primary-brown/40 hover:text-primary-brown">
-          <X size={24} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-5 sm:px-6">
+      <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative max-h-[calc(100vh-32px)] w-full max-w-[520px] overflow-hidden rounded-[18px] border border-white/70 bg-[#fffdf7] text-primary-brown shadow-[0_24px_80px_rgba(51,34,16,0.32)] animate-in fade-in zoom-in-95 duration-300">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-primary-brown/15 bg-white/80 text-primary-brown transition-colors hover:bg-primary-brown hover:text-white"
+          aria-label="Close auth popup"
+        >
+          <X className="h-5 w-5" />
         </button>
 
-        <div className="p-[3vw] space-y-[2vw]">
-          <div className="text-center space-y-[0.5vw]">
-            <h2 className="ff-accia text-[2.5vw] text-primary-brown">{signupNeedsEmailConfirmation ? "Check Email" : signupNeedsPhoneVerification ? "Verify Phone" : isLogin ? "Welcome Back" : "Join Kakeez"}</h2>
-            <p className="ff-colville-light text-[1vw] text-primary-brown/60">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,#e1eab4_0%,rgba(225,234,180,0)_100%)]" />
+
+        <div className="relative max-h-[calc(100vh-32px)] overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary-brown/20 bg-white shadow-sm">
+            {signupNeedsEmailConfirmation ? <Mail className="h-6 w-6" /> : signupNeedsPhoneVerification ? <Phone className="h-6 w-6" /> : <CakeSlice className="h-6 w-6" />}
+          </div>
+
+          <div className="mt-4 text-center">
+            <h2 className="ff-accia text-[clamp(34px,8vw,52px)] leading-[0.95] text-primary-brown">
+              {signupNeedsEmailConfirmation ? "Check Email" : signupNeedsPhoneVerification ? "Verify Phone" : isLogin ? "Welcome Back" : "Join Kakeez"}
+            </h2>
+            <p className="mx-auto mt-3 max-w-[360px] ff-colville-light text-[15px] leading-relaxed text-primary-brown/70">
               {signupNeedsEmailConfirmation ? "Confirm your email, then sign in to verify phone" : signupNeedsPhoneVerification ? "Enter the test OTP from the server console" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
             </p>
           </div>
 
           {signupNeedsEmailConfirmation ? (
-            <div className="space-y-4 rounded-[1vw] bg-primary-brown/5 p-4 text-center">
-              <p className="ff-apfel text-[1vw] leading-snug text-primary-brown/70">
+            <div className="mt-6 space-y-5 rounded-[14px] border border-primary-brown/15 bg-white/70 p-5 text-center">
+              <CheckCircle2 className="mx-auto h-9 w-9 text-primary-brown" />
+              <p className="ff-apfel text-[15px] leading-relaxed text-primary-brown/75">
                 We sent a confirmation link to <strong>{email}</strong>. Open it, then come back and sign in. Phone verification will happen before checkout.
               </p>
               <button
@@ -121,13 +137,13 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
                   setSignupNeedsEmailConfirmation(false)
                   setIsLogin(true)
                 }}
-                className="w-full rounded-[1vw] bg-primary-brown py-[1vw] ff-accia text-[1.1vw] text-white"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-primary-brown ff-accia text-[18px] text-white transition-colors hover:bg-primary-brown/90"
               >
-                Go to Sign In
+                Go to Sign In <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           ) : signupNeedsPhoneVerification ? (
-            <div className="space-y-4">
+            <div className="mt-6 space-y-4">
               <PhoneVerificationPanel
                 phone={phone}
                 onVerified={() => {
@@ -141,70 +157,70 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
                   if (onSuccess) onSuccess()
                   onClose()
                 }}
-                className="w-full ff-colville text-[1vw] text-primary-brown/70 underline decoration-dotted"
+                className="w-full ff-colville text-[15px] text-primary-brown/70 underline decoration-dotted underline-offset-4 transition-colors hover:text-primary-brown"
               >
                 I will verify later
               </button>
             </div>
           ) : (
-          <form onSubmit={handleAuth} className="space-y-[1.5vw]">
+          <form onSubmit={handleAuth} className="mt-6 space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-500 p-[1vw] rounded-[1vw] text-[0.9vw] text-center ff-apfel border border-red-100">
+              <div className="rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-center ff-apfel text-[14px] leading-snug text-red-600">
                 {error}
               </div>
             )}
 
-            <div className="space-y-[1vw]">
+            <div className="space-y-3">
               {!isLogin && (
                 <>
                   <div className="relative">
-                    <User className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-primary-brown/40" size={18} />
+                    <User className={iconClass} />
                     <input 
                       required
                       type="text"
                       placeholder="Full Name"
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
-                      className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw]"
+                      className={fieldClass}
                     />
                   </div>
                   <div className="relative">
-                    <Phone className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-primary-brown/40" size={18} />
+                    <Phone className={iconClass} />
                     <input 
                       required
                       type="tel"
                       placeholder="Phone Number"
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
-                      className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw]"
+                      className={fieldClass}
                     />
                   </div>
                   <div className="relative">
-                    <MapPin className="absolute left-[1vw] top-[1vw] text-primary-brown/40" size={18} />
+                    <MapPin className="absolute left-4 top-4 h-4 w-4 text-primary-brown/45" />
                     <textarea 
                       required
                       placeholder="Delivery Address"
                       value={address}
                       onChange={e => setAddress(e.target.value)}
-                      className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw] h-[4vw] resize-none"
+                      className="min-h-[92px] w-full resize-none rounded-[10px] border border-primary-brown/20 bg-white/75 py-3 pl-11 pr-4 ff-apfel text-[15px] text-primary-brown outline-none transition-colors placeholder:text-primary-brown/40 focus:border-primary-brown focus:bg-white"
                     />
                   </div>
                 </>
               )}
 
               <div className="relative">
-                <Mail className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-primary-brown/40" size={18} />
+                <Mail className={iconClass} />
                 <input 
                   required
                   type="email"
                   placeholder="Email Address"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw]"
+                  className={fieldClass}
                 />
               </div>
               <div className="relative">
-                <Lock className="absolute left-[1vw] top-1/2 -translate-y-1/2 text-primary-brown/40" size={18} />
+                <Lock className={iconClass} />
                 <input
                   required
                   type="password"
@@ -212,12 +228,12 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
                   placeholder={isLogin ? "Password" : `Password (${MIN_PASSWORD}+ characters)`}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-[1vw] pl-[3vw] pr-[1vw] py-[1vw] outline-none focus:border-primary-brown/40 text-primary-brown ff-apfel text-[1vw]"
+                  className={fieldClass}
                 />
               </div>
               {isLogin && (
                 <div className="text-right">
-                  <Link href="/forgot-password" onClick={onClose} className="ff-apfel text-[0.85vw] text-primary-brown/70 hover:text-primary-brown underline-offset-2 underline">
+                  <Link href="/forgot-password" onClick={onClose} className="ff-apfel text-[14px] text-primary-brown/70 underline underline-offset-4 transition-colors hover:text-primary-brown">
                     Forgot password?
                   </Link>
                 </div>
@@ -226,20 +242,20 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
 
             <button 
               disabled={loading}
-              className="w-full bg-primary-brown text-white py-[1.2vw] rounded-[1vw] ff-accia text-[1.2vw] hover:bg-primary-brown/90 transition-all flex items-center justify-center gap-2"
+              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[10px] bg-primary-brown px-4 ff-accia text-[20px] text-white transition-colors hover:bg-primary-brown/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? "Sign In" : "Create Account")}
             </button>
           </form>
           )}
 
-          {!signupNeedsPhoneVerification && !signupNeedsEmailConfirmation && <div className="text-center">
+          {!signupNeedsPhoneVerification && !signupNeedsEmailConfirmation && <div className="mt-5 text-center">
              <button 
                onClick={() => {
                  setIsLogin(!isLogin)
                  setError("")
                }}
-               className="ff-colville text-[1vw] text-primary-brown underline decoration-dotted"
+               className="ff-colville text-[15px] text-primary-brown underline decoration-dotted underline-offset-4 transition-opacity hover:opacity-70"
              >
                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
              </button>

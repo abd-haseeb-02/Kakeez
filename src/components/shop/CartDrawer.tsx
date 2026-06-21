@@ -36,9 +36,28 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
   const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [showAuthPopup, setShowAuthPopup] = useState(false)
+  const [shouldRender, setShouldRender] = useState(isOpen)
+  const [isVisible, setIsVisible] = useState(false)
   const [popular, setPopular] = useState<PopularProduct[]>([])
   const [popIndex, setPopIndex] = useState(0)
   const router = useRouter()
+
+  useEffect(() => {
+    const renderTimer = window.setTimeout(() => {
+      if (isOpen) {
+        setShouldRender(true)
+        window.requestAnimationFrame(() => setIsVisible(true))
+      } else {
+        setIsVisible(false)
+      }
+    }, 0)
+    const removeTimer = isOpen ? undefined : window.setTimeout(() => setShouldRender(false), 300)
+
+    return () => {
+      window.clearTimeout(renderTimer)
+      if (removeTimer) window.clearTimeout(removeTimer)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen || popular.length > 0) return
@@ -102,11 +121,20 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
         }}
       />
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      {shouldRender && (
+        <div className={`fixed inset-0 z-[100] flex justify-end ${isVisible ? "" : "pointer-events-none"}`}>
+          <div
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+              isVisible ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={onClose}
+          />
 
-          <div className="relative flex h-full w-[min(92vw,430px)] flex-col rounded-l-[14px] bg-white shadow-[0_0_18px_8px_rgba(0,0,0,0.16)] animate-in slide-in-from-right duration-500 md:w-[clamp(390px,27vw,470px)]">
+          <div
+            className={`relative flex h-full w-[min(92vw,430px)] transform flex-col rounded-l-[14px] bg-white shadow-[0_0_18px_8px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out md:w-[clamp(390px,27vw,470px)] ${
+              isVisible ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
             <div className="flex items-end justify-between px-[clamp(18px,1.35vw,24px)] pt-[clamp(18px,1.35vw,24px)] pb-[clamp(14px,1vw,18px)]">
               <h2 className="ff-accia text-[clamp(19px,1.05vw,22px)] text-black">Your Cart</h2>
               {items.length > 0 && (

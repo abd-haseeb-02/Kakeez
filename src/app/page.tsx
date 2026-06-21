@@ -163,15 +163,15 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative mx-auto w-[calc(100%_-_32px)] max-w-[1390px] bg-accent-green pb-[clamp(88px,7rem,112px)] pt-[clamp(168px,13rem,208px)]">
-          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 h-[clamp(128px,12rem,192px)] w-[min(1800px,132%)] -translate-x-1/2">
+        <section className="relative mx-auto w-[calc(100%_-_24px)] bg-accent-green pb-[clamp(88px,7rem,112px)] pt-[clamp(168px,13rem,208px)] lg:w-[calc(100%_-_40px)]">
+          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 h-[clamp(128px,12rem,192px)] w-full -translate-x-1/2">
             <Image src="/assets/vector13.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
           <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
             <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
-          <div className="relative z-10 mx-auto w-[calc(100%_-_32px)]">
+          <div className="relative z-10 mx-auto w-[min(1390px,calc(100%_-_32px))]">
             <h2 className="ff-accia text-center text-[clamp(38px,4.6vw,72px)] leading-none text-primary-brown">Shop Best Sellers</h2>
 
             <div className="mt-7 flex snap-x gap-3 overflow-x-auto pb-3">

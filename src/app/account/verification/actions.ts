@@ -7,6 +7,36 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const OTP_TTL_MINUTES = 10
 const OTP_PEPPER = process.env.PHONE_OTP_PEPPER || 'dev-phone-otp-pepper-change-me'
 
+type DevOtpEntry = {
+  phone: string
+  otpHash: string
+  attempts: number
+  expiresAt: number
+}
+
+const devOtpStore = globalThis as typeof globalThis & {
+  __kakeezDevPhoneOtps?: Map<string, DevOtpEntry>
+}
+
+function getDevOtpStore(): Map<string, DevOtpEntry> {
+  devOtpStore.__kakeezDevPhoneOtps ??= new Map<string, DevOtpEntry>()
+  return devOtpStore.__kakeezDevPhoneOtps
+}
+
+function canUseAdminClient(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+}
+
+function shouldShowOtpInUi(): boolean {
+  return process.env.NODE_ENV !== 'production'
+}
+
+function otpSentMessage(otp: string): string {
+  return shouldShowOtpInUi()
+    ? `Verification code sent. Test OTP: ${otp}`
+    : 'Verification code sent.'
+}
+
 function normalizePhone(phone: string): string {
   return phone.trim().replace(/[^\d+]/g, '')
 }
@@ -37,8 +67,22 @@ export async function requestPhoneOtp(phoneInput: string): Promise<PhoneOtpResul
   }
 
   const otp = generateOtp()
-  const admin = createAdminClient()
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString()
+  const otpHash = hashOtp(user.id, phone, otp)
+
+  if (!canUseAdminClient()) {
+    getDevOtpStore().set(user.id, {
+      phone,
+      otpHash,
+      attempts: 0,
+      expiresAt: Date.now() + OTP_TTL_MINUTES * 60 * 1000,
+    })
+    await supabase.from('profiles').update({ phone_e164: phone }).eq('id', user.id)
+    console.log(`[KAKEEZ TEST OTP - LOCAL MEMORY] user=${user.id} phone=${phone} otp=${otp}`)
+    return { ok: true, message: otpSentMessage(otp) }
+  }
+
+  const admin = createAdminClient()
 
   await admin
     .from('phone_verification_otps')
@@ -49,7 +93,7 @@ export async function requestPhoneOtp(phoneInput: string): Promise<PhoneOtpResul
   const { error } = await admin.from('phone_verification_otps').insert({
     user_id: user.id,
     phone_e164: phone,
-    otp_hash: hashOtp(user.id, phone, otp),
+    otp_hash: otpHash,
     expires_at: expiresAt,
   })
   if (error) return { ok: false, message: 'Could not create verification code.' }
@@ -57,7 +101,7 @@ export async function requestPhoneOtp(phoneInput: string): Promise<PhoneOtpResul
   await admin.from('profiles').update({ phone_e164: phone }).eq('id', user.id)
 
   console.log(`[KAKEEZ TEST OTP] user=${user.id} phone=${phone} otp=${otp}`)
-  return { ok: true, message: 'Verification code sent. Check the server console for the test OTP.' }
+  return { ok: true, message: otpSentMessage(otp) }
 }
 
 export async function verifyPhoneOtp(phoneInput: string, otpInput: string): Promise<PhoneOtpResult> {
@@ -69,6 +113,38 @@ export async function verifyPhoneOtp(phoneInput: string, otpInput: string): Prom
   const otp = otpInput.trim()
   if (!phone || !/^\d{6}$/.test(otp)) {
     return { ok: false, message: 'Enter the 6-digit code.' }
+  }
+
+  if (!canUseAdminClient()) {
+    const store = getDevOtpStore()
+    const row = store.get(user.id)
+
+    if (!row || row.phone !== phone) return { ok: false, message: 'Request a new verification code.' }
+    if (row.expiresAt < Date.now()) {
+      store.delete(user.id)
+      return { ok: false, message: 'That code expired. Request a new one.' }
+    }
+    if (row.attempts >= 5) {
+      store.delete(user.id)
+      return { ok: false, message: 'Too many attempts. Request a new code.' }
+    }
+
+    const expected = hashOtp(user.id, phone, otp)
+    if (expected !== row.otpHash) {
+      row.attempts += 1
+      store.set(user.id, row)
+      return { ok: false, message: 'Incorrect code.' }
+    }
+
+    store.delete(user.id)
+    const now = new Date().toISOString()
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ phone_e164: phone, phone_verified_at: now })
+      .eq('id', user.id)
+
+    if (profileError) return { ok: false, message: 'Could not mark phone as verified.' }
+    return { ok: true, message: 'Phone verified.' }
   }
 
   const admin = createAdminClient()

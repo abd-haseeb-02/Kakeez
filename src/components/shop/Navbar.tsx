@@ -79,7 +79,7 @@ export default function Navbar() {
       <UserAuthPopup isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-4 md:px-5 lg:h-[clamp(84px,6.9vw,118px)] lg:px-[clamp(24px,7.75vw,148px)]">
+      <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-4 md:px-5 lg:h-[clamp(84px,6.9vw,118px)] lg:px-[clamp(20px,2.5vw,48px)]">
         
         {/* Mobile Menu Button */}
         <button
