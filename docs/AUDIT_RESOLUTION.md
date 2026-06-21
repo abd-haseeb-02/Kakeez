@@ -1,4 +1,4 @@
-# AUDIT.md → Resolution Map
+# AUDIT.md â†’ Resolution Map
 
 A cross-reference from every finding in [`../AUDIT.md`](../AUDIT.md)
 (dated 2026-06-16) to the commit / migration / file where it was
@@ -8,12 +8,12 @@ plan.
 The original [`REMEDIATION_PLAN.md`](../REMEDIATION_PLAN.md) phased
 the same fixes; the phase numbers below refer to the
 Kakeez-execution phases documented in
-[`phases/`](./phases) (NOT the remediation-plan phases — the
+[`phases/`](./phases) (NOT the remediation-plan phases â€” the
 mappings happen to overlap but aren't identical).
 
 ---
 
-## B — Critical
+## B â€” Critical
 
 ### B.1 Client-trusted checkout totals and item prices
 
@@ -25,7 +25,7 @@ mappings happen to overlap but aren't identical).
 The `create_order` RPC body re-reads `products.base_price_minor +
 COALESCE(product_variations.price_delta_minor, 0)` from the database
 and IGNORES any `price` value sent from the browser. The order +
-items + payment + history are wrapped in one plpgsql block —
+items + payment + history are wrapped in one plpgsql block â€”
 atomic, no orphan rows. The cart shape is intentionally kept
 backward-compatible (see the security-rationale comment block at
 the top of `src/store/useCart.ts`); the guarantee lives on the
@@ -46,7 +46,7 @@ applied versions; deleting the file would orphan the row) but the
 auth user it created is gone.
 
 Phase 3's `20260617000007_bootstrap_admin.sql` re-creates the admin
-the right way — random 24-char password generated at migration time
+the right way â€” random 24-char password generated at migration time
 via `extensions.gen_random_bytes(18)`, printed to the CLI log
 (captured in gitignored `tmp/admin_push.log`), never in the repo.
 Idempotent: if the email already exists the migration just elevates
@@ -73,7 +73,7 @@ the profile role.
 
 ---
 
-## C — High
+## C â€” High
 
 ### C.1 Protected routes are only client-protected
 
@@ -107,7 +107,7 @@ stale orphan order from the pre-Phase-1 system is archived to
 **Commits:** [`8a98ca3`](https://github.com/abd-haseeb-02/Kakeez/commit/8a98ca3) + [`07dbef4`](https://github.com/abd-haseeb-02/Kakeez/commit/07dbef4)
 
 `0005_rls.sql` `REVOKE INSERT, UPDATE, DELETE ON public.orders FROM
-anon, authenticated` — direct INSERT is impossible from PostgREST.
+anon, authenticated` â€” direct INSERT is impossible from PostgREST.
 The only path to create an order is the `create_order` SECURITY
 DEFINER RPC, which server-computes the total. Defense in depth:
 `orders.payment_method` has a column-level `CHECK = 'cod'`.
@@ -125,29 +125,20 @@ The new admin product editor:
 - `crypto.randomUUID()` filenames (replaces `Math.random()`).
 - Explicit `contentType` passed to `supabase.storage.upload()`.
 - Storage RLS (Phase 0 `0005_rls.sql`) restricts the `products`
-  bucket to staff-write — admins only.
+  bucket to staff-write â€” admins only.
 
 ### C.5 Lint fails (32 errors, 14 warnings)
 
-**Status:** NOT YET resolved.
-**Plan:** Phase 6 (Growth Features) per the original
-remediation-plan ordering. Specifically:
-- `no-explicit-any` errors in the storefront + admin pages — the
-  Phase 1 query adapters introduced more `any` to keep the
-  refactor small; will be replaced when `supabase gen types
-  typescript` lands.
-- `react-hooks/exhaustive-deps` warnings in the realtime
-  subscriptions — the dependencies are stable refs but the linter
-  doesn't know that without context. Adding the
-  `eslint-disable-next-line` comments has been done where the
-  stability is provable; the rest need refactoring.
-- The internal `<a>` → `<Link>` swaps are independently easy and
-  could happen anytime; they didn't gate any phase shipping so
-  they got punted.
+**Status:** RESOLVED in the current working tree.
+
+`npm run lint` now exits 0 cleanly. The prior warnings around raw
+`<img>` previews, root Google Font loading, the unused footer prop,
+and stable admin effect dependencies have been resolved or narrowed
+with explicit suppressions. `npm run typecheck` also exits 0.
 
 ---
 
-## D — Medium
+## D â€” Medium
 
 ### D.1 No product slug route / SEO-friendly URLs
 
@@ -165,14 +156,12 @@ UUID lookup so every shared `/product/<uuid>` link still resolves.
 ### D.2 Invalid product URLs do not call `notFound()`
 
 **File audited:** `src/app/product/[id]/page.tsx:102`
-**Status:** PARTIAL.
+**Status:** RESOLVED in the current working tree.
 
-The new `/product/[slug]/page.tsx` still renders a "Product not
-found" component instead of using Next.js's `notFound()` (which
-returns a real 404 status). The page is a Client Component, so
-calling `notFound()` requires lifting the data fetch to a Server
-Component first — that refactor lands in Phase 6 alongside the
-SEO sitemap / metadata work.
+`/product/[slug]/page.tsx` is now a Server Component wrapper that
+checks published product existence by slug or UUID before rendering
+the existing client detail component. Invalid product URLs call
+Next.js `notFound()` and return a real 404 status.
 
 ### D.3 No published / draft model
 
@@ -194,7 +183,7 @@ The `create_order` RPC supports it: when `track_inventory = true`,
 it row-locks the stockable unit (product or variation), validates
 stock, decrements transactionally, writes an `inventory_movements`
 ledger row. None of the 88 ETL'd products have `track_inventory =
-true` — the admin product editor doesn't expose the flag yet (Phase
+true` â€” the admin product editor doesn't expose the flag yet (Phase
 2 follow-up). Once it does, the RPC starts enforcing immediately.
 
 ### D.5 Category deletion cascades to products
@@ -204,7 +193,7 @@ true` — the admin product editor doesn't expose the flag yet (Phase
 **Commits:** [`8a98ca3`](https://github.com/abd-haseeb-02/Kakeez/commit/8a98ca3) + [`d92d9bc`](https://github.com/abd-haseeb-02/Kakeez/commit/d92d9bc)
 
 The new `product_categories` table has `ON DELETE RESTRICT` against
-`categories(id)` — Postgres refuses the delete if any product
+`categories(id)` â€” Postgres refuses the delete if any product
 still references the category. Phase 2's admin editor catches the
 `23503` foreign-key violation and surfaces "This category still has
 products attached. Reassign or delete them first" instead of a
@@ -213,7 +202,7 @@ silent cascade.
 ### D.6 No payment / webhook backend despite card UI
 
 **File audited:** `src/app/checkout/page.tsx:31`
-**Status:** RESOLVED (re-scoped — COD-only at launch)
+**Status:** RESOLVED (re-scoped â€” COD-only at launch)
 **Commit:** [`9c6fae7`](https://github.com/abd-haseeb-02/Kakeez/commit/9c6fae7)
 
 User decision per the v2 plan: **COD-only at launch**. The Card /
@@ -221,7 +210,7 @@ JazzCash / Easypaisa UI is REMOVED from code in Phase 0 (not just
 hidden). The `payments` table and the `orders.payment_method`
 CHECK are shaped so adding a PSP later is a one-line CHECK
 relaxation + `ALTER TYPE ... ADD VALUE`, not a restructure. The
-admin Settings → Payments tab shows the locked-in COD notice.
+admin Settings â†’ Payments tab shows the locked-in COD notice.
 
 ### D.7 Schema lacks ecommerce constraints and indexes
 
@@ -242,38 +231,37 @@ search work.
 
 ---
 
-## E — Low
+## E â€” Low
 
 ### E.1 SEO is mostly static
 
 **File audited:** `src/app/layout.tsx:4`
-**Status:** NOT YET — Phase 6.
+**Status:** PARTIAL.
 
-`generateMetadata`, `robots.ts`, `sitemap.ts`, product JSON-LD,
-canonical URLs, `noindex` on admin / checkout / account are all
-Phase 6 work.
+Product pages now have route-level metadata, canonical URLs, Product
+JSON-LD, and real invalid-product 404s. `robots.ts` and `sitemap.ts`
+are implemented, and the sitemap includes published
+`/category/[slug]` routes. Category pages now generate route-level
+metadata. Remaining SEO work: expand shop/menu metadata coverage as
+the catalog grows and add broader content/error-state polish.
 
 ### E.2 Images bypass `next/image` in places
 
 **Files audited:** `src/components/shop/ProductCard.tsx:52`, `src/app/admin/products/page.tsx:287,384`
-**Status:** PARTIAL.
+**Status:** RESOLVED in the current working tree.
 
-- Admin product editor still uses raw `<img>` for the upload
-  preview and product grid hero (Phase 2 kept the legacy admin
-  visual; the storefront's customer-facing renders use
-  `next/image`).
-- The `<img>` in the upload-preview modal still has no `alt`.
-- Defer to Phase 6 alongside the `<img>`-everywhere audit.
+The remaining lint-reported raw image previews in account, admin,
+product-card, and order surfaces were converted to `next/image` with
+stable dimensions/sizes.
 
 ### E.3 Custom fonts loaded via `<head><link>`
 
 **File audited:** `src/app/layout.tsx:16`
-**Status:** NOT YET — Phase 6.
+**Status:** RESOLVED in the current working tree.
 
 The three Google Fonts (Cormorant Garamond, Playfair Display, Space
-Grotesk) still come in via `<link>` in the root layout. Phase 6's
-performance pass migrates them to `next/font` or self-hosted
-woff2 with `@font-face`.
+Grotesk) now load through `next/font/google` in the root layout and
+feed the existing CSS font variables.
 
 ---
 
@@ -285,26 +273,26 @@ state for each row:
 
 | Item                                  | Pre-rebuild status        | Now (post-Phase 4)                                |
 | ------------------------------------- | ------------------------- | ------------------------------------------------- |
-| RLS enabled                           | Pass                      | Pass — every public table + storage policies      |
-| Service role safe                     | Pass                      | Pass — `import 'server-only'` on admin client     |
-| Auth protected server-side            | **Fail**                  | **Pass** — Phase 4 part 2 `proxy.ts`              |
-| Admin routes protected                | Partial (email-gated)     | **Pass** — role-gated, RLS + UI + proxy           |
-| User order isolation                  | Partial (email-keyed)     | **Pass** — `user_id`-keyed, RLS on every row      |
-| No client-trusted prices              | **Fail**                  | **Pass** — Phase 1 RPC                            |
-| Webhooks verified                     | Fail (no webhooks)        | N/A — COD-only locked in                          |
+| RLS enabled                           | Pass                      | Pass â€” every public table + storage policies      |
+| Service role safe                     | Pass                      | Pass â€” `import 'server-only'` on admin client     |
+| Auth protected server-side            | **Fail**                  | **Pass** â€” Phase 4 part 2 `proxy.ts`              |
+| Admin routes protected                | Partial (email-gated)     | **Pass** â€” role-gated, RLS + UI + proxy           |
+| User order isolation                  | Partial (email-keyed)     | **Pass** â€” `user_id`-keyed, RLS on every row      |
+| No client-trusted prices              | **Fail**                  | **Pass** â€” Phase 1 RPC                            |
+| Webhooks verified                     | Fail (no webhooks)        | N/A â€” COD-only locked in                          |
 | Env vars safe                         | Pass                      | Pass                                              |
-| No exposed secrets                    | Partial (committed admin) | **Pass** — Phase 0 dropped seed + Phase 3 NOTICE  |
-| No dangerous file upload              | **Fail**                  | **Pass** — Phase 2 MIME + size + UUID filename    |
-| Product pages working                 | Partial                   | **Pass** (modulo `notFound()` — Phase 6)          |
-| Category pages working                | Fail                      | NOT YET — `/category/[slug]` is Phase 6           |
-| Cart working                          | Partial                   | **Pass** — server-authoritative pricing           |
-| Checkout working                      | **Fail**                  | **Pass** — Phase 1 RPC + Phase 4 proxy            |
+| No exposed secrets                    | Partial (committed admin) | **Pass** â€” Phase 0 dropped seed + Phase 3 NOTICE  |
+| No dangerous file upload              | **Fail**                  | **Pass** â€” Phase 2 MIME + size + UUID filename    |
+| Product pages working                 | Partial                   | **Pass** - slug/UUID routes plus real invalid-product 404 |
+| Category pages working                | Fail                      | **Pass** â€” `/category/[slug]` server route + sitemap |
+| Cart working                          | Partial                   | **Pass** â€” server-authoritative pricing           |
+| Checkout working                      | **Fail**                  | **Pass** - Phase 1 RPC + Phase 4 proxy + server totals preview |
 | Payment working                       | **Fail**                  | **Pass** for COD; PSP is future scope             |
-| Orders working                        | Partial                   | **Pass** — Phase 3 detail + transitions + history |
-| Admin product CRUD working            | Partial                   | **Pass** — Phase 2 part 1 single-image / -category|
-| Admin order management working        | Partial                   | **Pass** — Phase 3 valid-transition gating        |
-| Auth flows working                    | Partial                   | **Pass** — forgot/reset + cart-clear + min 8      |
-| SEO ready                             | Fail                      | NOT YET — Phase 6                                 |
+| Orders working                        | Partial                   | **Pass** â€” Phase 3 detail + transitions + history |
+| Admin product CRUD working            | Partial                   | **Pass** â€” Phase 2 part 1 single-image / -category|
+| Admin order management working        | Partial                   | **Pass** â€” Phase 3 valid-transition gating        |
+| Auth flows working                    | Partial                   | **Pass** â€” forgot/reset + cart-clear + min 8      |
+| SEO ready                             | Fail                      | Partial - product/category metadata, real product 404, robots/sitemap |
 | Mobile ready                          | Needs manual verification | Partial - 2026-06-18 pass covered navbar, home, checkout, single product, and footer; full device QA still pending |
-| Error states ready                    | Fail                      | Partial — Phase 6 will add `error.tsx` + `not-found.tsx` |
+| Error states ready                    | Fail                      | Partial - product/category notFound paths are real; broader `error.tsx` polish pending |
 | Production env vars ready             | Needs manual verification | Use `.env.example` as the checklist               |

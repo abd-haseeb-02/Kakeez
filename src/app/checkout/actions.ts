@@ -24,6 +24,8 @@ export interface CheckoutAddress {
   area?: string
   city?: string
   instructions?: string
+  delivery_slot_date?: string
+  delivery_slot_window?: string
 }
 
 export interface CheckoutInput {
@@ -33,8 +35,27 @@ export interface CheckoutInput {
   isGift?: boolean
 }
 
+export interface CheckoutPreviewInput {
+  cart: CheckoutCartLine[]
+  address: Partial<CheckoutAddress>
+  promoCode?: string
+}
+
 export type CheckoutResult =
   | { ok: true; orderId: string }
+  | { ok: false; code: string; message: string }
+
+export type CheckoutPreviewResult =
+  | {
+      ok: true
+      subtotalMinor: number
+      discountMinor: number
+      deliveryFeeMinor: number
+      taxMinor: number
+      totalMinor: number
+      promoCode: string | null
+      promoType: string | null
+    }
   | { ok: false; code: string; message: string }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -71,6 +92,135 @@ function friendlyMessage(pgMessage: string): { code: string; message: string } {
       return { code: 'payment_method_unsupported', message: 'Only Cash on Delivery is supported right now.' }
     default:
       return { code: 'server_error', message: 'Could not place your order. Please try again.' }
+  }
+}
+
+type ProductPriceRow = {
+  id: string
+  base_price_minor: number
+}
+
+type VariationPriceRow = {
+  id: string
+  product_id: string
+  price_delta_minor: number
+}
+
+type CouponPreviewRow = {
+  code: string
+  type: string
+  discount_minor: number
+}
+
+type TaxRateRow = {
+  rate_bp: number
+}
+
+export async function previewCheckout(input: CheckoutPreviewInput): Promise<CheckoutPreviewResult> {
+  const supabase = await createClient()
+  const cart = sanitizeCart(input.cart)
+
+  if (cart.length === 0) {
+    return { ok: true, subtotalMinor: 0, discountMinor: 0, deliveryFeeMinor: 0, taxMinor: 0, totalMinor: 0, promoCode: null, promoType: null }
+  }
+
+  const productIds = [...new Set(cart.map((item) => item.productId))]
+  const variationIds = [...new Set(cart.map((item) => item.variationId).filter((id): id is string => Boolean(id)))]
+
+  const [productsRes, variationsRes] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, base_price_minor')
+      .in('id', productIds)
+      .eq('status', 'published')
+      .is('deleted_at', null),
+    variationIds.length > 0
+      ? supabase
+          .from('product_variations')
+          .select('id, product_id, price_delta_minor')
+          .in('id', variationIds)
+          .eq('is_active', true)
+          .is('deleted_at', null)
+      : Promise.resolve({ data: [] }),
+  ])
+
+  if (productsRes.error) {
+    return { ok: false, code: 'server_error', message: 'Could not preview checkout totals.' }
+  }
+
+  const products = new Map(((productsRes.data as ProductPriceRow[] | null) ?? []).map((product) => [product.id, product]))
+  const variations = new Map(((variationsRes.data as VariationPriceRow[] | null) ?? []).map((variation) => [variation.id, variation]))
+  let subtotalMinor = 0
+
+  for (const item of cart) {
+    const product = products.get(item.productId)
+    if (!product) {
+      return { ok: false, code: 'product_not_found', message: 'One of the products in your cart is no longer available. Please refresh.' }
+    }
+
+    let unitMinor = product.base_price_minor
+    if (item.variationId) {
+      const variation = variations.get(item.variationId)
+      if (!variation || variation.product_id !== item.productId) {
+        return { ok: false, code: 'variation_not_found', message: 'A selected option is no longer available. Please re-pick it.' }
+      }
+      unitMinor += variation.price_delta_minor
+    }
+
+    subtotalMinor += unitMinor * item.quantity
+  }
+
+  const promoCode = input.promoCode?.trim() || ''
+  let discountMinor = 0
+  let appliedPromoCode: string | null = null
+  let promoType: string | null = null
+
+  if (promoCode) {
+    const { data: couponRows, error } = await supabase.rpc('validate_coupon_for_cart', {
+      p_code: promoCode,
+      p_subtotal_minor: subtotalMinor,
+    })
+    if (error) {
+      return { ok: false, code: 'coupon_error', message: 'Could not check that promo code.' }
+    }
+
+    const coupon = (couponRows as CouponPreviewRow[] | null)?.[0]
+    if (!coupon) {
+      return { ok: false, code: 'invalid_coupon', message: 'Invalid or expired promo code.' }
+    }
+    discountMinor = coupon.discount_minor
+    appliedPromoCode = coupon.code
+    promoType = coupon.type
+  }
+
+  const { data: deliveryData, error: deliveryError } = await supabase.rpc('compute_delivery_minor', {
+    p_address: input.address ?? {},
+  })
+  if (deliveryError) {
+    return { ok: false, code: 'delivery_error', message: 'Could not preview delivery charges.' }
+  }
+
+  const deliveryFeeMinor = promoType === 'free_shipping' ? 0 : Number(deliveryData ?? 0)
+  const { data: taxRate } = await supabase
+    .from('tax_rates')
+    .select('rate_bp')
+    .eq('is_default', true)
+    .limit(1)
+    .maybeSingle()
+  const rateBp = Number((taxRate as TaxRateRow | null)?.rate_bp ?? 0)
+  const taxableMinor = Math.max(0, subtotalMinor - discountMinor)
+  const taxMinor = Math.floor((taxableMinor * rateBp) / 10000)
+  const totalMinor = Math.max(0, subtotalMinor - discountMinor) + deliveryFeeMinor + taxMinor
+
+  return {
+    ok: true,
+    subtotalMinor,
+    discountMinor,
+    deliveryFeeMinor,
+    taxMinor,
+    totalMinor,
+    promoCode: appliedPromoCode,
+    promoType,
   }
 }
 

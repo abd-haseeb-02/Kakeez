@@ -2,15 +2,27 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { Users, Mail, Phone, Calendar, Loader2, ArrowUpRight } from "lucide-react"
+import { Mail, Calendar, Loader2, ArrowUpRight } from "lucide-react"
+
+type OrderCustomerRow = {
+  customer_name: string
+  customer_email: string
+  total_amount?: number | null
+  total_minor?: number | null
+  created_at: string
+}
+
+type CustomerSummary = {
+  customer_name: string
+  customer_email: string
+  created_at: string
+  orderCount: number
+  totalSpent: number
+}
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<any[]>([])
+  const [customers, setCustomers] = useState<CustomerSummary[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchCustomers()
-  }, [])
 
   const fetchCustomers = async () => {
     setLoading(true)
@@ -21,13 +33,14 @@ export default function CustomersPage() {
       .order('created_at', { ascending: false })
 
     if (data) {
-      const byEmail = new Map<string, any>()
-      for (const order of data) {
+      const byEmail = new Map<string, CustomerSummary>()
+      for (const order of data as OrderCustomerRow[]) {
         const key = order.customer_email
         const existing = byEmail.get(key)
+        const spent = order.total_minor != null ? order.total_minor / 100 : Number(order.total_amount) || 0
         if (existing) {
           existing.orderCount += 1
-          existing.totalSpent += Number(order.total_amount) || 0
+          existing.totalSpent += spent
           // keep the earliest order date as the "joined" date
           if (new Date(order.created_at) < new Date(existing.created_at)) {
             existing.created_at = order.created_at
@@ -38,7 +51,7 @@ export default function CustomersPage() {
             customer_email: order.customer_email,
             created_at: order.created_at,
             orderCount: 1,
-            totalSpent: Number(order.total_amount) || 0,
+            totalSpent: spent,
           })
         }
       }
@@ -47,12 +60,17 @@ export default function CustomersPage() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchCustomers()
+  }, [])
+
   return (
     <div className="space-y-8">
       <div>
         <p className="admin-pill mb-3 inline-flex rounded-full px-3 py-1 ff-apfel text-[11px] uppercase tracking-[0.16em]">Customer intelligence</p>
         <h1 className="text-3xl font-bold ff-accia text-primary-brown">Customers</h1>
-        <p className="text-white/50 ff-apfel mt-1">Manage your bakery's growing community.</p>
+        <p className="text-white/50 ff-apfel mt-1">Manage your bakery&apos;s growing community.</p>
       </div>
 
       {loading ? (

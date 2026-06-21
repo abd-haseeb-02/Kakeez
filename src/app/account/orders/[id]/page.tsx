@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { use, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { formatPkr } from "@/lib/money"
@@ -38,9 +39,19 @@ type Order = {
   tax_minor: number
   delivery_fee_minor: number
   total_minor: number
-  delivery_address_snapshot: Record<string, any>
+  delivery_address_snapshot: DeliveryAddressSnapshot
   created_at: string
   order_items: OrderItem[]
+}
+
+type DeliveryAddressSnapshot = {
+  recipient_name?: string | null
+  line1?: string | null
+  line2?: string | null
+  area?: string | null
+  city?: string | null
+  postal_code?: string | null
+  instructions?: string | null
 }
 
 type HistoryEntry = {
@@ -158,8 +169,8 @@ export default function CustomerOrderDetail({ params }: { params: Promise<{ id: 
               <div key={it.id} className="py-3">
                 <div className="flex items-start gap-4">
                   {it.image_storage_path_snapshot && (
-                    <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-primary-brown/15 bg-[#ece9e2]">
-                      <img src={it.image_storage_path_snapshot} alt="" className="w-full h-full object-cover" />
+                    <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-primary-brown/15 bg-[#ece9e2]">
+                      <Image src={it.image_storage_path_snapshot} alt="" fill sizes="56px" className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

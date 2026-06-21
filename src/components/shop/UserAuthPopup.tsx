@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { X, Mail, Lock, Loader2, User, Phone, MapPin } from "lucide-react"
+import PhoneVerificationPanel from "@/components/account/PhoneVerificationPanel"
 
 const MIN_PASSWORD = 8
 
@@ -16,6 +17,8 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   const [address, setAddress] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [signupNeedsPhoneVerification, setSignupNeedsPhoneVerification] = useState(false)
+  const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false)
 
   if (!isOpen) return null
 
@@ -79,8 +82,12 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
           })
         }
       }
-      if (onSuccess) onSuccess()
-      onClose()
+      if (signupData.session) {
+        setSignupNeedsPhoneVerification(true)
+      } else {
+        setSignupNeedsEmailConfirmation(true)
+      }
+      setLoading(false)
     }
   }
 
@@ -97,12 +104,49 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
 
         <div className="p-[3vw] space-y-[2vw]">
           <div className="text-center space-y-[0.5vw]">
-            <h2 className="ff-accia text-[2.5vw] text-primary-brown">{isLogin ? "Welcome Back" : "Join Kakeez"}</h2>
+            <h2 className="ff-accia text-[2.5vw] text-primary-brown">{signupNeedsEmailConfirmation ? "Check Email" : signupNeedsPhoneVerification ? "Verify Phone" : isLogin ? "Welcome Back" : "Join Kakeez"}</h2>
             <p className="ff-colville-light text-[1vw] text-primary-brown/60">
-              {isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
+              {signupNeedsEmailConfirmation ? "Confirm your email, then sign in to verify phone" : signupNeedsPhoneVerification ? "Enter the test OTP from the server console" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
             </p>
           </div>
 
+          {signupNeedsEmailConfirmation ? (
+            <div className="space-y-4 rounded-[1vw] bg-primary-brown/5 p-4 text-center">
+              <p className="ff-apfel text-[1vw] leading-snug text-primary-brown/70">
+                We sent a confirmation link to <strong>{email}</strong>. Open it, then come back and sign in. Phone verification will happen before checkout.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSignupNeedsEmailConfirmation(false)
+                  setIsLogin(true)
+                }}
+                className="w-full rounded-[1vw] bg-primary-brown py-[1vw] ff-accia text-[1.1vw] text-white"
+              >
+                Go to Sign In
+              </button>
+            </div>
+          ) : signupNeedsPhoneVerification ? (
+            <div className="space-y-4">
+              <PhoneVerificationPanel
+                phone={phone}
+                onVerified={() => {
+                  if (onSuccess) onSuccess()
+                  onClose()
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSuccess) onSuccess()
+                  onClose()
+                }}
+                className="w-full ff-colville text-[1vw] text-primary-brown/70 underline decoration-dotted"
+              >
+                I will verify later
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleAuth} className="space-y-[1.5vw]">
             {error && (
               <div className="bg-red-50 text-red-500 p-[1vw] rounded-[1vw] text-[0.9vw] text-center ff-apfel border border-red-100">
@@ -187,8 +231,9 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
               {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? "Sign In" : "Create Account")}
             </button>
           </form>
+          )}
 
-          <div className="text-center">
+          {!signupNeedsPhoneVerification && !signupNeedsEmailConfirmation && <div className="text-center">
              <button 
                onClick={() => {
                  setIsLogin(!isLogin)
@@ -198,7 +243,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
              >
                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
              </button>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

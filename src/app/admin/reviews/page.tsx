@@ -74,7 +74,11 @@ export default function ReviewsModeration() {
     })
     setLoading(false)
   }
-  useEffect(() => { load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
 
   const moderate = async (id: string, next: 'published' | 'rejected' | 'pending') => {
     setBusyId(id)

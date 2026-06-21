@@ -130,17 +130,17 @@ Done now:
 Not done yet:
 
 - Phase 1-3 WooCommerce editor depth is not complete: global attribute
-  management, variation generation, multi-image gallery editing,
-  advanced product filters, linked products, bundles, and hierarchical
-  category management remain future work.
+  and hierarchical category management now have a dedicated `/admin/catalog`
+  screen, while variation generation, multi-image gallery editing,
+  advanced product filters, linked products, and bundles remain future work.
 - Phase 4 order management is only partially complete: realtime support
   exists, but full toast/sound notification UX, internal/customer notes,
   rider outcomes, and cash reconciliation are not complete.
 - Phase 5 CRM/RBAC is partial: staff/customer screens exist, but full
   role-specific permissions and CRM metrics remain future work.
-- Phase 6 store settings/analytics are partial: COD notice/settings UI
-  exists, but delivery zones, tax settings, reporting charts, and low
-  stock widgets remain future work.
+- Phase 6 store settings/analytics are partial: delivery zones and tax
+  settings are now editable in `/admin/settings`, while reporting charts
+  and low stock widgets remain future work.
 - Phase 7 frontend integration is partial: simple CMS-backed products
   render, but variable-product selectors, cross-sells/upsells powered by
   linked-product relationships, SEO metadata, sitemap, and server-rendered

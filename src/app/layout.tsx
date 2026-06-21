@@ -1,5 +1,27 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Playfair_Display, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+
+const accia = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-accia",
+  display: "swap",
+});
+
+const colville = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-colville",
+  display: "swap",
+});
+
+const apfel = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-apfel",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "KAKEEZ Bakeshop | Every Bite Matters",
@@ -12,12 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="en" className={`${accia.variable} ${colville.variable} ${apfel.variable}`}>
       <body>
         {children}
       </body>

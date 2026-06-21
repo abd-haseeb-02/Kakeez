@@ -99,7 +99,11 @@ export default function CouponsPage() {
     setCoupons(((cRes as CouponRow[]) ?? []).map((c) => ({ ...c, redemption_count: counts[c.id] ?? 0 })))
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const openAdd = () => { setEditing(null); setForm(DEFAULT_FORM); setShowForm(true) }
   const openEdit = (c: CouponRow) => {

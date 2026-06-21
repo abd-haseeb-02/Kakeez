@@ -8,9 +8,9 @@
     --accent-green: #e1eab4;
     --dark: #262729;
     
-    --accia: 'Accia Piano', 'Playfair Display', serif;
-    --colville: 'Colville', 'Cormorant Garamond', serif;
-    --apfel: 'Apfel Grotezk', 'Space Grotesk', sans-serif;
+    --accia: 'Accia Piano', var(--font-accia), serif;
+    --colville: 'Colville', var(--font-colville), serif;
+    --apfel: 'Apfel Grotezk', var(--font-apfel), sans-serif;
   }
 }
 

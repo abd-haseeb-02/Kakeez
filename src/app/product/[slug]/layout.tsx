@@ -25,6 +25,8 @@ interface ProductMeta {
   product_images?: { storage_path: string; position: number; is_featured: boolean }[]
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 function origin(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
@@ -34,13 +36,24 @@ function origin(): string {
 
 async function fetchProductMeta(slug: string): Promise<ProductMeta | null> {
   const supabase = await createClient()
+  const query = "id, slug, name, description, base_price_minor, rating_avg, rating_count, product_images(storage_path, position, is_featured)"
   const { data } = await supabase
     .from('products')
-    .select('id, slug, name, description, base_price_minor, rating_avg, rating_count, product_images(storage_path, position, is_featured)')
+    .select(query)
     .eq('slug', slug)
     .eq('status', 'published')
+    .is('deleted_at', null)
     .maybeSingle<ProductMeta>()
-  return data
+  if (data || !UUID_RE.test(slug)) return data
+
+  const { data: idData } = await supabase
+    .from('products')
+    .select(query)
+    .eq('id', slug)
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .maybeSingle<ProductMeta>()
+  return idData
 }
 
 export async function generateMetadata(

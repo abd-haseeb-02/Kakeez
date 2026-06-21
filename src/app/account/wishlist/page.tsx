@@ -39,7 +39,10 @@ export default function WishlistPage() {
     setItems(flat.filter((it) => it.product?.status === 'published'))
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+  }, [])
 
   const remove = async (productId: string) => {
     setBusyId(productId)

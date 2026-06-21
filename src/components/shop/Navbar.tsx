@@ -102,7 +102,7 @@ export default function Navbar() {
         {/* Central Logo */}
         <div className="absolute left-1/2 top-1/2 h-[72px] w-[52px] -translate-x-1/2 -translate-y-1/2 lg:h-[clamp(88px,6.2vw,112px)] lg:w-[clamp(62px,4.4vw,80px)]">
           <Link href="/" className="relative block h-full w-full hover:opacity-90 transition-opacity" aria-label="Kakeez home">
-            <Image src="/assets/LOGO.png" alt="Kakeez" fill className="object-contain drop-shadow-sm" priority />
+            <Image src="/assets/LOGO.png" alt="Kakeez" fill sizes="(max-width: 1024px) 52px, 80px" className="object-contain drop-shadow-sm" priority />
           </Link>
         </div>
 

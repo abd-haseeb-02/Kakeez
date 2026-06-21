@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { rupeesToMinor, formatPkr } from "@/lib/money"
 import {
@@ -89,7 +90,10 @@ export default function ProductsPage() {
   const [formData, setFormData] = useState<ProductFormData>(DEFAULT_FORM)
   const [categoryFormData, setCategoryFormData] = useState({ name: "" })
 
-  useEffect(() => { fetchInitialData() }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
+    void fetchInitialData()
+  }, [])
 
   const fetchInitialData = async () => {
     setLoading(true)
@@ -465,9 +469,9 @@ export default function ProductsPage() {
               <div className="col-span-2">
                 <label className="block text-xs text-white/30 mb-2 ff-apfel uppercase tracking-widest font-bold">Product Image</label>
                 <div className="flex gap-4 items-center">
-                  <div className="w-24 h-24 bg-white/5 rounded-2xl overflow-hidden flex items-center justify-center border border-dashed border-white/10">
+                  <div className="relative w-24 h-24 bg-white/5 rounded-2xl overflow-hidden flex items-center justify-center border border-dashed border-white/10">
                     {formData.imageUrl
-                      ? <img src={formData.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ? <Image src={formData.imageUrl} alt="" fill sizes="96px" className="object-cover" />
                       : <ImageIcon className="text-white/10" size={32} />
                     }
                   </div>
@@ -591,7 +595,7 @@ export default function ProductsPage() {
               <div key={product.id} className="admin-card rounded-2xl overflow-hidden group transition-all flex flex-col">
                 <div className="h-48 bg-white/5 relative border-b border-white/10">
                   {img
-                    ? <img src={img} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+                    ? <Image src={img} alt={product.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw" className="object-cover" />
                     : <div className="absolute inset-0 flex items-center justify-center opacity-20"><Plus size={48} /></div>
                   }
                   <div className="absolute top-3 left-3 flex flex-wrap gap-2">

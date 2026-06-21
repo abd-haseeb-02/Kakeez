@@ -7,14 +7,42 @@ import { useToast } from "@/components/ui/Toast"
 import { formatPkr } from "@/lib/money"
 import { Loader2, CheckCircle, Clock, Truck, XCircle, ExternalLink } from "lucide-react"
 
+type OrderItemSummary = {
+  id: string
+  product_name_snapshot: string
+  quantity: number
+  unit_price_minor_snapshot: number
+}
+
+type AdminOrder = {
+  id: string
+  order_number: string | null
+  customer_name: string | null
+  customer_email: string | null
+  status: string
+  total_minor: number | null
+  total_amount: number
+  created_at: string
+  order_items?: OrderItemSummary[]
+}
+
+type RealtimeOrderPayload = Partial<AdminOrder> & {
+  id: string
+  total_minor?: number | null
+  order_number?: string | null
+  customer_name?: string | null
+  status?: string
+}
+
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<any[]>([])
+  const [orders, setOrders] = useState<AdminOrder[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const toast = useToast()
 
   useEffect(() => {
-    fetchOrders()
+    // eslint-disable-next-line react-hooks/immutability
+    void fetchOrders()
 
     // Phase 3: orders list now subscribes to realtime INSERT + UPDATE so
     // status changes from elsewhere (rider RPCs, customer cancel, other
@@ -23,8 +51,18 @@ export default function OrdersPage() {
     const channel = supabase
       .channel('admin-orders-list')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-        const o = payload.new as any
-        setOrders((prev) => [{ ...o, total_amount: (o.total_minor ?? 0) / 100, order_items: [] }, ...prev])
+        const o = payload.new as RealtimeOrderPayload
+        setOrders((prev) => [{
+          id: o.id,
+          order_number: o.order_number ?? null,
+          customer_name: o.customer_name ?? null,
+          customer_email: o.customer_email ?? null,
+          status: o.status ?? 'pending_confirmation',
+          total_minor: o.total_minor ?? null,
+          total_amount: (o.total_minor ?? 0) / 100,
+          created_at: o.created_at ?? new Date().toISOString(),
+          order_items: [],
+        }, ...prev])
         toast.push({
           kind: 'info',
           title: `New order ${o.order_number ?? '#' + o.id?.slice(0, 8)}`,
@@ -32,8 +70,8 @@ export default function OrdersPage() {
         })
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
-        const next = payload.new as any
-        const prev = payload.old as any
+        const next = payload.new as RealtimeOrderPayload
+        const prev = payload.old as RealtimeOrderPayload
         setOrders((cur) => cur.map((o) => o.id === next.id ? { ...o, ...next, total_amount: (next.total_minor ?? 0) / 100 } : o))
         if (prev?.status !== next?.status) {
           toast.push({
@@ -50,7 +88,7 @@ export default function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     setLoading(true)
     // New schema: order_items now carries an immutable product_name_snapshot
     // taken at checkout, so we don't have to join back to products at all.
@@ -61,7 +99,7 @@ export default function OrdersPage() {
       .order('created_at', { ascending: false })
     if (data) {
       setOrders(
-        (data as any[]).map((o) => ({
+        (data as AdminOrder[]).map((o) => ({
           ...o,
           total_amount: (o.total_minor ?? 0) / 100,
         }))
@@ -151,7 +189,7 @@ export default function OrdersPage() {
                     <td className="px-6 py-4 ff-apfel">
                       {order.order_items?.length || 0} items
                     </td>
-                    <td className="px-6 py-4 ff-apfel text-green-400">{formatPkr((order.total_minor ?? order.total_amount * 100) ?? 0)}</td>
+                    <td className="px-6 py-4 ff-apfel text-green-400">{formatPkr(order.total_minor ?? order.total_amount * 100)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(order.status)}

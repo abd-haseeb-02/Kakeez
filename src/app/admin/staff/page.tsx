@@ -49,7 +49,12 @@ export default function StaffPage() {
     }
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+    // load uses the stable Supabase singleton and ToastProvider push function.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const setRole = async (id: string, newRole: UserRow['role']) => {
     setSavingId(id)

@@ -1,7 +1,7 @@
-# Kakeez — Build Progress
+# Kakeez â€” Build Progress
 
-**Last updated:** 2026-06-18
-**Head:** `master` after the storefront/admin UI stabilization sprint
+**Last updated:** 2026-06-21
+**Head:** current working tree after audit-continuation fixes
 **Live Supabase project:** `kakeez-bakeshop` (`crzqqvbvaguttrkzvpqh`, Postgres 17, ACTIVE_HEALTHY)
 
 This file is the single index for everything that's been built since the
@@ -24,8 +24,8 @@ The plan that drives all this is [`ECOMMERCE_CMS_PLAN.md`](./ECOMMERCE_CMS_PLAN.
 | 3     | LIVE     | `107de8b`      | [`docs/phases/PHASE_3.md`](./docs/phases/PHASE_3.md)         |
 | 4     | part 1+2 | `19b21e8` + `9216dfb` | [`docs/phases/PHASE_4.md`](./docs/phases/PHASE_4.md)  |
 | UI/admin stabilization | done | current commit | This file + `WOOCOMMERCE_CMS_PLAN.md` |
-| 5     | not started | —           | (Phase 5 plan in `ECOMMERCE_CMS_PLAN.md` §F Phase 5)         |
-| 6     | not started | —           | (Phase 6 plan in `ECOMMERCE_CMS_PLAN.md` §F Phase 6)         |
+| 5     | part 1   | current working tree | [`docs/phases/PHASE_5.md`](./docs/phases/PHASE_5.md) |
+| 6     | not started | â€”           | (Phase 6 plan in `ECOMMERCE_CMS_PLAN.md` Â§F Phase 6)         |
 
 `LIVE` means both the code is on `master` AND any required DB
 migrations have been applied to prod. `part N` means scope is split
@@ -41,9 +41,9 @@ in the phase doc.
   attribute_values**.
 - **1 admin user** (`admin@kakeez.com`) with a random Phase 3-generated
   password (see [`docs/phases/PHASE_3.md`](./docs/phases/PHASE_3.md)
-  — rotate via Studio).
-- **15 migrations** total in the repo (5 legacy + the orphan
-  `20260619000000` drift capture + 9 Phase 0–4 migrations).
+  â€” rotate via Studio).
+- **19 migrations** total in the repo, including the current Phase 5
+  checkout-economics migration.
 
 ## 2026-06-18 UI/admin stabilization sprint
 
@@ -86,30 +86,35 @@ Verified:
   product-grid panel width, and single-product width alignment at
   desktop sizes.
 
+## 2026-06-21 audit continuation
+
+Completed:
+
+- `npm run lint`, `npm run typecheck`, and `npm run build` all pass cleanly.
+- Added server-rendered `/category/[slug]` pages with metadata and sitemap coverage.
+- Wrapped product detail with a Server Component so invalid product URLs now return a real `notFound()` 404 while preserving the existing client detail experience.
+- Replaced root Google Font `<link>` tags with `next/font/google` variables.
+- Converted the remaining raw admin/account/shop image previews touched by lint to `next/image`.
+- Added server-side checkout totals preview for live product prices, active variation deltas, coupon validation, and delivery fee calculation.
+- Added `/admin/catalog` for hierarchical category management and global attributes/values.
+- Added editable delivery/tax settings in `/admin/settings`.
+- Applied the Phase 5 tax totals and notification queue migrations to the linked Supabase project.
+- Added phone OTP verification groundwork: hashed OTP storage, server actions, signup/checkout verification UI, and checkout blocking until `profiles.phone_verified_at` is set. Test OTPs are logged to the server console for now.
+- Added `/api/notifications/process` to process queued notification rows through Google SMTP and WhatsApp Cloud API once env vars are configured; dry-run mode logs messages for testing.
+
 Still not done:
 
-- `npm run lint` is still not confirmed green; lint/types cleanup
-  remains tracked as open audit work.
-- The storefront is still largely Client Component based. Product
-  `notFound()`, dynamic metadata, sitemap, server-rendered catalog
-  queries, and SEO structured data remain future work.
-- Full WooCommerce-depth CMS features are not complete: multi-image
-  galleries, variable-product editor, category/attribute management UI,
-  coupons, delivery zones, taxes, reporting, and deeper staff workflows
-  remain on the roadmap.
-- Checkout economics are still not fully server-previewed with coupons,
-  taxes, delivery zones, or delivery slots.
-- The legacy `ProductCard` component still contains absolute `vw`
-  sizing for any old caller, although the current home grid no longer
-  uses it.
+- The storefront is still partly Client Component based. Product 404 is now server-backed, but broader server-rendered catalog queries remain future work.
+- Full WooCommerce-depth CMS features are not complete: multi-image galleries, variable-product editor, linked products, bundles, reporting, and deeper staff workflows remain on the roadmap.
+- Checkout economics now have server-previewed prices/coupons/delivery/tax, order-time tax persistence, optional delivery-slot capture, and admin delivery/tax settings.
 
 ## How money flows now (Phase 1 invariants)
 
 - Cart sends ONLY `{productId, variationId, qty, options}` to the
-  server. Prices in localStorage are display-only — the
+  server. Prices in localStorage are display-only â€” the
   `create_order` RPC re-reads `products.base_price_minor +
   product_variations.price_delta_minor` from the DB.
-- `orders.payment_method` has a column-level `CHECK = 'cod'` —
+- `orders.payment_method` has a column-level `CHECK = 'cod'` â€”
   non-COD orders are rejected at the DB layer, not just the UI.
 - Order creation + line item snapshots + payment record + history
   row are wrapped in one plpgsql block. No more "1 order, 0 items"
@@ -120,47 +125,43 @@ Still not done:
 
 | AUDIT.md finding                                  | Resolved in   |
 | -------------------------------------------------- | ------------- |
-| B Critical 1 — client-trusted checkout totals      | Phase 1       |
-| B Critical 2 — committed `admin@kakeez.com` / `admin` | Phase 0 + 3 |
-| B Critical 3 — admin email hard-coded in RLS + UI  | Phase 0 + 3 + 4-2 |
-| C High — admin/checkout client-only protection     | Phase 4 part 2 (`proxy.ts`) |
-| C High — non-transactional order creation          | Phase 1       |
-| C High — RLS allows arbitrary order totals          | Phase 0 + 1   |
-| C High — image upload lacks validation             | Phase 2       |
-| C High — lint fails (32 errors)                    | NOT YET — see [`docs/AUDIT_RESOLUTION.md`](./docs/AUDIT_RESOLUTION.md) |
-| D Medium — no product slug routes                  | Phase 2       |
-| D Medium — invalid product URLs don't `notFound()` | partial — Phase 2 |
-| D Medium — no draft/published model                | Phase 0 (`products.status`) |
-| D Medium — no stock enforcement                    | partial — Phase 1 RPC supports; UI flag pending |
-| D Medium — category cascade destroys products      | Phase 0 (`ON DELETE RESTRICT`) |
-| D Medium — no payment backend                      | N/A — COD-only locked in |
-| D Medium — schema lacks constraints / indexes      | Phase 0       |
-| E Low — SEO is mostly static                       | Phase 6 (planned) |
-| E Low — `<img>` bypasses next/image                | partial — Phase 2 admin remediated |
-| E Low — fonts loaded via `<head><link>`            | Phase 6 (planned) |
+| B Critical 1 â€” client-trusted checkout totals      | Phase 1       |
+| B Critical 2 â€” committed `admin@kakeez.com` / `admin` | Phase 0 + 3 |
+| B Critical 3 â€” admin email hard-coded in RLS + UI  | Phase 0 + 3 + 4-2 |
+| C High â€” admin/checkout client-only protection     | Phase 4 part 2 (`proxy.ts`) |
+| C High â€” non-transactional order creation          | Phase 1       |
+| C High â€” RLS allows arbitrary order totals          | Phase 0 + 1   |
+| C High â€” image upload lacks validation             | Phase 2       |
+| C High - lint fails (32 errors)                    | resolved - lint exits 0 cleanly |
+| D Medium â€” no product slug routes                  | Phase 2       |
+| D Medium - invalid product URLs do not `notFound()` | resolved - current working tree |
+| D Medium â€” no draft/published model                | Phase 0 (`products.status`) |
+| D Medium â€” no stock enforcement                    | partial â€” Phase 1 RPC supports; UI flag pending |
+| D Medium â€” category cascade destroys products      | Phase 0 (`ON DELETE RESTRICT`) |
+| D Medium â€” no payment backend                      | N/A â€” COD-only locked in |
+| D Medium â€” schema lacks constraints / indexes      | Phase 0       |
+| E Low â€” SEO is mostly static                       | partial â€” product/category metadata + sitemap |
+| E Low - `<img>` bypasses next/image                | resolved - current working tree |
+| E Low - fonts loaded via `<head><link>`            | resolved - current working tree |
 
 Full mapping with commit references and remediation notes in
 [`docs/AUDIT_RESOLUTION.md`](./docs/AUDIT_RESOLUTION.md).
 
 ## What's next
 
-Phase 5 — Checkout Economics, per
+Phase 5 - Checkout Economics, per
 [`ECOMMERCE_CMS_PLAN.md`](./ECOMMERCE_CMS_PLAN.md):
 
-- Server-side coupon validation/redemption (replaces the client
-  `PROMOS` dict still in `checkout/page.tsx`).
-- Real tax rates and delivery zones/methods with city-aware lookup
-  (currently `create_order` reads the first active method = flat
-  PKR 99 Karachi).
-- Optional delivery time slots.
-- Transactional emails via Resend Edge Function (order_confirmed,
-  status updates, password reset polishing).
+- Server-side checkout preview now covers product prices, active variation deltas, coupon validation, delivery fee calculation, and configured default tax.
+- `create_order` now persists configured tax totals through the Phase 5 tax migration.
+- Notification queueing and sender route are wired. Remaining: add real Google SMTP and WhatsApp Cloud API credentials, then set `NOTIFICATIONS_DRY_RUN=false`.
+- Next implementation slice: product variation editor and multi-image gallery.
 - Phone OTP first-order COD (Twilio Verify) per G.X.4.
-- Server-side password policy bump (Supabase project setting → ≥8).
+- Server-side password policy bump (Supabase project setting -> >=8).
 - Email verification flip in `config.toml`.
 
 Beyond that, Phase 6 covers reviews, wishlist, search, reporting,
-SEO, accessibility — also fully scoped in the plan.
+SEO, accessibility - also fully scoped in the plan.
 
 ## Working with this branch
 
@@ -169,7 +170,7 @@ SEO, accessibility — also fully scoped in the plan.
 npm install      # picks up @supabase/ssr + server-only added in Phase 0
 npm run dev      # next dev (Turbopack, port 3000)
 
-# Push a new migration (Phase 0+ convention — repo is source of truth)
+# Push a new migration (Phase 0+ convention â€” repo is source of truth)
 npx supabase migration new <slug>
 # edit supabase/migrations/<ts>_<slug>.sql
 npx supabase db push --include-all --linked
@@ -180,4 +181,4 @@ npm run build
 
 The CLI is already linked to `crzqqvbvaguttrkzvpqh`. The Windows
 silent-pg_dump bug is documented in
-[`docs/phases/PHASE_0.md`](./docs/phases/PHASE_0.md) §Workarounds.
+[`docs/phases/PHASE_0.md`](./docs/phases/PHASE_0.md) Â§Workarounds.

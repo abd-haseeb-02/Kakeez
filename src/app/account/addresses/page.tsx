@@ -65,7 +65,10 @@ export default function AddressesPage() {
     setAddresses((data as AddressRow[]) ?? [])
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load()
+  }, [])
 
   const openAdd = () => {
     setEditing(null)

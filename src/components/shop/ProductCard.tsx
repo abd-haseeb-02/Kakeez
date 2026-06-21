@@ -52,7 +52,7 @@ export default function ProductCard({
   
   const renderImage = () => (
     <div className="absolute inset-[0.0755vw] bottom-[12.15vw] bg-[#ece9e2] rounded-t-[0.9053vw] overflow-hidden pointer-events-none">
-      <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+      <Image src={imageUrl} alt={name} fill sizes="27vw" className="object-cover" />
     </div>
   )
 

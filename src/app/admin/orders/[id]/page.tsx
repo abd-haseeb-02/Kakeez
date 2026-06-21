@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, use } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/Toast"
 import { formatPkr } from "@/lib/money"
@@ -52,7 +53,7 @@ type OrderRow = {
   total_minor: number
   currency: string
   coupon_code: string | null
-  delivery_address_snapshot: Record<string, any>
+  delivery_address_snapshot: DeliveryAddressSnapshot
   delivery_slot_date: string | null
   delivery_slot_window: string | null
   created_at: string
@@ -80,6 +81,16 @@ type PaymentRow = {
 }
 
 type Transition = { from_status: string; to_status: string }
+
+type DeliveryAddressSnapshot = {
+  recipient_name?: string | null
+  line1?: string | null
+  line2?: string | null
+  area?: string | null
+  city?: string | null
+  postal_code?: string | null
+  instructions?: string | null
+}
 
 function statusBadgeColor(status: string): string {
   switch (status) {
@@ -152,7 +163,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   useEffect(() => {
-    fetchAll()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAll()
     // Realtime: keep this page in sync if another admin tab moves the order.
     const channel = supabase
       .channel(`admin-order-${id}`)
@@ -300,8 +312,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               {order.order_items.map((item) => (
                 <div key={item.id} className="py-3 flex items-start gap-4">
                   {item.image_storage_path_snapshot && (
-                    <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-white/5 border border-white/10">
-                      <img src={item.image_storage_path_snapshot} alt="" className="w-full h-full object-cover" />
+                    <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                      <Image src={item.image_storage_path_snapshot} alt="" fill sizes="56px" className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

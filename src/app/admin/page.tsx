@@ -13,8 +13,27 @@ import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/Toast"
 import { formatPkr } from "@/lib/money"
 
+type DashboardOrder = {
+  id: string
+  order_number: string | null
+  customer_name: string | null
+  customer_email: string | null
+  status: string
+  total_minor: number | null
+  total_amount: number
+  created_at: string
+  order_items?: { id: string }[]
+}
+
+type RealtimeDashboardOrder = Partial<DashboardOrder> & {
+  id: string
+  total_minor?: number | null
+  order_number?: string | null
+  customer_name?: string | null
+}
+
 export default function AdminDashboard() {
-  const [liveOrders, setLiveOrders] = useState<any[]>([])
+  const [liveOrders, setLiveOrders] = useState<DashboardOrder[]>([])
   const toast = useToast()
   const [stats, setStats] = useState([
     { label: "Total Revenue", value: "Rs. 0", icon: DollarSign, trend: "Live", color: "text-green-400" },
@@ -24,7 +43,8 @@ export default function AdminDashboard() {
   ])
 
   useEffect(() => {
-    fetchDashboardData()
+    // eslint-disable-next-line react-hooks/immutability
+    void fetchDashboardData()
 
     // Subscribe to Realtime changes
     const channel = supabase
@@ -34,9 +54,17 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           // Project the realtime payload to the legacy render shape.
+          const nextOrder = payload.new as RealtimeDashboardOrder
           const projected = {
-            ...(payload.new as any),
-            total_amount: ((payload.new as any).total_minor ?? 0) / 100,
+            id: nextOrder.id,
+            order_number: nextOrder.order_number ?? null,
+            customer_name: nextOrder.customer_name ?? null,
+            customer_email: nextOrder.customer_email ?? null,
+            status: nextOrder.status ?? 'pending_confirmation',
+            total_minor: nextOrder.total_minor ?? null,
+            total_amount: (nextOrder.total_minor ?? 0) / 100,
+            created_at: nextOrder.created_at ?? new Date().toISOString(),
+            order_items: [],
           }
           setLiveOrders(prev => [projected, ...prev].slice(0, 10))
           toast.push({
@@ -44,7 +72,7 @@ export default function AdminDashboard() {
             title: `New order ${projected.order_number ?? '#' + projected.id?.slice(0, 8)}`,
             body: `${formatPkr(projected.total_minor ?? 0)} — ${projected.customer_name ?? 'customer'}`,
           })
-          fetchDashboardData() // Refresh stats on new order
+          void fetchDashboardData() // Refresh stats on new order
         }
       )
       .subscribe()
@@ -52,9 +80,11 @@ export default function AdminDashboard() {
     return () => {
       supabase.removeChannel(channel)
     }
+    // toast comes from the ToastProvider and fetchDashboardData is the initial/realtime refresh routine.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
     const [ordersRes, productsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(id)').order('created_at', { ascending: false }),
       supabase.from('products').select('id', { count: 'exact' })
@@ -63,7 +93,7 @@ export default function AdminDashboard() {
     if (ordersRes.data) {
       // New schema: total_minor (paisa, integer). Project to total_amount
       // (rupees, number) so the existing render code stays the same.
-      const orders = (ordersRes.data as any[]).map((o) => ({
+      const orders = (ordersRes.data as DashboardOrder[]).map((o) => ({
         ...o,
         total_amount: (o.total_minor ?? 0) / 100,
       }))

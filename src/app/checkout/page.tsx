@@ -7,18 +7,50 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
+import PhoneVerificationPanel from "@/components/account/PhoneVerificationPanel"
 import { Loader2, CheckCircle, Minus, Plus, Trash2, ChevronLeft, ChevronRight, Banknote, Gift } from "lucide-react"
-import { placeOrder } from "./actions"
+import { placeOrder, previewCheckout, type CheckoutCartLine, type CheckoutPreviewResult } from "./actions"
 
 // Estimated delivery — server (delivery_methods) is the source of truth at
 // checkout. This is purely for the right-side summary preview.
-const DELIVERY_CHARGE = 99
+const FALLBACK_DELIVERY_MINOR = 9900
+
+type CheckoutUser = {
+  id: string
+  email?: string
+  user_metadata?: {
+    full_name?: string
+    phone?: string
+    address?: string
+  }
+}
+
+type ProductImageRow = {
+  storage_path: string
+  position: number
+  is_featured: boolean
+}
+
+type PopularProductRow = {
+  id: string
+  name: string
+  base_price_minor: number | null
+  description: string | null
+  is_best_seller?: boolean | null
+  product_images?: ProductImageRow[]
+}
+
+type PopularProduct = PopularProductRow & {
+  image_url: string | null
+  price: number
+}
 
 export default function CheckoutPage() {
   const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<CheckoutUser | null>(null)
+  const [phoneVerified, setPhoneVerified] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
   const router = useRouter()
 
@@ -27,13 +59,15 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("+92")
   const [email, setEmail] = useState("")
   const [address, setAddress] = useState("")
+  const [deliveryDate, setDeliveryDate] = useState("")
+  const [deliveryWindow, setDeliveryWindow] = useState("")
   const [isGift, setIsGift] = useState(false)
   const [instructions, setInstructions] = useState("")
   // Payment method is locked to COD at launch (see ECOMMERCE_CMS_PLAN.md §G.X).
   // The schema is shaped so adding JazzCash/Easypaisa later is additive.
 
   // summary state
-  const [popular, setPopular] = useState<any[]>([])
+  const [popular, setPopular] = useState<PopularProduct[]>([])
   const [popIndex, setPopIndex] = useState(0)
   const [promo, setPromo] = useState("")
   // Server-validated coupon — Phase 5. Carries the discount_minor returned
@@ -42,6 +76,15 @@ export default function CheckoutPage() {
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountMinor: number } | null>(null)
   const [promoMsg, setPromoMsg] = useState("")
   const [applyingPromo, setApplyingPromo] = useState(false)
+  const [preview, setPreview] = useState<CheckoutPreviewResult | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+
+  const cartForServer = (): CheckoutCartLine[] => items.map((item) => ({
+    productId: item.id,
+    variationId: item.variationId ?? null,
+    quantity: item.quantity,
+    customMessage: item.customMessage,
+  }))
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,6 +97,13 @@ export default function CheckoutPage() {
         setEmail(session.user.email || "")
         if (session.user.user_metadata?.phone) setPhone(session.user.user_metadata.phone)
         if (session.user.user_metadata?.address) setAddress(session.user.user_metadata.address)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('phone_e164, phone_verified_at')
+          .eq('id', session.user.id)
+          .maybeSingle()
+        if (profile?.phone_e164) setPhone(profile.phone_e164)
+        setPhoneVerified(Boolean(profile?.phone_verified_at))
       }
       setAuthChecking(false)
     }
@@ -72,8 +122,8 @@ export default function CheckoutPage() {
       .then(({ data }) => {
         if (data) {
           setPopular(
-            (data as any[]).map((p) => {
-              const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+            (data as PopularProductRow[]).map((p) => {
+              const hero = p.product_images?.find((i) => i.is_featured) ?? p.product_images?.[0]
               return {
                 ...p,
                 image_url: hero?.storage_path ?? null,
@@ -85,10 +135,65 @@ export default function CheckoutPage() {
       })
   }, [])
 
-  const subtotal = totalPrice()
-  const discount = appliedPromo ? appliedPromo.discountMinor / 100 : 0
-  const delivery = items.length > 0 ? DELIVERY_CHARGE : 0
-  const grandTotal = Math.max(0, subtotal - discount) + delivery
+  const refreshPreview = async (code = appliedPromo?.code ?? "", showPromoMessage = false) => {
+    if (items.length === 0) {
+      setPreview({ ok: true, subtotalMinor: 0, discountMinor: 0, deliveryFeeMinor: 0, taxMinor: 0, totalMinor: 0, promoCode: null, promoType: null })
+      return
+    }
+
+    setPreviewLoading(true)
+    const result = await previewCheckout({
+      cart: cartForServer(),
+      address: {
+        recipient_name: name,
+        phone_e164: phone,
+        line1: address,
+        city: "Karachi",
+        instructions,
+        delivery_slot_date: deliveryDate,
+        delivery_slot_window: deliveryWindow,
+      },
+      promoCode: code || undefined,
+    })
+    setPreview(result)
+    setPreviewLoading(false)
+
+    if (!result.ok) {
+      setPromoMsg(result.message)
+      if (result.code === 'invalid_coupon' || result.code === 'coupon_error') {
+        setAppliedPromo(null)
+      }
+      return
+    }
+
+    if (result.promoCode) {
+      setAppliedPromo({ code: result.promoCode, discountMinor: result.discountMinor })
+      if (showPromoMessage) {
+        setPromoMsg(
+          result.promoType === 'free_shipping'
+            ? `Promo ${result.promoCode} applied - free delivery!`
+            : `Promo ${result.promoCode} applied - Rs. ${(result.discountMinor / 100).toFixed(2)} off!`
+        )
+      }
+    } else if (!code) {
+      setAppliedPromo(null)
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshPreview(appliedPromo?.code ?? "")
+    }, 250)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, name, phone, address, instructions, deliveryDate, deliveryWindow])
+
+  const previewOk = preview?.ok ? preview : null
+  const subtotal = previewOk ? previewOk.subtotalMinor / 100 : totalPrice()
+  const discount = previewOk ? previewOk.discountMinor / 100 : appliedPromo ? appliedPromo.discountMinor / 100 : 0
+  const delivery = previewOk ? previewOk.deliveryFeeMinor / 100 : items.length > 0 ? FALLBACK_DELIVERY_MINOR / 100 : 0
+  const tax = previewOk ? previewOk.taxMinor / 100 : 0
+  const grandTotal = previewOk ? previewOk.totalMinor / 100 : Math.max(0, subtotal - discount) + delivery + tax
 
   // Phase 5: real coupon validation. Calls validate_coupon_for_cart RPC
   // which gates on status / window / min_order / per-user limits, etc.
@@ -101,30 +206,9 @@ export default function CheckoutPage() {
 
     setApplyingPromo(true)
     setPromoMsg("")
-    const subtotalMinor = Math.round(subtotal * 100)
-    const { data, error } = await supabase.rpc('validate_coupon_for_cart', {
-      p_code: code,
-      p_subtotal_minor: subtotalMinor,
-    })
+    await refreshPreview(code, true)
     setApplyingPromo(false)
 
-    if (error) {
-      setAppliedPromo(null)
-      setPromoMsg(error.message ?? 'Could not check that code.')
-      return
-    }
-    const row = (data as { code: string; type: string; discount_minor: number }[] | null)?.[0]
-    if (!row) {
-      setAppliedPromo(null)
-      setPromoMsg("Invalid or expired promo code.")
-      return
-    }
-    setAppliedPromo({ code: row.code, discountMinor: row.discount_minor })
-    setPromoMsg(
-      row.type === 'free_shipping'
-        ? `Promo ${row.code} applied — free delivery!`
-        : `Promo ${row.code} applied — Rs. ${(row.discount_minor / 100).toFixed(2)} off!`
-    )
   }
 
   const handleEditAddress = () => {
@@ -134,6 +218,10 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!user || items.length === 0) return
+    if (!phoneVerified) {
+      setPromoMsg("Please verify your phone number before placing the order.")
+      return
+    }
     setLoading(true)
     setPromoMsg("")
 
@@ -141,12 +229,7 @@ export default function CheckoutPage() {
     // re-reads prices from products/variations — see ECOMMERCE_CMS_PLAN.md
     // §G.X.1. Any localStorage edit a user might have made to `price` is
     // ignored on the server.
-    const cart = items.map((item) => ({
-      productId: item.id,
-      variationId: item.variationId ?? null,
-      quantity: item.quantity,
-      customMessage: item.customMessage,
-    }))
+    const cart = cartForServer()
 
     const result = await placeOrder({
       cart,
@@ -156,6 +239,8 @@ export default function CheckoutPage() {
         line1: address,
         city: "Karachi",
         instructions,
+        delivery_slot_date: deliveryDate,
+        delivery_slot_window: deliveryWindow,
       },
       promoCode: appliedPromo?.code,
       isGift,
@@ -235,6 +320,30 @@ export default function CheckoutPage() {
             </div>
             {address && (
               <p className="mt-2 line-clamp-2 pl-1 ff-accia-light text-[clamp(14px,0.95vw,16px)] text-black/70">Address: {address}</p>
+            )}
+
+            {/* Delivery slot */}
+            <div className="mt-4 grid gap-4 md:grid-cols-2 lg:mt-[clamp(14px,1.1vw,22px)] lg:gap-[clamp(12px,0.8vw,18px)]">
+              <div className="space-y-2 lg:space-y-[clamp(6px,0.5vw,10px)]">
+                <label className={labelCls}>Delivery Date</label>
+                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={inputCls} />
+              </div>
+              <div className="space-y-2 lg:space-y-[clamp(6px,0.5vw,10px)]">
+                <label className={labelCls}>Delivery Window</label>
+                <select value={deliveryWindow} onChange={(e) => setDeliveryWindow(e.target.value)} className={inputCls}>
+                  <option value="">Any time</option>
+                  <option value="10:00 AM - 1:00 PM">10:00 AM - 1:00 PM</option>
+                  <option value="1:00 PM - 4:00 PM">1:00 PM - 4:00 PM</option>
+                  <option value="4:00 PM - 7:00 PM">4:00 PM - 7:00 PM</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Send as a gift */}
+            {!phoneVerified && (
+              <div className="mt-5">
+                <PhoneVerificationPanel phone={phone} onVerified={() => setPhoneVerified(true)} />
+              </div>
             )}
 
             {/* Send as a gift */}
@@ -325,7 +434,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <h4 className="line-clamp-2 ff-accia text-[15px] leading-[1.0] text-black lg:text-[clamp(13px,0.85vw,15px)]">{p.name}</h4>
-                          <button onClick={() => addItem({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description })} className="self-start rounded-[6px] bg-accent-green px-2 py-1 ff-accia-light text-[13px] text-primary-brown lg:rounded-[clamp(5px,0.3vw,7px)] lg:px-[clamp(8px,0.5vw,10px)] lg:py-[clamp(2px,0.15vw,4px)] lg:text-[clamp(12px,0.75vw,14px)]">Rs. {Number(p.price).toFixed(2)}</button>
+                          <button onClick={() => addItem({ id: p.id, name: p.name, price: p.price, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description ?? undefined })} className="self-start rounded-[6px] bg-accent-green px-2 py-1 ff-accia-light text-[13px] text-primary-brown lg:rounded-[clamp(5px,0.3vw,7px)] lg:px-[clamp(8px,0.5vw,10px)] lg:py-[clamp(2px,0.15vw,4px)] lg:text-[clamp(12px,0.75vw,14px)]">Rs. {Number(p.price).toFixed(2)}</button>
                         </div>
                       </div>
                     ))}
@@ -344,16 +453,19 @@ export default function CheckoutPage() {
 
             {/* Totals */}
             <div className="mt-4 space-y-2 lg:mt-[clamp(12px,1vw,20px)] lg:space-y-[clamp(5px,0.4vw,8px)]">
+              {previewLoading && <p className="ff-accia-light text-[13px] text-black/50">Refreshing server totals...</p>}
+              {preview && !preview.ok && <p className="ff-accia-light text-[13px] text-red-500">{preview.message}</p>}
               <div className="flex justify-between"><span className="ff-accia-light text-[17px] capitalize text-black lg:text-[clamp(16px,1.1vw,20px)]">Subtotal</span><span className="ff-accia-light text-[17px] text-black lg:text-[clamp(16px,1.1vw,20px)]">Rs.{subtotal.toFixed(2)}</span></div>
               {discount > 0 && <div className="flex justify-between"><span className="ff-accia-light text-[17px] capitalize text-green-700 lg:text-[clamp(16px,1.1vw,20px)]">Discount</span><span className="ff-accia-light text-[17px] text-green-700 lg:text-[clamp(16px,1.1vw,20px)]">- Rs.{discount.toFixed(2)}</span></div>}
               <div className="flex justify-between"><span className="ff-accia-light text-[17px] capitalize text-black lg:text-[clamp(16px,1.1vw,20px)]">Delivery charges</span><span className="ff-accia-light text-[17px] text-black lg:text-[clamp(16px,1.1vw,20px)]">Rs{delivery.toFixed(2)}</span></div>
+              {tax > 0 && <div className="flex justify-between"><span className="ff-accia-light text-[17px] capitalize text-black lg:text-[clamp(16px,1.1vw,20px)]">Tax</span><span className="ff-accia-light text-[17px] text-black lg:text-[clamp(16px,1.1vw,20px)]">Rs{tax.toFixed(2)}</span></div>}
               <div className="flex justify-between pt-1 lg:pt-[clamp(4px,0.3vw,6px)]"><span className="ff-accia-medium text-[19px] text-black lg:text-[clamp(18px,1.2vw,22px)]">Grand total</span><span className="ff-accia-medium text-[19px] text-black lg:text-[clamp(18px,1.2vw,22px)]">Rs. {grandTotal.toFixed(2)}</span></div>
             </div>
 
             {/* Place order */}
             <button
               onClick={handlePlaceOrder}
-              disabled={loading || items.length === 0}
+              disabled={loading || items.length === 0 || !phoneVerified}
               className="mt-5 flex h-12 w-full items-center justify-center rounded-[10px] bg-primary-brown transition-all hover:bg-primary-brown/90 disabled:opacity-50 lg:mt-[clamp(16px,1.2vw,24px)] lg:h-[clamp(44px,2.83vw,56px)] lg:rounded-[clamp(8px,0.6vw,12px)]"
             >
               {loading ? <Loader2 className="animate-spin text-white" size={20} /> : <span className="ff-accia text-[20px] text-white lg:text-[clamp(20px,1.4vw,24px)]">Place Order</span>}

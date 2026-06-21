@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number>(0)
+  const [showSaved, setShowSaved] = useState(false)
   const [error, setError] = useState<string>("")
 
   // Password change
@@ -50,12 +51,19 @@ export default function ProfilePage() {
         .eq('id', session.user.id)
       if (upErr) throw upErr
       setSavedAt(Date.now())
+      setShowSaved(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save.')
     } finally {
       setSaving(false)
     }
   }
+
+  useEffect(() => {
+    if (!savedAt) return
+    const timeout = window.setTimeout(() => setShowSaved(false), 5000)
+    return () => window.clearTimeout(timeout)
+  }, [savedAt])
 
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,7 +107,7 @@ export default function ProfilePage() {
           >
             {saving ? <Loader2 className="animate-spin inline" size={16} /> : 'Save changes'}
           </button>
-          {savedAt > 0 && Date.now() - savedAt < 5000 && (
+          {showSaved && (
             <span className="ff-apfel text-sm text-emerald-600 flex items-center gap-1.5"><Check size={14} /> Saved</span>
           )}
         </div>

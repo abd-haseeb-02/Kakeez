@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   Users,
   Settings,
+  FolderTree,
   ShieldCheck,
   Tag,
   Star,
@@ -83,6 +84,7 @@ export default function AdminLayout({
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
     { icon: Package, label: "Products", href: "/admin/products" },
+    { icon: FolderTree, label: "Catalog", href: "/admin/catalog" },
     { icon: ShoppingBag, label: "Orders", href: "/admin/orders" },
     { icon: Tag, label: "Coupons", href: "/admin/coupons" },
     { icon: Star, label: "Reviews", href: "/admin/reviews" },

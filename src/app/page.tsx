@@ -23,13 +23,39 @@ const CATEGORY_ICONS = {
   cupcakes: cupcakesIcon,
 }
 
+type CategoryRow = {
+  id: string
+  name: string
+  slug?: string | null
+}
+
+type ProductImageRow = {
+  storage_path: string
+  position: number
+  is_featured: boolean
+}
+
+type CategoryProductRow = {
+  id: string
+  slug: string | null
+  name: string
+  description: string | null
+  base_price_minor: number | null
+  product_images?: ProductImageRow[]
+}
+
+type HomeProduct = CategoryProductRow & {
+  image_url: string | null
+  price: number
+}
+
 function getCategoryIcon(name: string) {
   return CATEGORY_ICONS[name.trim().toLowerCase() as keyof typeof CATEGORY_ICONS]
 }
 
 export default function Home() {
-  const [categories, setCategories] = useState<any[]>([])
-  const [productsByCategory, setProductsByCategory] = useState<Record<string, any[]>>({})
+  const [categories, setCategories] = useState<CategoryRow[]>([])
+  const [productsByCategory, setProductsByCategory] = useState<Record<string, HomeProduct[]>>({})
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -59,7 +85,7 @@ export default function Home() {
         // image_url + price columns are gone (base_price_minor in paisa now,
         // image in product_images). We project back to the legacy shape so
         // ProductCard stays unchanged this phase — Phase 2 revamps the cards.
-        const productsMap: Record<string, any[]> = {}
+        const productsMap: Record<string, HomeProduct[]> = {}
         const initialCounts: Record<string, number> = {}
         for (const cat of orderedCategories) {
           const { data: prodData } = await supabase
@@ -70,8 +96,8 @@ export default function Home() {
             .order('created_at', { ascending: false })
 
           if (prodData) {
-            productsMap[cat.id] = prodData.map((p: any) => {
-              const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+            productsMap[cat.id] = (prodData as CategoryProductRow[]).map((p) => {
+              const hero = p.product_images?.find((i) => i.is_featured) ?? p.product_images?.[0]
               return {
                 ...p,
                 image_url: hero?.storage_path ?? null,
@@ -183,6 +209,16 @@ export default function Home() {
                     <h3 className="ff-accia text-center text-[clamp(34px,4vw,62px)] uppercase leading-none text-primary-brown">
                       {layout.category.name}
                     </h3>
+                    {layout.category.slug && (
+                      <div className="mt-3 flex justify-center">
+                        <Link
+                          href={`/category/${layout.category.slug}`}
+                          className="ff-apfel text-sm uppercase tracking-[0.12em] text-primary-brown/70 underline-offset-4 transition-colors hover:text-primary-brown hover:underline"
+                        >
+                          View all {layout.category.name}
+                        </Link>
+                      </div>
+                    )}
                     <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                       {layout.products.map((product) => (
                         <article
@@ -208,7 +244,7 @@ export default function Home() {
                               </Link>
                               <button
                                 type="button"
-                                onClick={() => addItem({ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description })}
+                                onClick={() => addItem({ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description ?? undefined })}
                                 className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary-brown px-3 ff-accia text-[15px] uppercase text-white transition-colors hover:bg-primary-brown/90"
                               >
                                 <ShoppingCart className="h-4 w-4" /> Add
@@ -228,6 +264,16 @@ export default function Home() {
                         >
                           View More {layout.category.name}
                         </button>
+                      </div>
+                    )}
+                    {!layout.hasMore && layout.category.slug && layout.products.length > 0 && (
+                      <div className="mt-7 flex justify-center">
+                        <Link
+                          href={`/category/${layout.category.slug}`}
+                          className="rounded-[8px] border border-primary-brown bg-white px-6 py-3 ff-accia text-[16px] uppercase tracking-[0.02em] text-primary-brown transition-opacity hover:opacity-75"
+                        >
+                          Open {layout.category.name}
+                        </Link>
                       </div>
                     )}
                   </section>

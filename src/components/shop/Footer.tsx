@@ -8,6 +8,8 @@ type FooterProps = {
 }
 
 export default function Footer(_props: FooterProps) {
+  void _props
+
   return (
     <footer className="relative z-20 mx-auto w-[calc(100%_-_32px)] max-w-[1390px] overflow-hidden border border-white bg-[#e1eab4] px-[clamp(22px,4.4vw,72px)] py-[clamp(24px,2.8vw,42px)] text-[#936939]">
       <div className="grid gap-[clamp(24px,4vw,64px)] md:grid-cols-[1.35fr_0.65fr_0.65fr_0.8fr]">

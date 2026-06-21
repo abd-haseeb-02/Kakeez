@@ -18,6 +18,20 @@ type PopularProduct = {
   description: string | null
 }
 
+type ProductImageRow = {
+  storage_path: string
+  position: number
+  is_featured: boolean
+}
+
+type PopularProductRow = {
+  id: string
+  name: string
+  base_price_minor: number | null
+  description: string | null
+  product_images?: ProductImageRow[]
+}
+
 export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const { items, addItem, removeItem, updateQuantity, totalPrice, clearCart } = useCart()
   const [loadingCheckout, setLoadingCheckout] = useState(false)
@@ -42,8 +56,8 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
 
       if (data) {
         setPopular(
-          (data as any[]).map((p) => {
-            const hero = p.product_images?.find((i: any) => i.is_featured) ?? p.product_images?.[0]
+          (data as PopularProductRow[]).map((p) => {
+            const hero = p.product_images?.find((i) => i.is_featured) ?? p.product_images?.[0]
             return {
               id: p.id,
               name: p.name,
