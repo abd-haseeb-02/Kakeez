@@ -56,29 +56,30 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#fffdf7]">
         <Loader2 className="animate-spin text-primary-brown" size={32} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fffdf7] text-primary-brown">
       <Navbar />
 
-      <main className="pt-[clamp(122px,8.8vw,150px)] pb-20">
-        <div className="mx-auto w-[min(1180px,calc(100vw-40px))]">
-          <div className="mb-8">
-            <h1 className="ff-accia text-[clamp(34px,3vw,48px)] text-primary-brown leading-[1.02]">
+      <main className="pb-20 pt-[clamp(122px,8.8vw,150px)]">
+        <div className="mx-auto w-[min(1390px,calc(100%_-_32px))]">
+          <div className="mb-8 rounded-[18px] border border-primary-brown/10 bg-accent-green/55 px-5 py-6 sm:px-8">
+            <p className="ff-colville text-[15px] uppercase tracking-[0.12em] text-primary-brown/65">My account</p>
+            <h1 className="ff-accia mt-2 text-[clamp(38px,5vw,72px)] leading-[0.95] text-primary-brown">
               {profileName ? `Welcome, ${profileName.split(' ')[0]}` : 'Your account'}
             </h1>
-            <p className="ff-accia-light text-[clamp(13px,0.95vw,15px)] text-black/50 mt-1">
+            <p className="ff-colville-light mt-3 text-[clamp(14px,1vw,16px)] text-primary-brown/70">
               {profileEmail}
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-[220px_1fr]">
-            <aside className="space-y-1">
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+            <aside className="h-fit rounded-[16px] border border-primary-brown/10 bg-white/70 p-2 shadow-sm">
               {SECTIONS.map((s) => {
                 const isActive = pathname === s.href || (s.href !== '/account' && pathname.startsWith(s.href))
                 const Icon = s.icon
@@ -86,10 +87,10 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   <Link
                     key={s.href}
                     href={s.href}
-                    className={`flex items-center gap-3 rounded-lg px-4 py-2.5 ff-apfel text-sm transition-all ${
+                    className={`flex items-center gap-3 rounded-[10px] px-4 py-3 ff-colville text-[16px] transition-all ${
                       isActive
                         ? 'bg-primary-brown text-white'
-                        : 'text-black/70 hover:bg-primary-brown/5'
+                        : 'text-primary-brown/75 hover:bg-accent-green/55 hover:text-primary-brown'
                     }`}
                   >
                     <Icon size={16} />
@@ -99,7 +100,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               })}
               <button
                 onClick={signOut}
-                className="flex items-center gap-3 rounded-lg px-4 py-2.5 ff-apfel text-sm transition-all text-red-500 hover:bg-red-50 w-full text-left mt-4"
+                className="mt-2 flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left ff-colville text-[16px] text-red-600 transition-all hover:bg-red-50"
               >
                 <LogOut size={16} />
                 Sign out

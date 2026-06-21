@@ -49,10 +49,10 @@ export default function OrdersHistory() {
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-2xl border border-primary-brown/15 bg-accent-green/30 p-8 text-center">
-        <p className="ff-accia text-[clamp(20px,1.4vw,26px)] text-primary-brown">No orders yet.</p>
-        <p className="ff-accia-light text-sm text-black/60 mt-2">When you place your first order it&apos;ll appear here.</p>
-        <Link href="/" className="inline-flex items-center gap-2 mt-4 bg-primary-brown text-white px-5 py-2.5 rounded-lg ff-apfel hover:bg-primary-brown/90 transition-all">
+      <div className="rounded-[16px] border border-primary-brown/10 bg-accent-green/45 p-8 text-center">
+        <p className="ff-accia text-[clamp(24px,2.3vw,34px)] leading-none text-primary-brown">No orders yet.</p>
+        <p className="ff-colville-light mt-2 text-[15px] text-primary-brown/65">When you place your first order it&apos;ll appear here.</p>
+        <Link href="/" className="mt-5 inline-flex h-11 items-center gap-2 rounded-[10px] bg-primary-brown px-5 ff-accia text-[17px] text-white transition-colors hover:bg-primary-brown/90">
           Browse the menu <ArrowRight size={14} />
         </Link>
       </div>
@@ -61,29 +61,29 @@ export default function OrdersHistory() {
 
   return (
     <div className="space-y-3">
-      <h2 className="ff-accia text-[clamp(22px,1.6vw,28px)] text-primary-brown mb-2">Your orders</h2>
+      <h2 className="mb-3 ff-accia text-[clamp(32px,3vw,48px)] leading-none text-primary-brown">Your orders</h2>
       {orders.map((o) => (
         <Link
           key={o.id}
           href={`/account/orders/${o.id}`}
-          className="block rounded-2xl border border-primary-brown/15 bg-white p-5 hover:border-primary-brown/40 transition-all"
+          className="block rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm transition-all hover:border-primary-brown/35 hover:bg-white"
         >
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="ff-accia text-primary-brown text-lg">{o.order_number}</p>
-              <p className="ff-apfel text-xs text-black/40">{new Date(o.created_at).toLocaleString()}</p>
-              <p className="ff-accia-light text-sm text-black/70 mt-2 line-clamp-2">
+              <p className="ff-accia text-[24px] leading-none text-primary-brown">{o.order_number}</p>
+              <p className="mt-1 ff-colville-light text-sm text-primary-brown/55">{new Date(o.created_at).toLocaleString()}</p>
+              <p className="mt-2 line-clamp-2 ff-colville-light text-sm text-primary-brown/65">
                 {o.order_items && o.order_items.length > 0
                   ? o.order_items.map((it) => `${it.quantity}× ${it.product_name_snapshot}`).join(' · ')
                   : 'No items.'}
               </p>
             </div>
-            <div className="text-right shrink-0 space-y-1">
+            <div className="shrink-0 space-y-1 text-right">
               <span className={`inline-block ff-apfel text-xs px-2.5 py-1 rounded-full capitalize ${statusColor(o.status)}`}>
                 {o.status.replace(/_/g, ' ')}
               </span>
-              <p className="ff-accia text-primary-brown text-lg">{formatPkr(o.total_minor)}</p>
-              <p className="ff-apfel text-xs text-black/40 capitalize">{o.payment_status}</p>
+              <p className="ff-accia text-[22px] leading-none text-primary-brown">{formatPkr(o.total_minor)}</p>
+              <p className="ff-colville-light text-xs capitalize text-primary-brown/55">{o.payment_status}</p>
             </div>
           </div>
         </Link>

@@ -90,8 +90,11 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={saveProfile} className="rounded-2xl border border-primary-brown/15 bg-white p-6 space-y-4">
-        <h2 className="ff-accia text-[clamp(22px,1.6vw,28px)] text-primary-brown">Profile</h2>
+      <form onSubmit={saveProfile} className="space-y-4 rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm sm:p-6">
+        <div>
+          <p className="ff-colville text-[13px] uppercase tracking-[0.12em] text-primary-brown/55">Account details</p>
+          <h2 className="ff-accia mt-1 text-[clamp(32px,3vw,48px)] leading-none text-primary-brown">Profile</h2>
+        </div>
 
         <Field label="Email" value={email} disabled hint="Email changes happen via Supabase email-change flow (Phase 5)." />
         <Field label="Full name" value={fullName} onChange={setFullName} required />
@@ -103,19 +106,19 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-primary-brown text-white px-5 py-2.5 rounded-lg ff-apfel hover:bg-primary-brown/90 transition-all disabled:opacity-60"
+            className="h-11 rounded-[10px] bg-primary-brown px-5 ff-accia text-[17px] text-white transition-colors hover:bg-primary-brown/90 disabled:opacity-60"
           >
             {saving ? <Loader2 className="animate-spin inline" size={16} /> : 'Save changes'}
           </button>
           {showSaved && (
-            <span className="ff-apfel text-sm text-emerald-600 flex items-center gap-1.5"><Check size={14} /> Saved</span>
+            <span className="flex items-center gap-1.5 rounded-full bg-accent-green px-3 py-1 ff-colville text-sm text-primary-brown"><Check size={14} /> Saved</span>
           )}
         </div>
       </form>
 
-      <form onSubmit={changePassword} className="rounded-2xl border border-primary-brown/15 bg-white p-6 space-y-4">
-        <h2 className="ff-accia text-[clamp(20px,1.4vw,26px)] text-primary-brown flex items-center gap-2"><KeyRound size={18} /> Change password</h2>
-        <p className="ff-apfel text-xs text-black/50">Minimum 8 characters.</p>
+      <form onSubmit={changePassword} className="space-y-4 rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm sm:p-6">
+        <h2 className="flex items-center gap-2 ff-accia text-[clamp(28px,2.5vw,40px)] leading-none text-primary-brown"><KeyRound size={20} /> Change password</h2>
+        <p className="ff-colville-light text-sm text-primary-brown/60">Minimum 8 characters.</p>
 
         <Field label="New password" type="password" value={newPassword} onChange={setNewPassword} required />
         <Field label="Confirm new password" type="password" value={confirmPassword} onChange={setConfirmPassword} required />
@@ -126,7 +129,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={pwSaving || !newPassword}
-          className="bg-primary-brown text-white px-5 py-2.5 rounded-lg ff-apfel hover:bg-primary-brown/90 transition-all disabled:opacity-60"
+          className="h-11 rounded-[10px] bg-primary-brown px-5 ff-accia text-[17px] text-white transition-colors hover:bg-primary-brown/90 disabled:opacity-60"
         >
           {pwSaving ? <Loader2 className="animate-spin inline" size={16} /> : 'Update password'}
         </button>
@@ -144,7 +147,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="ff-apfel text-xs text-black/50 block mb-1">{label}</label>
+      <label className="mb-1.5 block ff-colville text-[13px] uppercase tracking-[0.08em] text-primary-brown/55">{label}</label>
       <input
         type={type ?? 'text'}
         required={required}
@@ -152,9 +155,9 @@ function Field({
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-primary-brown/5 border border-primary-brown/10 rounded-lg px-3 py-2 outline-none focus:border-primary-brown/40 ff-apfel text-sm disabled:opacity-60"
+        className="h-12 w-full rounded-[10px] border border-primary-brown/15 bg-white/80 px-4 ff-apfel text-[15px] text-primary-brown outline-none transition-colors placeholder:text-primary-brown/35 focus:border-primary-brown disabled:opacity-60"
       />
-      {hint && <p className="ff-apfel text-[11px] text-black/40 mt-1">{hint}</p>}
+      {hint && <p className="mt-1 ff-colville-light text-[12px] text-primary-brown/50">{hint}</p>}
     </div>
   )
 }

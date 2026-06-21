@@ -159,8 +159,8 @@ export default function CustomerOrderDetail({ params }: { params: Promise<{ id: 
         </span>
       </div>
 
-      <div className="rounded-2xl border border-primary-brown/15 bg-white p-5">
-        <p className="ff-apfel text-xs uppercase tracking-widest text-black/30 mb-3">Items</p>
+      <div className="rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm">
+        <p className="mb-3 ff-colville text-xs uppercase tracking-[0.12em] text-primary-brown/55">Items</p>
         <div className="divide-y divide-primary-brown/5">
           {order.order_items.map((it) => {
             const myReview = it.product_id ? reviews.find((r) => r.product_id === it.product_id) : null
@@ -169,7 +169,7 @@ export default function CustomerOrderDetail({ params }: { params: Promise<{ id: 
               <div key={it.id} className="py-3">
                 <div className="flex items-start gap-4">
                   {it.image_storage_path_snapshot && (
-                    <div className="relative w-14 h-14 shrink-0 rounded-lg overflow-hidden border border-primary-brown/15 bg-[#ece9e2]">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[10px] border border-primary-brown/10 bg-[#ece9e2]">
                       <Image src={it.image_storage_path_snapshot} alt="" fill sizes="56px" className="object-cover" />
                     </div>
                   )}
@@ -220,9 +220,9 @@ export default function CustomerOrderDetail({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-primary-brown/15 bg-white p-5">
-          <p className="ff-apfel text-xs uppercase tracking-widest text-black/30 mb-2 flex items-center gap-2"><MapPin size={12} /> Delivery</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm">
+          <p className="mb-2 flex items-center gap-2 ff-colville text-xs uppercase tracking-[0.12em] text-primary-brown/55"><MapPin size={12} /> Delivery</p>
           <div className="ff-accia-light text-sm leading-relaxed text-black/70">
             {addr.recipient_name && <p className="ff-accia text-primary-brown text-base">{addr.recipient_name}</p>}
             {addr.line1 && <p>{addr.line1}</p>}
@@ -232,16 +232,16 @@ export default function CustomerOrderDetail({ params }: { params: Promise<{ id: 
           </div>
         </div>
 
-        <div className="rounded-2xl border border-primary-brown/15 bg-white p-5">
-          <p className="ff-apfel text-xs uppercase tracking-widest text-black/30 mb-2 flex items-center gap-2"><Banknote size={12} /> Payment</p>
+        <div className="rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm">
+          <p className="mb-2 flex items-center gap-2 ff-colville text-xs uppercase tracking-[0.12em] text-primary-brown/55"><Banknote size={12} /> Payment</p>
           <p className="ff-accia text-primary-brown">Cash on Delivery</p>
           <p className="ff-apfel text-sm text-black/60 capitalize mt-1">Status: {order.payment_status.replace(/_/g, ' ')}</p>
           {order.is_gift && <p className="ff-apfel text-xs text-primary-brown flex items-center gap-2 mt-2"><Gift size={12} /> Gift — prices hidden on receipt</p>}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-primary-brown/15 bg-white p-5">
-        <p className="ff-apfel text-xs uppercase tracking-widest text-black/30 mb-3">Timeline</p>
+      <div className="rounded-[16px] border border-primary-brown/10 bg-white/75 p-5 shadow-sm">
+        <p className="mb-3 ff-colville text-xs uppercase tracking-[0.12em] text-primary-brown/55">Timeline</p>
         <ol className="space-y-2">
           {history.map((h) => (
             <li key={h.id} className="flex items-center justify-between gap-4">
