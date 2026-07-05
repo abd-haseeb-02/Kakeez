@@ -26,6 +26,11 @@ const apfel = Space_Grotesk({
 export const metadata: Metadata = {
   title: "KAKEEZ Bakeshop | Every Bite Matters",
   description: "At Kakeez, we believe every celebration deserves a centerpiece as delicious as it is beautiful. Artisanal cakes, brownies, and cookies.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

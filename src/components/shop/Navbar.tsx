@@ -94,8 +94,8 @@ export default function Navbar() {
 
         {/* Left Links */}
         <div className="hidden items-center gap-[clamp(28px,4vw,76px)] ff-colville-medium text-[clamp(16px,1.1vw,21px)] text-[#936939] uppercase lg:flex">
-          <Link href="/menu" className="hover:opacity-70 transition-opacity">Menu</Link>
-          <Link href="/contact" className="hover:opacity-70 transition-opacity">Contact</Link>
+          <Link href="/#menu" className="hover:opacity-70 transition-opacity">Menu</Link>
+          <Link href="/#contact" className="hover:opacity-70 transition-opacity">Contact</Link>
           <Link href="/catering" className="hover:opacity-70 transition-opacity">Catering</Link>
         </div>
 
@@ -190,8 +190,8 @@ export default function Navbar() {
           <div className="fixed inset-0 z-40 bg-black/15 lg:hidden" onClick={() => setIsMenuOpen(false)} />
           <div className="absolute left-3 right-3 top-[84px] z-50 overflow-hidden rounded-[14px] border border-primary-brown/15 bg-white shadow-2xl lg:hidden">
             <div className="grid divide-y divide-primary-brown/10 ff-colville-medium text-[18px] uppercase text-[#936939]">
-              <Link href="/menu" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Menu</Link>
-              <Link href="/contact" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Contact</Link>
+              <Link href="/#menu" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Menu</Link>
+              <Link href="/#contact" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Contact</Link>
               <Link href="/catering" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Catering</Link>
               {isAdmin && (
                 <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 px-5 py-4 text-red-600 transition-colors hover:bg-red-50">

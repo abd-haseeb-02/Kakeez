@@ -326,21 +326,21 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const ratingCount = product.rating_count ?? 0
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-white">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
       <Navbar />
 
       <main className="pt-[118px] lg:pt-[130px]">
-        <section className="relative mx-auto w-[calc(100%_-_32px)] max-w-[1390px] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green px-[clamp(18px,2.125rem,34px)] pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)]">
-          <div className="absolute bottom-[-74px] left-0 h-[118px] w-full pointer-events-none sm:bottom-[-82px] sm:h-[132px]" style={{ transform: "scaleY(-1)" }}>
-            <Image src="/assets/union-drip.svg" alt="" fill className="block h-full w-full object-fill" />
+        <section className="relative mx-auto w-[calc(100%_-_24px)] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)] lg:w-[calc(100%_-_40px)]">
+          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+            <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
-          <div className="relative grid gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(360px,540px)_minmax(320px,430px)] lg:items-start lg:justify-center">
-            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm">
+          <div className="relative z-10 mx-auto grid w-[min(1390px,calc(100%_-_32px))] gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(360px,540px)_minmax(320px,430px)] lg:items-start lg:justify-center">
+            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm lg:sticky lg:top-[130px]">
               <Image src={hero} alt={product.name} fill className="object-cover" priority />
             </div>
 
-            <div className="w-full pt-[clamp(2px,0.625rem,10px)]">
+            <div className="w-full pt-[clamp(2px,0.625rem,10px)] lg:max-h-[calc(100vh-160px)] lg:overflow-y-auto lg:pr-2">
               <h1 className="ff-accia text-[clamp(34px,3rem,48px)] text-primary-brown leading-[1.02]">{product.name}</h1>
 
               {product.product_categories?.[0]?.categories?.name ? (

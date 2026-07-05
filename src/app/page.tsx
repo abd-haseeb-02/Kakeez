@@ -202,7 +202,7 @@ export default function Home() {
               })}
             </div>
 
-            <div className="mt-[clamp(36px,4vw,64px)] space-y-[clamp(48px,6vw,92px)]">
+            <div id="menu" className="mt-[clamp(36px,4vw,64px)] scroll-mt-[120px] space-y-[clamp(48px,6vw,92px)]">
               {categoryLayouts.map((layout) => {
                 return (
                   <section key={layout.category.id} id={`mobile-category-${layout.category.id}`} className="scroll-mt-24">
@@ -292,7 +292,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="pb-6">
+        <div id="contact" className="scroll-mt-[120px] pb-6">
           <Footer variant="flow" />
         </div>
       </main>

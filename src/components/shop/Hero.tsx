@@ -8,15 +8,17 @@ const HERO_PATH = "M1668 627H1667.04C1667.67 634.793 1668 642.743 1668 650.816C1
 const SLIDES = [
   {
     id: "hero-1",
-    image: "/assets/hero.png",
+    image: "/hero%20banner%203.png",
     eyebrow: "Bite Ino The Bliss",
     title: ["Paradise", "Awaits"],
+    showText: false,
   },
   {
     id: "hero-2",
-    image: "/assets/hero.png",
+    image: "/hero%20banner%202.png",
     eyebrow: "Bite Ino The Bliss",
     title: ["Paradise", "Awaits"],
+    showText: false,
   },
   {
     id: "hero-3",
@@ -32,7 +34,7 @@ export default function Hero() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % SLIDES.length)
-    }, 6000)
+    }, 9000)
 
     return () => window.clearInterval(timer)
   }, [])
@@ -46,9 +48,13 @@ export default function Hero() {
   }
 
   return (
-    <div className="relative z-10 mx-auto h-[clamp(420px,46vw,820px)] w-[calc(100%_-_24px)] overflow-hidden lg:w-[calc(100%_-_40px)]">
-        <svg className="block h-full w-full" viewBox="0 0 1668 876.633" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-          <defs><clipPath id="heroClip" clipPathUnits="userSpaceOnUse"><path d={HERO_PATH}/></clipPath></defs>
+    <div className="relative z-10 mx-auto mb-[clamp(22px,3.5vw,56px)] h-[clamp(300px,46vw,820px)] w-[calc(100%_-_24px)] overflow-visible lg:w-[calc(100%_-_40px)]">
+        <svg className="relative z-10 block h-full w-full overflow-visible" viewBox="0 0 1668 876.633" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="heroClip" clipPathUnits="userSpaceOnUse"><path d={HERO_PATH}/></clipPath>
+            <clipPath id="heroBottomStrokeClip" clipPathUnits="userSpaceOnUse"><rect x="0" y="590" width="1668" height="286.633" /></clipPath>
+          </defs>
+          <path d={HERO_PATH} fill="none" stroke="#E1EAB4" strokeWidth="44" strokeLinejoin="round" clipPath="url(#heroBottomStrokeClip)" />
           <g clipPath="url(#heroClip)">
             <g
               className="transition-transform duration-700 ease-in-out"
@@ -67,33 +73,37 @@ export default function Hero() {
                       height="876.633"
                       preserveAspectRatio="xMidYMid slice"
                     />
-                    <text
-                      x={offset + 834}
-                      y="315"
-                      textAnchor="middle"
-                      fill="#936939"
-                      fontFamily="var(--accia)"
-                      fontSize="34"
-                      fontWeight="300"
-                    >
-                      {item.eyebrow}
-                    </text>
-                    <text
-                      x={offset + 834}
-                      y="475"
-                      textAnchor="middle"
-                      fill="#936939"
-                      fontFamily="var(--accia)"
-                      fontSize="106"
-                      fontWeight="500"
-                      style={{ filter: "drop-shadow(5px 12px 14px rgba(0,0,0,0.25))" }}
-                    >
-                      {item.title.map((line, lineIndex) => (
-                        <tspan key={line} x={offset + 834} dy={lineIndex === 0 ? 0 : 92}>
-                          {line}
-                        </tspan>
-                      ))}
-                    </text>
+                    {item.showText !== false && (
+                      <>
+                        <text
+                          x={offset + 834}
+                          y="340"
+                          textAnchor="middle"
+                          fill="#936939"
+                          fontFamily="var(--accia)"
+                          fontSize="34"
+                          fontWeight="300"
+                        >
+                          {item.eyebrow}
+                        </text>
+                        <text
+                          x={offset + 834}
+                          y="475"
+                          textAnchor="middle"
+                          fill="#936939"
+                          fontFamily="var(--accia)"
+                          fontSize="106"
+                          fontWeight="500"
+                          style={{ filter: "drop-shadow(5px 12px 14px rgba(0,0,0,0.25))" }}
+                        >
+                          {item.title.map((line, lineIndex) => (
+                            <tspan key={line} x={offset + 834} dy={lineIndex === 0 ? 0 : 92}>
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      </>
+                    )}
                   </g>
                 )
               })}

@@ -280,17 +280,17 @@ export default function CheckoutPage() {
   const labelCls = "ff-accia text-[clamp(18px,1.45vw,25px)] text-black"
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-white">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
       <Navbar />
 
       {/* Green panel with form + summary */}
-      <div className="relative mx-auto mt-[clamp(108px,8.8vw,150px)] w-[calc(100vw-32px)] rounded-[18px] bg-accent-green px-4 pb-14 pt-7 sm:px-6 lg:w-[min(1180px,calc(100%_-_40px))] lg:rounded-[clamp(16px,1.4vw,24px)] lg:px-[clamp(20px,1.45vw,28px)] lg:pb-[clamp(56px,5vw,86px)] lg:pt-[clamp(42px,3.76vw,64px)]">
+      <div className="relative mx-auto mt-[clamp(108px,8.8vw,150px)] w-[calc(100%_-_24px)] rounded-[18px] bg-accent-green pb-14 pt-7 lg:w-[calc(100%_-_40px)] lg:rounded-[clamp(16px,1.4vw,24px)] lg:pb-[clamp(56px,5vw,86px)] lg:pt-[clamp(42px,3.76vw,64px)]">
         {/* drip bottom edge */}
-        <div className="pointer-events-none absolute bottom-[-72px] left-0 h-[112px] w-full lg:bottom-[clamp(-128px,-9vw,-72px)] lg:h-[clamp(120px,14.4vw,210px)]" style={{ transform: "scaleY(-1)" }}>
-          <Image src="/assets/union-drip.svg" alt="" fill className="block w-full h-full object-fill" />
+        <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+          <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
         </div>
 
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:gap-[clamp(20px,1.56vw,30px)]">
+        <div className="relative mx-auto flex w-[min(1390px,calc(100%_-_32px))] flex-col gap-6 lg:flex-row lg:items-start lg:gap-[clamp(20px,1.56vw,30px)]">
           {/* ===================== LEFT: FORM ===================== */}
           <div className="w-full lg:min-w-0 lg:flex-1">
             {/* Row 1: Full name | Mobile */}
@@ -313,7 +313,7 @@ export default function CheckoutPage() {
               </div>
               <div className="space-y-2 lg:space-y-[clamp(6px,0.5vw,10px)]">
                 <label className={labelCls}>YOUR Address</label>
-                <button onClick={handleEditAddress} className="flex h-11 w-full items-center justify-center rounded-[10px] bg-primary-brown px-4 ff-apfel text-[15px] text-white transition-all hover:bg-primary-brown/90 sm:w-auto lg:h-[clamp(40px,2.66vw,52px)] lg:w-[clamp(160px,11.75vw,210px)] lg:rounded-[clamp(8px,0.6vw,12px)] lg:px-[clamp(8px,0.5vw,12px)] lg:text-[clamp(15px,1.04vw,18px)]">
+                <button onClick={handleEditAddress} className="flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[10px] bg-primary-brown px-5 ff-apfel text-[15px] text-white transition-all hover:bg-primary-brown/90 sm:w-auto lg:h-[clamp(40px,2.66vw,52px)] lg:w-[clamp(230px,15vw,280px)] lg:rounded-[clamp(8px,0.6vw,12px)] lg:px-[clamp(16px,1vw,22px)] lg:text-[clamp(15px,1.04vw,18px)]">
                   Add / Change Address
                 </button>
               </div>
@@ -379,11 +379,11 @@ export default function CheckoutPage() {
           </div>
 
           {/* ===================== RIGHT: SUMMARY CARD ===================== */}
-          <div className="flex w-full flex-col self-start rounded-[16px] bg-white p-4 sm:p-5 lg:w-[clamp(320px,26vw,390px)] lg:rounded-[clamp(12px,1vw,18px)] lg:p-[clamp(16px,1.2vw,24px)]">
+          <div className="flex w-full flex-col self-start rounded-[16px] bg-white p-4 sm:p-5 lg:sticky lg:top-[130px] lg:w-[clamp(320px,26vw,390px)] lg:rounded-[clamp(12px,1vw,18px)] lg:p-[clamp(16px,1.2vw,24px)]">
             <h2 className="ff-accia text-[clamp(24px,1.45vw,28px)] text-black">Your cart</h2>
 
             {/* Items */}
-            <div className="mt-4 max-h-[420px] space-y-4 overflow-y-auto pr-1 lg:mt-[clamp(12px,1vw,20px)] lg:max-h-[clamp(270px,18vw,360px)] lg:space-y-[clamp(12px,1vw,20px)] lg:pr-[clamp(4px,0.3vw,6px)]">
+            <div className="mt-4 space-y-4 pr-1 lg:mt-[clamp(12px,1vw,20px)] lg:space-y-[clamp(12px,1vw,20px)] lg:pr-[clamp(4px,0.3vw,6px)]">
               {items.length === 0 ? (
                 <p className="py-8 text-center ff-accia-light text-[16px] text-black/50 lg:py-[clamp(24px,2vw,38px)] lg:text-[clamp(15px,1vw,17px)]">Your cart is empty.</p>
               ) : items.map((item) => (
