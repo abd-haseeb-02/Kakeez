@@ -48,11 +48,11 @@ export default function Hero() {
   }
 
   return (
-    <div className="relative z-10 mx-auto mb-[clamp(22px,3.5vw,56px)] h-[clamp(300px,46vw,820px)] w-[calc(100%_-_24px)] overflow-visible lg:w-[calc(100%_-_40px)]">
-        <svg className="relative z-10 block h-full w-full overflow-visible" viewBox="0 0 1668 876.633" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <div className="relative z-10 mx-5 mb-[clamp(22px,3.5vw,56px)] h-[clamp(250px,68vw,330px)] overflow-visible lg:h-[clamp(300px,46vw,820px)]">
+        <svg className="relative z-10 block h-full w-full overflow-hidden" viewBox="0 0 1668 910" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <clipPath id="heroClip" clipPathUnits="userSpaceOnUse"><path d={HERO_PATH}/></clipPath>
-            <clipPath id="heroBottomStrokeClip" clipPathUnits="userSpaceOnUse"><rect x="0" y="590" width="1668" height="286.633" /></clipPath>
+            <clipPath id="heroBottomStrokeClip" clipPathUnits="userSpaceOnUse"><rect x="0" y="590" width="1668" height="320" /></clipPath>
           </defs>
           <path d={HERO_PATH} fill="none" stroke="#E1EAB4" strokeWidth="44" strokeLinejoin="round" clipPath="url(#heroBottomStrokeClip)" />
           <g clipPath="url(#heroClip)">

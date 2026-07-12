@@ -138,7 +138,7 @@ export default function Home() {
         <Hero />
 
         <section className="mx-auto grid w-[min(1190px,calc(100%_-_32px))] items-center gap-[clamp(28px,4vw,64px)] py-[clamp(56px,7vw,118px)] lg:grid-cols-[minmax(220px,340px)_1fr_minmax(220px,340px)]">
-          <div className="relative aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2]">
+          <div className="relative hidden aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2] lg:block">
             <Image src="/assets/welcome-1.png" alt="" fill className="object-cover" />
           </div>
 
@@ -163,11 +163,11 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative mx-auto w-[calc(100%_-_24px)] bg-accent-green pb-[clamp(88px,7rem,112px)] pt-[clamp(168px,13rem,208px)] lg:w-[calc(100%_-_40px)]">
-          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 h-[clamp(128px,12rem,192px)] w-full -translate-x-1/2">
+        <section className="relative mx-auto w-[calc(100%_-_24px)] bg-accent-green pb-[clamp(56px,10vw,72px)] pt-[clamp(56px,10vw,72px)] lg:w-[calc(100%_-_40px)] lg:pb-[clamp(88px,7rem,112px)] lg:pt-[clamp(168px,13rem,208px)]">
+          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 hidden h-[clamp(128px,12rem,192px)] w-full -translate-x-1/2 lg:block">
             <Image src="/assets/vector13.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
-          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
             <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 

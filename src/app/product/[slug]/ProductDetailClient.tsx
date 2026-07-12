@@ -331,7 +331,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
       <main className="pt-[118px] lg:pt-[130px]">
         <section className="relative mx-auto w-[calc(100%_-_24px)] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)] lg:w-[calc(100%_-_40px)]">
-          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
             <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
@@ -513,7 +513,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         )}
 
         {hasRelated ? (
-          <section className="mx-auto mt-[clamp(105px,8.875rem,142px)] w-[calc(100%_-_32px)] max-w-[1390px]">
+          <section className="mx-auto mt-[clamp(56px,9vw,72px)] w-[calc(100%_-_32px)] max-w-[1390px] lg:mt-[clamp(105px,8.875rem,142px)]">
             <h2 className="ff-accia text-center text-[clamp(36px,3.25rem,52px)] leading-none text-primary-brown">
               You May Also Like
             </h2>

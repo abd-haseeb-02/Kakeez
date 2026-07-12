@@ -44,8 +44,8 @@ function AdminLoginForm() {
     setError("")
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: email.trim(),
+      password: password.trim(),
     })
 
     if (error) {
@@ -83,8 +83,11 @@ function AdminLoginForm() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 outline-none focus:border-primary-brown transition-all text-white"
-                placeholder="admin@kakeez.com"
+                placeholder="Hello@kakeez.com"
               />
             </div>
             <div>

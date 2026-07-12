@@ -286,7 +286,7 @@ export default function CheckoutPage() {
       {/* Green panel with form + summary */}
       <div className="relative mx-auto mt-[clamp(108px,8.8vw,150px)] w-[calc(100%_-_24px)] rounded-[18px] bg-accent-green pb-14 pt-7 lg:w-[calc(100%_-_40px)] lg:rounded-[clamp(16px,1.4vw,24px)] lg:pb-[clamp(56px,5vw,86px)] lg:pt-[clamp(42px,3.76vw,64px)]">
         {/* drip bottom edge */}
-        <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 h-[clamp(126px,11rem,176px)] w-full">
+        <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
           <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
         </div>
 
@@ -475,7 +475,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* Footer (rendered in flow via a relative wrapper since Footer is absolute) */}
-      <div className="mt-[clamp(72px,10vw,140px)] pb-6">
+      <div className="mt-[clamp(42px,8vw,64px)] pb-6 lg:mt-[clamp(72px,10vw,140px)]">
         <Footer variant="flow" />
       </div>
     </div>
