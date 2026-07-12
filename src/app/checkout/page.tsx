@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
-import PhoneVerificationPanel from "@/components/account/PhoneVerificationPanel"
 import { Loader2, CheckCircle, Minus, Plus, Trash2, ChevronLeft, ChevronRight, Banknote, Gift } from "lucide-react"
 import { placeOrder, previewCheckout, type CheckoutCartLine, type CheckoutPreviewResult } from "./actions"
 
@@ -50,7 +49,6 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [user, setUser] = useState<CheckoutUser | null>(null)
-  const [phoneVerified, setPhoneVerified] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
   const router = useRouter()
 
@@ -99,11 +97,10 @@ export default function CheckoutPage() {
         if (session.user.user_metadata?.address) setAddress(session.user.user_metadata.address)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('phone_e164, phone_verified_at')
+          .select('phone_e164')
           .eq('id', session.user.id)
           .maybeSingle()
         if (profile?.phone_e164) setPhone(profile.phone_e164)
-        setPhoneVerified(Boolean(profile?.phone_verified_at))
       }
       setAuthChecking(false)
     }
@@ -218,10 +215,6 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!user || items.length === 0) return
-    if (!phoneVerified) {
-      setPromoMsg("Please verify your phone number before placing the order.")
-      return
-    }
     setLoading(true)
     setPromoMsg("")
 
@@ -338,13 +331,6 @@ export default function CheckoutPage() {
                 </select>
               </div>
             </div>
-
-            {/* Send as a gift */}
-            {!phoneVerified && (
-              <div className="mt-5">
-                <PhoneVerificationPanel phone={phone} onVerified={() => setPhoneVerified(true)} />
-              </div>
-            )}
 
             {/* Send as a gift */}
             <div className="mt-5 flex min-h-[58px] items-center justify-between rounded-[12px] bg-white px-4 lg:mt-[clamp(18px,1.4vw,26px)] lg:h-[clamp(52px,3.88vw,68px)] lg:rounded-[clamp(10px,0.7vw,14px)] lg:px-[clamp(18px,1.6vw,28px)]">
@@ -465,7 +451,7 @@ export default function CheckoutPage() {
             {/* Place order */}
             <button
               onClick={handlePlaceOrder}
-              disabled={loading || items.length === 0 || !phoneVerified}
+              disabled={loading || items.length === 0}
               className="mt-5 flex h-12 w-full items-center justify-center rounded-[10px] bg-primary-brown transition-all hover:bg-primary-brown/90 disabled:opacity-50 lg:mt-[clamp(16px,1.2vw,24px)] lg:h-[clamp(44px,2.83vw,56px)] lg:rounded-[clamp(8px,0.6vw,12px)]"
             >
               {loading ? <Loader2 className="animate-spin text-white" size={20} /> : <span className="ff-accia text-[20px] text-white lg:text-[clamp(20px,1.4vw,24px)]">Place Order</span>}

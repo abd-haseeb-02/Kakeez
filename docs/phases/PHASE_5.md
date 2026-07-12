@@ -50,5 +50,3 @@ inputs. Prices remain server-authoritative.
 ## Remaining
 
 - Add transactional emails/status notifications.
-- Add first-order COD phone verification if the launch policy still
-  requires it.

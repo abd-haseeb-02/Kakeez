@@ -4,7 +4,6 @@ import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2 } from "lucide-react"
-import PhoneVerificationPanel from "@/components/account/PhoneVerificationPanel"
 
 const MIN_PASSWORD = 8
 
@@ -17,7 +16,6 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   const [address, setAddress] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [signupNeedsPhoneVerification, setSignupNeedsPhoneVerification] = useState(false)
   const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false)
 
   if (!isOpen) return null
@@ -87,7 +85,8 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
         }
       }
       if (signupData.session) {
-        setSignupNeedsPhoneVerification(true)
+        if (onSuccess) onSuccess()
+        onClose()
       } else {
         setSignupNeedsEmailConfirmation(true)
       }
@@ -113,15 +112,15 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
 
         <div className="relative max-h-[calc(100vh-32px)] overflow-y-auto px-5 py-6 sm:px-8 sm:py-8">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-primary-brown/20 bg-white shadow-sm">
-            {signupNeedsEmailConfirmation ? <Mail className="h-6 w-6" /> : signupNeedsPhoneVerification ? <Phone className="h-6 w-6" /> : <CakeSlice className="h-6 w-6" />}
+            {signupNeedsEmailConfirmation ? <Mail className="h-6 w-6" /> : <CakeSlice className="h-6 w-6" />}
           </div>
 
           <div className="mt-4 text-center">
             <h2 className="ff-accia text-[clamp(34px,8vw,52px)] leading-[0.95] text-primary-brown">
-              {signupNeedsEmailConfirmation ? "Check Email" : signupNeedsPhoneVerification ? "Verify Phone" : isLogin ? "Welcome Back" : "Join Kakeez"}
+              {signupNeedsEmailConfirmation ? "Check Email" : isLogin ? "Welcome Back" : "Join Kakeez"}
             </h2>
             <p className="mx-auto mt-3 max-w-[360px] ff-colville-light text-[15px] leading-relaxed text-primary-brown/70">
-              {signupNeedsEmailConfirmation ? "Confirm your email, then sign in to verify phone" : signupNeedsPhoneVerification ? "Enter the test OTP from the server console" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
+              {signupNeedsEmailConfirmation ? "Confirm your email, then come back and sign in" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
             </p>
           </div>
 
@@ -129,7 +128,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
             <div className="mt-6 space-y-5 rounded-[14px] border border-primary-brown/15 bg-white/70 p-5 text-center">
               <CheckCircle2 className="mx-auto h-9 w-9 text-primary-brown" />
               <p className="ff-apfel text-[15px] leading-relaxed text-primary-brown/75">
-                We sent a confirmation link to <strong>{email}</strong>. Open it, then come back and sign in. Phone verification will happen before checkout.
+                We sent a confirmation link to <strong>{email}</strong>. Open it, then come back and sign in.
               </p>
               <button
                 type="button"
@@ -140,26 +139,6 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-[10px] bg-primary-brown ff-accia text-[18px] text-white transition-colors hover:bg-primary-brown/90"
               >
                 Go to Sign In <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          ) : signupNeedsPhoneVerification ? (
-            <div className="mt-6 space-y-4">
-              <PhoneVerificationPanel
-                phone={phone}
-                onVerified={() => {
-                  if (onSuccess) onSuccess()
-                  onClose()
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (onSuccess) onSuccess()
-                  onClose()
-                }}
-                className="w-full ff-colville text-[15px] text-primary-brown/70 underline decoration-dotted underline-offset-4 transition-colors hover:text-primary-brown"
-              >
-                I will verify later
               </button>
             </div>
           ) : (
@@ -249,7 +228,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
           </form>
           )}
 
-          {!signupNeedsPhoneVerification && !signupNeedsEmailConfirmation && <div className="mt-5 text-center">
+          {!signupNeedsEmailConfirmation && <div className="mt-5 text-center">
              <button 
                onClick={() => {
                  setIsLogin(!isLogin)

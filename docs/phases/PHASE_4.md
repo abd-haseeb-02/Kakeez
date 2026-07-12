@@ -165,10 +165,9 @@ icon to the menu items list.
 These were originally scoped under Phase 4 but require external
 services or project-level config:
 
-- **Phone OTP first-order COD** — Twilio Verify integration per
-  §G.X.4. Requires Twilio credentials + a `verify_phone_otp` RPC +
-  a UI step in the auth flow. The `profiles.phone_e164` /
-  `phone_verified_at` columns are already there from Phase 0.
+- **Email-only verification** — Phone code verification was removed from
+  checkout/signup. Customer phone numbers are kept only as delivery contact
+  details.
 - **Server-side password policy bump** — needs the Supabase project's
   password_requirements setting bumped from default 6 → 8. That's
   done via the Supabase Dashboard's Auth → Policies (or via the
