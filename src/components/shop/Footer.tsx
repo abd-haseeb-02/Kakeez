@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { CONTACT } from "@/lib/contact"
 
 type FooterProps = {
   topOffset?: number | string
@@ -27,7 +28,7 @@ export default function Footer(_props: FooterProps) {
           <div className="md:ml-auto">
             <h3 className="ff-colville text-[clamp(19px,1.35vw,23px)] leading-tight">About Us</h3>
             <div className="ff-colville mt-3 space-y-2 text-[clamp(14px,0.95vw,16px)] capitalize">
-              <p>Our Story</p>
+              <Link href="/about" className="block transition-opacity hover:opacity-70">Our Story</Link>
               <Link href="/#menu" className="block transition-opacity hover:opacity-70">Menu</Link>
               <Link href="/#menu" className="block transition-opacity hover:opacity-70">Order now</Link>
             </div>
@@ -35,8 +36,13 @@ export default function Footer(_props: FooterProps) {
 
           <div className="md:ml-auto">
             <h3 className="ff-colville text-[clamp(19px,1.35vw,23px)] leading-tight">Visit Us</h3>
-            <p className="ff-colville-light mt-3 max-w-[190px] text-[clamp(14px,0.95vw,16px)] leading-snug">9998 Hayes Isle, Mantefurt 03581</p>
-            <p className="ff-colville-light mt-3 text-[clamp(14px,0.95vw,16px)]">505-418-0415</p>
+            <p className="ff-colville-light mt-3 max-w-[200px] text-[clamp(14px,0.95vw,16px)] leading-snug">
+              {CONTACT.addressLines.map((line) => (
+                <span key={line} className="block">{line}</span>
+              ))}
+            </p>
+            <a href={CONTACT.phoneHref} className="mt-3 block ff-colville-light text-[clamp(14px,0.95vw,16px)] transition-opacity hover:opacity-70">{CONTACT.phone}</a>
+            <a href={`mailto:${CONTACT.email}`} className="mt-1 block ff-colville-light text-[clamp(14px,0.95vw,16px)] normal-case transition-opacity hover:opacity-70">{CONTACT.email}</a>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/components/ui/Toast"
 import { formatPkr, rupeesToMinor } from "@/lib/money"
+import { CONTACT, addressOneLine } from "@/lib/contact"
 import { Save, Globe, Shield, CreditCard, Bell, Palette, Loader2, Truck, Percent } from "lucide-react"
 
 type TabId = "general" | "delivery" | "tax" | "payments" | "security" | "notifications" | "appearance"
@@ -308,11 +309,15 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>Contact Email</label>
-                  <input defaultValue="orders@kakeez.com" className={inputCls} />
+                  <input defaultValue={CONTACT.email} className={inputCls} />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Contact Phone</label>
+                  <input defaultValue={CONTACT.phone} className={inputCls} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelCls}>Shop Address</label>
-                  <textarea defaultValue="9998 Hayes Isle, Mantefurt 03581" className={`${inputCls} h-32 resize-none`} />
+                  <textarea defaultValue={addressOneLine} className={`${inputCls} h-32 resize-none`} />
                 </div>
               </div>
             </div>
