@@ -39,3 +39,6 @@ next-env.d.ts
 # supabase logs
 supabase/.temp
 tmp/
+
+# dev server logs
+.codex-dev-server.*.log

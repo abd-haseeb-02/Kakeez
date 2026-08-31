@@ -15,7 +15,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       // Every authenticated route + auth flows stay out of search indexes.
       // Matches the proxy.ts gating in src/proxy.ts.
-      { userAgent: '*', allow: '/', disallow: ['/admin', '/account', '/checkout', '/forgot-password', '/reset-password'] },
+      { userAgent: '*', allow: '/', disallow: ['/admin', '/account', '/checkout', '/forgot-password', '/reset-password', '/auth'] },
     ],
     sitemap: `${origin()}/sitemap.xml`,
     host: origin(),

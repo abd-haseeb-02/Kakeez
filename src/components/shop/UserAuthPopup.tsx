@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { authConfirmUrl } from "@/lib/site-url"
 import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2 } from "lucide-react"
 
 const MIN_PASSWORD = 8
@@ -50,6 +51,10 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
         email,
         password,
         options: {
+          // Without this, Supabase builds the confirmation link from the
+          // project's Site URL and new customers get mailed a localhost link.
+          // /auth/confirm redeems the token and lands them signed in.
+          emailRedirectTo: authConfirmUrl(),
           data: {
             full_name: fullName,
             phone: phone,
@@ -120,7 +125,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
               {signupNeedsEmailConfirmation ? "Check Email" : isLogin ? "Welcome Back" : "Join Kakeez"}
             </h2>
             <p className="mx-auto mt-3 max-w-[360px] ff-colville-light text-[15px] leading-relaxed text-primary-brown/70">
-              {signupNeedsEmailConfirmation ? "Confirm your email, then come back and sign in" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
+              {signupNeedsEmailConfirmation ? "Open the link we sent and you'll be signed in" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
             </p>
           </div>
 
@@ -128,7 +133,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
             <div className="mt-6 space-y-5 rounded-[14px] border border-primary-brown/15 bg-white/70 p-5 text-center">
               <CheckCircle2 className="mx-auto h-9 w-9 text-primary-brown" />
               <p className="ff-apfel text-[15px] leading-relaxed text-primary-brown/75">
-                We sent a confirmation link to <strong>{email}</strong>. Open it, then come back and sign in.
+                We sent a confirmation link to <strong>{email}</strong>. Open it and we&apos;ll sign you in automatically.
               </p>
               <button
                 type="button"

@@ -3,10 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { authConfirmUrl } from "@/lib/site-url"
 import { Loader2, Mail, ArrowLeft } from "lucide-react"
 
 // Forgot-password request page. Sends Supabase Auth's recovery email; the
-// link in that email redirects to /reset-password where we call updateUser.
+// link in that email hits /auth/confirm, which verifies the one-time token
+// and forwards to /reset-password where we call updateUser.
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -18,9 +20,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    // Recovery links land on /auth/confirm, which redeems the token
+    // server-side and forwards to /reset-password with a session in cookies.
+    // The template (supabase/templates/reset-password.html) supplies `next`.
     const { error: rErr } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo: authConfirmUrl(),
     })
     setLoading(false)
     if (rErr) { setError(rErr.message); return }

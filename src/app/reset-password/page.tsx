@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Loader2, Lock, ArrowLeft, CheckCircle } from "lucide-react"
 
-// Lands here after the recovery email link. Supabase Auth's client-side
-// detectSessionInUrl exchanges the recovery token for a short-lived session
-// automatically, so we just need to capture the new password and submit it
-// via auth.updateUser.
+// Lands here after /auth/confirm has already redeemed the recovery token and
+// written the short-lived session into cookies, so the browser client picks it
+// up on first read. All that's left is capturing the new password and
+// submitting it via auth.updateUser.
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    // After the redirect, the client SDK consumes the token from the URL.
+    // /auth/confirm set the session cookies before redirecting here.
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setSessionOk(!!session)

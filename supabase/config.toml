@@ -155,12 +155,27 @@ max_indexes = 5
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# in emails. This is the value Supabase substitutes for `{{ .SiteURL }}` in the templates below —
+# leave it pointing at localhost and every confirmation email tells the customer to open a link on
+# their own machine. www is canonical: the apex 308-redirects to it on Vercel.
+site_url = "https://www.kakeez.com"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# A list of URLs that auth providers are permitted to redirect to post authentication. Anything the
+# app passes as `emailRedirectTo` / `redirectTo` (see src/lib/site-url.ts) has to match one of these
+# or Supabase silently falls back to site_url — which is exactly how a live signup ends up mailing
+# out a localhost link. `**` matches any path depth.
+additional_redirect_urls = [
+  "https://www.kakeez.com/**",
+  "https://kakeez.com/**",
+  "https://kakeez-one.vercel.app/**",
+  # Vercel preview + branch deploys for this project.
+  "https://kakeez-*-abdul-haseebs-projects-ff568a70.vercel.app/**",
+  "https://kakeez-git-*-abdul-haseebs-projects-ff568a70.vercel.app/**",
+  # Local development against this same hosted project.
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -195,8 +210,11 @@ password_requirements = ""
 # rp_origins = ["http://127.0.0.1:3000"]
 
 [auth.rate_limit]
-# Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-email_sent = 2
+# Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled -- which means
+# it goes live the moment custom SMTP is turned on below. At the scaffold default of 2 an hour, the
+# third person to sign up in any given hour never gets a confirmation email. Gmail's own ceiling is
+# ~500/day, so 100/hour leaves plenty of headroom on both sides.
+email_sent = 100
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
 anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
@@ -221,30 +239,90 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = true
+#
+# OFF until custom SMTP is configured, and it has to be. Supabase's built-in email provider
+# "will refuse to deliver messages to addresses that are not part of the project's team"
+# (https://supabase.com/docs/guides/auth/auth-smtp) — yet signup still returns 200, so the
+# storefront cheerfully shows "Check Email" while the customer waits on mail that was never
+# sent, and can never sign in. Requiring a confirmation we cannot deliver means no customer
+# outside the Supabase org can hold an account at all.
+#
+# With this off, signUp returns a session straight away and UserAuthPopup signs the customer
+# in on the spot. Side benefit: the profile/address writes that follow signup now run as
+# `authenticated` instead of `anon`, so RLS stops silently dropping them.
+#
+# The trade-off is real and worth naming: email addresses go unverified, so someone can
+# register under an address that isn't theirs. Turn this back to `true` the same day SMTP
+# lands — see [auth.email.smtp] below.
+enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+# Controls the minimum amount of time that must pass before sending another signup confirmation or
+# password reset email. This config is pushed to the hosted project, so it wants a production value,
+# not a local-dev one: 60s is Supabase's own default and the thing standing between a live inbox and
+# someone hammering the resend button.
+max_frequency = "60s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Supabase's built-in email sender is rate-limited (a couple of messages an hour) and explicitly
+# meant for testing — mail goes out from a supabase.io address and lands in spam often enough to
+# matter. The project already carries Google SMTP credentials for order notifications
+# (GOOGLE_SMTP_* in .env.example); pointing Auth at the same mailbox puts these emails on the
+# kakeez.com domain. Uncomment, export the vars, then `supabase config push`.
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# host = "smtp.gmail.com"
+# port = 465
+# user = "env(GOOGLE_SMTP_USER)"
+# pass = "env(GOOGLE_SMTP_PASS)"
+# admin_email = "orders@kakeez.com"
+# sender_name = "Kakeez"
 
-# Uncomment to customize email template
+# Branded transactional auth emails, rendered from supabase/templates/*.html.
+# Each one links to /auth/confirm with `{{ .TokenHash }}` rather than
+# `{{ .ConfirmationURL }}`; see src/app/auth/confirm/route.ts for why.
+#
+# COMMENTED OUT because the project is on the free tier using Supabase's own
+# email sender, and that combination rejects the push outright:
+#
+#   400 Email template modification is not available for free tier projects
+#       using the default email provider. Please upgrade your plan or
+#       configure a custom SMTP provider.
+#
+# Because the auth update is applied as one unit, leaving these enabled fails
+# the whole push — site_url included. To turn them on:
+#   1. enable [auth.email.smtp] above (Google SMTP credentials),
+#   2. uncomment the six blocks below,
+#   3. supabase config push
+# Until then Supabase sends its stock unbranded template. The links in it are
+# correct — that half is fixed by site_url + additional_redirect_urls.
+
+# [auth.email.template.confirmation]
+# subject = "Confirm your Kakeez account"
+# content_path = "./supabase/templates/confirm-signup.html"
+
+# [auth.email.template.recovery]
+# subject = "Reset your Kakeez password"
+# content_path = "./supabase/templates/reset-password.html"
+
+# [auth.email.template.magic_link]
+# subject = "Your Kakeez sign-in link"
+# content_path = "./supabase/templates/magic-link.html"
+
+# [auth.email.template.email_change]
+# subject = "Confirm your new Kakeez email"
+# content_path = "./supabase/templates/email-change.html"
+
 # [auth.email.template.invite]
-# subject = "You have been invited"
+# subject = "You're invited to Kakeez"
 # content_path = "./supabase/templates/invite.html"
+
+# [auth.email.template.reauthentication]
+# subject = "Your Kakeez verification code"
+# content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -273,6 +351,13 @@ otp_expiry = 3600
 # [auth.mfa.web_authn]
 # enroll_enabled = true
 # verify_enabled = true
+
+# TOTP is on in the hosted project. Declared explicitly because an undeclared
+# [auth.mfa.totp] section defaults to false and `supabase config push` would
+# silently turn it off.
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,

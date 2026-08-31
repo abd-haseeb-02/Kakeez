@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Confirm your Kakeez account</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td, a, h1, p { font-family: Georgia, 'Times New Roman', serif !important; }
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    a { color: #936939; }
+    @media only screen and (max-width: 620px) {
+      .kz-shell { width: 100% !important; }
+      .kz-pad { padding-left: 24px !important; padding-right: 24px !important; }
+      .kz-h1 { font-size: 30px !important; line-height: 36px !important; }
+      /* Full-bleed button on narrow screens. The horizontal padding has to go
+         with it: email clients can't be trusted with box-sizing, so a 100%
+         width plus 40px of padding overflows the card. */
+      .kz-btn { width: 100% !important; }
+      .kz-btn a { display: block !important; padding-left: 0 !important; padding-right: 0 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; width:100%; background-color:#f3ede1; -webkit-font-smoothing:antialiased;">
+
+  <!-- Preheader: the grey line Gmail and Apple Mail show beside the subject.
+       The zero-width padding stops them pulling body copy in after it. -->
+  <div style="display:none; font-size:1px; color:#f3ede1; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+    One tap and your Kakeez account is ready.&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;&#8203;&#847;
+  </div>
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f3ede1;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+
+        <table role="presentation" class="kz-shell" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px; max-width:600px; background-color:#fffdf7; border:1px solid #e7dcc6; border-radius:18px; overflow:hidden;">
+
+          <!-- Accent bar: the pistachio green that tops every card on the site -->
+          <tr><td style="height:6px; line-height:6px; font-size:0; background-color:#e1eab4;">&nbsp;</td></tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:36px 48px 8px 48px;">
+              <a href="https://www.kakeez.com" target="_blank" style="text-decoration:none;">
+                <img src="https://www.kakeez.com/assets/LOGO.png" width="78" height="78" alt="Kakeez" style="display:block; width:78px; height:78px; border:0; outline:none;" />
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:20px 48px 0 48px;">
+              <h1 class="kz-h1" style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:36px; line-height:42px; font-weight:400; color:#936939;">Welcome to Kakeez</h1>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:16px 48px 0 48px;">
+              <p style="margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:16px; line-height:26px; color:#5b4a34;">You&rsquo;re one tap away. Confirm <strong>{{ .Email }}</strong> and we&rsquo;ll sign you straight in, ready to order.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:32px 48px 0 48px;">
+              <!--[if mso]>
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}/auth/confirm{{ end }}?token_hash={{ .TokenHash }}&amp;type=email&amp;next=%2F" style="height:52px; v-text-anchor:middle; width:280px;" arcsize="20%" stroke="f" fillcolor="#936939">
+                <w:anchorlock/>
+                <center style="color:#ffffff; font-family:Georgia,serif; font-size:17px;">Confirm my email</center>
+              </v:roundrect>
+              <![endif]-->
+              <!--[if !mso]><!-- -->
+              <table role="presentation" class="kz-btn" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#936939" style="border-radius:10px;">
+                    <a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}/auth/confirm{{ end }}?token_hash={{ .TokenHash }}&amp;type=email&amp;next=%2F" target="_blank" style="display:inline-block; padding:15px 40px; font-family:Georgia,'Times New Roman',serif; font-size:17px; line-height:22px; color:#ffffff; text-align:center; text-decoration:none; border-radius:10px;">Confirm my email</a>
+                  </td>
+                </tr>
+              </table>
+              <!--<![endif]-->
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:24px 48px 28px 48px;">
+              <p style="margin:0 0 6px 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:13px; line-height:20px; color:#8a7a63;">Button not working? Paste this into your browser:</p>
+              <p style="margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; word-break:break-all;">
+                <a href="{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}/auth/confirm{{ end }}?token_hash={{ .TokenHash }}&amp;type=email&amp;next=%2F" target="_blank" style="color:#936939; text-decoration:underline;">{{ if .RedirectTo }}{{ .RedirectTo }}{{ else }}{{ .SiteURL }}/auth/confirm{{ end }}?token_hash={{ .TokenHash }}&amp;type=email&amp;next=%2F</a>
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:0 48px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr><td style="height:1px; line-height:1px; font-size:0; background-color:#ece2d0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:24px 48px 8px 48px;">
+              <p style="margin:0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:13px; line-height:21px; color:#8a7a63;">This link works once and expires in an hour. If you didn&rsquo;t sign up at Kakeez, you can safely ignore this email &mdash; no account will be created.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="kz-pad" align="center" style="padding:8px 48px 36px 48px;">
+              <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:13px; line-height:20px; color:#a3937c; letter-spacing:0.08em; text-transform:uppercase;">Every bite matters</p>
+              <p style="margin:8px 0 0 0; font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#a3937c;">
+                Kakeez Bakeshop &middot; Karachi, Pakistan<br />
+                <a href="https://www.kakeez.com" target="_blank" style="color:#936939; text-decoration:underline;">www.kakeez.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
