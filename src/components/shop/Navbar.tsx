@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import type { Session } from "@supabase/supabase-js"
 import UserAuthPopup from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
+import SearchDialog from "./SearchDialog"
 import { useCart } from "@/store/useCart"
 import { supabase } from "@/lib/supabase"
 import { Menu, Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, LayoutGrid, X } from "lucide-react"
@@ -13,6 +14,7 @@ import { Menu, Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, Layo
 export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
@@ -78,6 +80,8 @@ export default function Navbar() {
     <>
       <UserAuthPopup isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {/* Mounted only while open so each search starts from a clean slate. */}
+      {isSearchOpen && <SearchDialog onClose={() => setIsSearchOpen(false)} />}
 
       <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-4 md:px-5 lg:h-[clamp(84px,6.9vw,118px)] lg:px-[clamp(20px,2.5vw,48px)]">
         
@@ -97,7 +101,6 @@ export default function Navbar() {
           <Link href="/#menu" className="hover:opacity-70 transition-opacity">Menu</Link>
           <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
           <Link href="/about#contact" className="hover:opacity-70 transition-opacity">Contact</Link>
-          <Link href="/catering" className="hover:opacity-70 transition-opacity">Catering</Link>
         </div>
 
         {/* Central Logo */}
@@ -122,7 +125,8 @@ export default function Navbar() {
           <button
             type="button"
             aria-label="Search"
-            className="hidden h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 sm:flex lg:h-11 lg:w-11"
+            onClick={() => setIsSearchOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-11 lg:w-11"
           >
             <Search className="h-5 w-5 lg:h-[22px] lg:w-[22px]" strokeWidth={2} />
           </button>
@@ -194,7 +198,6 @@ export default function Navbar() {
               <Link href="/#menu" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Menu</Link>
               <Link href="/about" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">About</Link>
               <Link href="/about#contact" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Contact</Link>
-              <Link href="/catering" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Catering</Link>
               {isAdmin && (
                 <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 px-5 py-4 text-red-600 transition-colors hover:bg-red-50">
                   <ShieldAlert size={16} /> Admin

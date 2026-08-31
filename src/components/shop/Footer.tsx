@@ -48,7 +48,7 @@ export default function Footer(_props: FooterProps) {
 
         <div className="mt-[clamp(24px,3vw,46px)] border-t border-[#936939]/20 pt-4 ff-colville text-[clamp(13px,0.9vw,15px)] capitalize">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <p>(c) 2022-24 Kakeez All rights reserved</p>
+            <p>(c) 2022-{new Date().getFullYear()} Kakeez All rights reserved</p>
             <p className="md:text-right">Terms & Conditions | Cookies | Privacy Policy</p>
           </div>
         </div>
