@@ -5,24 +5,31 @@ import { useEffect, useState } from "react"
 
 const HERO_PATH = "M1668 627H1667.04C1667.67 634.793 1668 642.743 1668 650.816C1668 750.65 1618.08 831.582 1556.5 831.582C1521.32 831.582 1489.95 805.172 1469.51 763.915C1449.68 830.732 1408.58 876.633 1361.09 876.633C1311.32 876.633 1268.56 826.199 1249.95 754.106C1232.05 774.447 1209.67 786.531 1185.4 786.531C1149.35 786.531 1117.49 759.891 1098.24 719.133C1077.8 760.236 1046.49 786.531 1011.39 786.531C976.209 786.531 944.837 760.121 924.401 718.863C904.565 785.681 863.465 831.582 815.979 831.582C766.205 831.582 723.447 781.149 704.839 709.057C686.933 729.397 664.557 741.48 640.282 741.48C618.643 741.48 598.513 731.879 581.712 715.385C565.679 783.331 525.085 831.582 477.537 831.582C442.36 831.582 410.987 805.172 390.552 763.915C370.715 830.732 329.615 876.633 282.13 876.633C232.355 876.633 189.597 826.199 170.989 754.106C153.083 774.447 130.707 786.531 106.433 786.531C47.6518 786.531 4.16107e-06 715.685 0 628.291C0 627.86 0.00354853 627.43 0.00585938 627H0V0H1668V627Z"
 
+// Pre-compressed WebP rather than the original PNGs. These are drawn with raw
+// SVG <image href> elements inside the clipped hero shape, which never touches
+// next/image -- so whatever is referenced here ships to the browser untouched.
+// The three PNGs they replaced were 16.3 MB, 2.1 MB and 1.7 MB; every visitor
+// downloaded all three, because all three slides are in the DOM at once.
+// Re-export from supabase/scripts if the art is ever changed, and keep the
+// output under a few hundred KB.
 const SLIDES = [
   {
     id: "hero-1",
-    image: "/hero%20banner%203.png",
+    image: "/hero%20banner%203.webp",
     eyebrow: "Bite Ino The Bliss",
     title: ["Paradise", "Awaits"],
     showText: false,
   },
   {
     id: "hero-2",
-    image: "/hero%20banner%202.png",
+    image: "/hero%20banner%202.webp",
     eyebrow: "Bite Ino The Bliss",
     title: ["Paradise", "Awaits"],
     showText: false,
   },
   {
     id: "hero-3",
-    image: "/assets/hero.png",
+    image: "/assets/hero.webp",
     eyebrow: "Bite Ino The Bliss",
     title: ["Paradise", "Awaits"],
   },

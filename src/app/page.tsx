@@ -1,134 +1,93 @@
-"use client"
-
 import Image from "next/image"
-import Link from "next/link"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
 import Hero from "@/components/shop/Hero"
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Loader2, ShoppingCart } from "lucide-react"
-import { useCart } from "@/store/useCart"
-import cakesIcon from "../../cakes.png"
-import cookiesIcon from "../../cookies.png"
-import cupcakesIcon from "../../cupcakes.png"
-import customizedCakesIcon from "../../customized cakes.png"
+import BestSellers, { type HomeCategory, type HomeProduct } from "@/components/shop/BestSellers"
+import { createClient } from "@/lib/supabase/server"
 
-const CATEGORY_ICONS = {
-  "simple cakes": cakesIcon,
-  "customized cake": customizedCakesIcon,
-  "customized cakes": customizedCakesIcon,
-  cookies: cookiesIcon,
-  "cup cakes": cupcakesIcon,
-  cupcakes: cupcakesIcon,
-}
+// Server component on purpose. This page used to be "use client" and fetch its
+// catalogue from the browser on mount, which meant two things: every visitor
+// watched a full-screen spinner replace the page while a Supabase round-trip
+// completed, and crawlers -- which see the first response, not the eventual
+// render -- got a document with no products, no headings and no text at all.
+// Fetching here ships finished HTML instead.
 
-type CategoryRow = {
-  id: string
-  name: string
-  slug?: string | null
-}
+// Merchandising order for the storefront. Anything not listed sorts to the end.
+const CATEGORY_ORDER = ["Simple Cakes", "Customized Cake", "Cookies", "Cup Cakes"]
 
-type ProductImageRow = {
-  storage_path: string
-  position: number
-  is_featured: boolean
-}
+type CategoryRow = { id: string; name: string; slug: string | null }
 
-type CategoryProductRow = {
+type ProductRow = {
   id: string
   slug: string | null
   name: string
   description: string | null
   base_price_minor: number | null
-  product_images?: ProductImageRow[]
+  product_categories?: { category_id: string }[]
+  product_images?: { storage_path: string; position: number; is_featured: boolean }[]
 }
 
-type HomeProduct = CategoryProductRow & {
-  image_url: string | null
-  price: number
+function heroImage(product: ProductRow): string | null {
+  const images = product.product_images ?? []
+  return (images.find((image) => image.is_featured) ?? images[0])?.storage_path ?? null
 }
 
-function getCategoryIcon(name: string) {
-  return CATEGORY_ICONS[name.trim().toLowerCase() as keyof typeof CATEGORY_ICONS]
-}
+async function fetchHomeCategories(): Promise<HomeCategory[]> {
+  const supabase = await createClient()
 
-export default function Home() {
-  const [categories, setCategories] = useState<CategoryRow[]>([])
-  const [productsByCategory, setProductsByCategory] = useState<Record<string, HomeProduct[]>>({})
-  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
-  const [loading, setLoading] = useState(true)
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const addItem = useCart((state) => state.addItem)
+  // One query for products rather than one per category. The old client code
+  // issued a separate request inside a for-loop, so the spinner stayed up for
+  // as many sequential round-trips as there were categories.
+  const [categoriesRes, productsRes] = await Promise.all([
+    supabase.from("categories").select("id, name, slug").order("name"),
+    supabase
+      .from("products")
+      .select("id, slug, name, description, base_price_minor, product_categories!inner(category_id), product_images(storage_path, position, is_featured)")
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+  ])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Fetch categories
-      const { data: catData } = await supabase.from('categories').select('*').order('name')
-      if (catData) {
-        // Enforce specific category order
-        const desiredOrder = ["Simple Cakes", "Customized Cake", "Cookies", "Cup Cakes"]
-        const orderedCategories = catData.sort((a, b) => {
-          const indexA = desiredOrder.indexOf(a.name)
-          const indexB = desiredOrder.indexOf(b.name)
-          // If a category isn't in the list, put it at the end
-          if (indexA === -1) return 1
-          if (indexB === -1) return -1
-          return indexA - indexB
-        })
+  const categories = (categoriesRes.data as CategoryRow[] | null) ?? []
+  const products = (productsRes.data as ProductRow[] | null) ?? []
 
-        setCategories(orderedCategories)
-        if (orderedCategories.length > 0) setActiveCategory(orderedCategories[0].id)
-        
-        // Fetch products for each category and set initial pagination.
-        // New schema: category link is M:M via product_categories; the legacy
-        // image_url + price columns are gone (base_price_minor in paisa now,
-        // image in product_images). We project back to the legacy shape so
-        // ProductCard stays unchanged this phase — Phase 2 revamps the cards.
-        const productsMap: Record<string, HomeProduct[]> = {}
-        const initialCounts: Record<string, number> = {}
-        for (const cat of orderedCategories) {
-          const { data: prodData } = await supabase
-            .from('products')
-            .select('*, product_categories!inner(category_id), product_images(storage_path, position, is_featured)')
-            .eq('product_categories.category_id', cat.id)
-            .eq('status', 'published')
-            .order('created_at', { ascending: false })
-
-          if (prodData) {
-            productsMap[cat.id] = (prodData as CategoryProductRow[]).map((p) => {
-              const hero = p.product_images?.find((i) => i.is_featured) ?? p.product_images?.[0]
-              return {
-                ...p,
-                image_url: hero?.storage_path ?? null,
-                price: (p.base_price_minor ?? 0) / 100,
-              }
-            })
-          }
-          initialCounts[cat.id] = 6 // Show 6 products initially per category
-        }
-        setProductsByCategory(productsMap)
-        setVisibleCounts(initialCounts)
-      }
-      setLoading(false)
+  const byCategory = new Map<string, HomeProduct[]>()
+  for (const product of products) {
+    const mapped: HomeProduct = {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      description: product.description,
+      price: (product.base_price_minor ?? 0) / 100,
+      image_url: heroImage(product),
     }
-    fetchData()
-  }, [])
-
-  if (loading) {
-    return <div className="min-h-screen bg-white flex items-center justify-center"><Loader2 className="animate-spin text-primary-brown" size={40} /></div>
+    // A product can sit in several categories; it should appear under each.
+    for (const link of product.product_categories ?? []) {
+      const bucket = byCategory.get(link.category_id)
+      if (bucket) bucket.push(mapped)
+      else byCategory.set(link.category_id, [mapped])
+    }
   }
 
-  const categoryLayouts = categories.map((category) => {
-    const allProducts = productsByCategory[category.id] || []
-    const visibleCount = visibleCounts[category.id] || 6
+  return categories
+    .slice()
+    .sort((a, b) => {
+      const indexA = CATEGORY_ORDER.indexOf(a.name)
+      const indexB = CATEGORY_ORDER.indexOf(b.name)
+      if (indexA === -1) return 1
+      if (indexB === -1) return -1
+      return indexA - indexB
+    })
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      products: byCategory.get(category.id) ?? [],
+    }))
+}
 
-    return {
-      category,
-      products: allProducts.slice(0, visibleCount),
-      hasMore: allProducts.length > visibleCount,
-    }
-  })
+export default async function Home() {
+  const categories = await fetchHomeCategories()
 
   return (
     <div className="min-h-screen bg-white">
@@ -139,7 +98,7 @@ export default function Home() {
 
         <section className="mx-auto grid w-[min(1190px,calc(100%_-_32px))] items-center gap-[clamp(28px,4vw,64px)] py-[clamp(56px,7vw,118px)] lg:grid-cols-[minmax(220px,340px)_1fr_minmax(220px,340px)]">
           <div className="relative hidden aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2] lg:block">
-            <Image src="/assets/welcome-1.png" alt="" fill className="object-cover" />
+            <Image src="/assets/welcome-1.webp" alt="A table of Kakeez celebration cakes" fill sizes="340px" className="object-cover" />
           </div>
 
           <div className="mx-auto max-w-[620px] text-center">
@@ -158,130 +117,12 @@ export default function Home() {
               <Image src="/assets/badge-circle.png" alt="" fill sizes="138px" className="object-contain" />
             </div>
             <div className="relative aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2]">
-              <Image src="/assets/welcome-2.png" alt="" fill className="object-cover" />
+              <Image src="/assets/welcome-2.webp" alt="Decorated cupcakes and desserts from Kakeez" fill sizes="340px" className="object-cover" />
             </div>
           </div>
         </section>
 
-        <section className="relative mx-auto w-[calc(100%_-_24px)] bg-accent-green pb-[clamp(56px,10vw,72px)] pt-[clamp(56px,10vw,72px)] lg:w-[calc(100%_-_40px)] lg:pb-[clamp(88px,7rem,112px)] lg:pt-[clamp(168px,13rem,208px)]">
-          <div className="pointer-events-none absolute left-1/2 top-[-2px] z-0 hidden h-[clamp(128px,12rem,192px)] w-full -translate-x-1/2 lg:block">
-            <Image src="/assets/vector13.svg" alt="" fill className="block h-full w-full object-fill" />
-          </div>
-          <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
-            <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
-          </div>
-
-          <div className="relative z-10 mx-auto w-[min(1390px,calc(100%_-_32px))]">
-            <h2 className="ff-accia text-center text-[clamp(38px,4.6vw,72px)] leading-none text-primary-brown">Shop Best Sellers</h2>
-
-            <div className="mt-7 flex snap-x gap-3 overflow-x-auto pb-3">
-              {categoryLayouts.map((layout) => {
-                const categoryIcon = getCategoryIcon(layout.category.name)
-                const isActive = activeCategory === layout.category.id
-
-                return (
-                  <button
-                    key={layout.category.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveCategory(layout.category.id)
-                      document.getElementById(`mobile-category-${layout.category.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }}
-                    className={`flex shrink-0 snap-start items-center gap-2 rounded-full border px-4 py-2.5 transition-all ${
-                      isActive ? "border-primary-brown bg-white shadow-sm" : "border-primary-brown/10 bg-white/45"
-                    }`}
-                  >
-                    {categoryIcon && (
-                      <span className="relative block h-7 w-7 shrink-0">
-                        <Image src={categoryIcon} alt="" fill sizes="28px" className="object-contain" />
-                      </span>
-                    )}
-                    <span className="ff-colville text-[15px] uppercase text-primary-brown">{layout.category.name}</span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div id="menu" className="mt-[clamp(36px,4vw,64px)] scroll-mt-[120px] space-y-[clamp(48px,6vw,92px)]">
-              {categoryLayouts.map((layout) => {
-                return (
-                  <section key={layout.category.id} id={`mobile-category-${layout.category.id}`} className="scroll-mt-24">
-                    <h3 className="ff-accia text-center text-[clamp(34px,4vw,62px)] uppercase leading-none text-primary-brown">
-                      {layout.category.name}
-                    </h3>
-                    {layout.category.slug && (
-                      <div className="mt-3 flex justify-center">
-                        <Link
-                          href={`/category/${layout.category.slug}`}
-                          className="ff-apfel text-sm uppercase tracking-[0.12em] text-primary-brown/70 underline-offset-4 transition-colors hover:text-primary-brown hover:underline"
-                        >
-                          View all {layout.category.name}
-                        </Link>
-                      </div>
-                    )}
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                      {layout.products.map((product) => (
-                        <article
-                          key={product.id}
-                          className="overflow-hidden rounded-[14px] border border-primary-brown bg-white transition-all hover:shadow-lg"
-                        >
-                          <Link href={`/product/${product.slug ?? product.id}`} className="block">
-                            <div className="relative aspect-square bg-[#ece9e2]">
-                              <Image src={product.image_url || "/assets/product.svg"} alt={product.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
-                            </div>
-                          </Link>
-                          <div className="px-4 py-5 text-center">
-                            <Link href={`/product/${product.slug ?? product.id}`} className="block">
-                              <h4 className="ff-accia text-[clamp(25px,2.3vw,34px)] leading-[1.04] text-primary-brown">{product.name}</h4>
-                              <p className="ff-colville mt-2 text-[clamp(18px,1.5vw,24px)] text-primary-brown">Rs. {Number(product.price).toLocaleString()}</p>
-                            </Link>
-                            <div className="mt-4 grid grid-cols-2 gap-3">
-                              <Link
-                                href={`/product/${product.slug ?? product.id}`}
-                                className="flex h-11 items-center justify-center rounded-[10px] border border-primary-brown ff-accia text-[15px] uppercase text-primary-brown transition-colors hover:bg-primary-brown/5"
-                              >
-                                Buy Now
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => addItem({ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description ?? undefined })}
-                                className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary-brown px-3 ff-accia text-[15px] uppercase text-white transition-colors hover:bg-primary-brown/90"
-                              >
-                                <ShoppingCart className="h-4 w-4" /> Add
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-
-                    {layout.hasMore && (
-                      <div className="mt-7 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => setVisibleCounts((prev) => ({ ...prev, [layout.category.id]: prev[layout.category.id] + 6 }))}
-                          className="rounded-[8px] border border-primary-brown bg-white px-6 py-3 ff-accia text-[16px] uppercase tracking-[0.02em] text-primary-brown transition-opacity hover:opacity-75"
-                        >
-                          View More {layout.category.name}
-                        </button>
-                      </div>
-                    )}
-                    {!layout.hasMore && layout.category.slug && layout.products.length > 0 && (
-                      <div className="mt-7 flex justify-center">
-                        <Link
-                          href={`/category/${layout.category.slug}`}
-                          className="rounded-[8px] border border-primary-brown bg-white px-6 py-3 ff-accia text-[16px] uppercase tracking-[0.02em] text-primary-brown transition-opacity hover:opacity-75"
-                        >
-                          Open {layout.category.name}
-                        </Link>
-                      </div>
-                    )}
-                  </section>
-                )
-              })}
-            </div>
-          </div>
-        </section>
+        <BestSellers categories={categories} />
 
         <section className="mx-auto w-[min(1390px,calc(100%_-_32px))] py-[clamp(56px,7vw,110px)] text-center">
           <h2 className="ff-accia text-[clamp(38px,4vw,64px)] leading-none text-[#262729]">Follow @kakeezbakers</h2>

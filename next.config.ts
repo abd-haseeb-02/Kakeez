@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
+    // AVIF first, WebP as the fallback. Next only ships one of these to a given
+    // browser based on Accept, and AVIF is typically 20-30% smaller than WebP
+    // at the same visual quality -- worth it for a catalogue of photographs.
+    formats: ["image/avif", "image/webp"],
     // Allow product images served from Supabase Storage to be used with next/image.
     remotePatterns: [
       {

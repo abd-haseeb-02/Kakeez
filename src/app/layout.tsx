@@ -50,11 +50,14 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/",
     locale: "en_PK",
+    // Resolved against metadataBase, so shares carry an absolute URL.
+    images: [{ url: "/og-home.jpg", width: 1200, height: 630, alt: "Kakeez Bakeshop — artistry in every slice" }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_NAME + " | Every Bite Matters",
     description: DESCRIPTION,
+    images: ["/og-home.jpg"],
   },
 
   // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION to the token from Search Console's

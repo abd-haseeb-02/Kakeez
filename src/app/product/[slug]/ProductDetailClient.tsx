@@ -16,7 +16,7 @@ import { Star, Heart } from "lucide-react"
 // old shared UUID links, if the param doesn't match by slug we fall back to
 // matching by id.
 
-type ProductRow = {
+export type ProductRow = {
   id: string
   slug: string
   name: string
@@ -68,17 +68,24 @@ type AttributeWithValues = {
   values: { id: string; slug: string; label: string }[]
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-export default function ProductDetailClient({ slug }: { slug: string }) {
-  const [product, setProduct] = useState<ProductRow | null>(null)
+export default function ProductDetailClient({
+  slug,
+  initialProduct,
+}: {
+  slug: string
+  initialProduct: ProductRow
+}) {
+  // Seeded from the server render, so the page paints complete on the first
+  // pass instead of blanking behind a spinner while the browser re-fetches
+  // what the server already had.
+  const [product, setProduct] = useState<ProductRow | null>(initialProduct)
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [wishlisted, setWishlisted] = useState(false)
   const [wishBusy, setWishBusy] = useState(false)
   const [variations, setVariations] = useState<VariationRow[]>([])
   const [productAttributes, setProductAttributes] = useState<AttributeWithValues[]>([])
   const [related, setRelated] = useState<ProductRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [instructions, setInstructions] = useState("")
   const [isGift, setIsGift] = useState(false)
@@ -89,39 +96,11 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
   useEffect(() => {
     const fetchAll = async () => {
-      setLoading(true)
-
-      // Try slug first; if not found and param looks like a UUID, fall back.
-      let row: ProductRow | null = null
-      const slugRes = await supabase
-        .from("products")
-        .select("id, slug, name, description, base_price_minor, is_perishable, rating_avg, rating_count, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
-        .eq("slug", slug)
-        .eq("status", "published")
-        .maybeSingle()
-
-      if (slugRes.data) {
-        row = slugRes.data as ProductRow
-      } else if (UUID_RE.test(slug)) {
-        const idRes = await supabase
-          .from("products")
-          .select("id, slug, name, description, base_price_minor, is_perishable, rating_avg, rating_count, product_categories(category_id, categories(name, slug)), product_images(storage_path, position, is_featured)")
-          .eq("id", slug)
-          .eq("status", "published")
-          .maybeSingle()
-        row = idRes.data as ProductRow | null
-      }
-
-      if (!row) {
-        setProduct(null)
-        setRelated([])
-        setVariations([])
-        setProductAttributes([])
-        setLoading(false)
-        return
-      }
-
-      setProduct(row as ProductRow)
+      // The product itself came from the server component. Only the secondary
+      // panels -- reviews, variations, related items, wishlist state -- are
+      // fetched here, and they fill in around content that is already on screen.
+      const row = initialProduct
+      setProduct(row)
 
       // Phase 6: published reviews. RLS allows anon to read where
       // status='published', so this works for signed-out visitors too.
@@ -206,7 +185,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       setLoading(false)
     }
     fetchAll()
-  }, [slug])
+  }, [slug, initialProduct])
 
   const hero = useMemo(() => {
     const imgs = product?.product_images ?? []

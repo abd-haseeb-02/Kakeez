@@ -118,7 +118,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!data) notFound()
 
   const { category, products } = data
-  const heroImage = category.image_storage_path || productHero(products[0]) || "/assets/welcome-1.png"
+  const heroImage = category.image_storage_path || productHero(products[0]) || "/assets/welcome-1.webp"
 
   return (
     <div className="min-h-screen bg-white">

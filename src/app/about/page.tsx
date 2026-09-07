@@ -11,6 +11,18 @@ export const metadata: Metadata = {
   description:
     "Founded in April 2023 by Mian Zain, KAKEEZ began with a simple belief — every special moment deserves something made with care.",
   alternates: { canonical: "/about" },
+  openGraph: {
+    type: "article",
+    title: "Our Story | KAKEEZ Bakeshop",
+    description:
+      "Founded in April 2023 by Mian Zain, KAKEEZ began with a simple belief — every special moment deserves something made with care.",
+    url: "/about",
+    images: [{ url: "/og-about.jpg", width: 1200, height: 630, alt: "More Than a Cake. A Part of Your Celebration." }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-about.jpg"],
+  },
 }
 
 // Three ways of looking at the same cake. Kept as data so the cards stay
@@ -104,7 +116,7 @@ export default function AboutPage() {
             </div>
             <div className="relative aspect-[0.76] overflow-hidden rounded-[14px] border border-primary-brown/30 bg-[#ece9e2]">
               <Image
-                src="/assets/welcome-1.png"
+                src="/assets/welcome-1.webp"
                 alt="A table of Kakeez celebration cakes"
                 fill
                 sizes="(max-width: 1024px) 100vw, 420px"
