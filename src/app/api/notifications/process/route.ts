@@ -3,6 +3,12 @@ import nodemailer from 'nodemailer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatPkr } from '@/lib/money'
 
+// nodemailer needs the Node.js runtime (not Edge), and the queue drain must
+// never be statically cached.
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
+
 type NotificationRow = {
   id: number
   order_id: string | null
@@ -133,12 +139,23 @@ async function sendWhatsApp(notification: NotificationRow): Promise<string> {
   return data.messages?.[0]?.id || `whatsapp-${notification.id}`
 }
 
-export async function POST(request: NextRequest) {
-  const expectedSecret = process.env.NOTIFICATIONS_PROCESS_SECRET
-  if (expectedSecret && request.headers.get('authorization') !== `Bearer ${expectedSecret}`) {
-    return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 })
-  }
+// Authorize the caller. Fails CLOSED: if no secret is configured at all the
+// endpoint refuses every request rather than draining the queue for anyone who
+// can reach the URL. Accepts either NOTIFICATIONS_PROCESS_SECRET (manual /
+// pg_cron callers set this Bearer explicitly) or CRON_SECRET (Vercel Cron sends
+// this automatically on scheduled invocations).
+function isAuthorized(request: NextRequest): boolean {
+  const processSecret = process.env.NOTIFICATIONS_PROCESS_SECRET
+  const cronSecret = process.env.CRON_SECRET
+  const provided = request.headers.get('authorization')
 
+  if (!processSecret && !cronSecret) return false
+  if (processSecret && provided === `Bearer ${processSecret}`) return true
+  if (cronSecret && provided === `Bearer ${cronSecret}`) return true
+  return false
+}
+
+async function drainQueue() {
   let admin: ReturnType<typeof createAdminClient>
   try {
     admin = createAdminClient()
@@ -148,6 +165,7 @@ export async function POST(request: NextRequest) {
       message: err instanceof Error ? err.message : 'Notification processor is not configured',
     }, { status: 500 })
   }
+
   const { data, error } = await admin
     .from('notifications')
     .select('id, order_id, user_id, audience, channel, template_key, payload')
@@ -184,4 +202,20 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, processed: results.length, results })
+}
+
+// Vercel Cron invokes scheduled endpoints with GET, so the cron path lives
+// here. POST is kept for manual drains and pg_cron/pg_net callers.
+export async function GET(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 })
+  }
+  return drainQueue()
+}
+
+export async function POST(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 })
+  }
+  return drainQueue()
 }
