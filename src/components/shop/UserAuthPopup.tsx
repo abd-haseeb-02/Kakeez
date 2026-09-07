@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { authConfirmUrl } from "@/lib/site-url"
+import { useModalA11y } from "@/lib/use-modal-a11y"
 import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2 } from "lucide-react"
 
 const MIN_PASSWORD = 8
@@ -18,6 +19,8 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false)
+  // Escape to close, focus trapped inside, page behind locked.
+  const dialogRef = useModalA11y(isOpen, onClose)
 
   if (!isOpen) return null
 
@@ -103,7 +106,13 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-5 sm:px-6">
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative max-h-[calc(100vh-32px)] w-full max-w-[520px] overflow-hidden rounded-[18px] border border-white/70 bg-[#fffdf7] text-primary-brown shadow-[0_24px_80px_rgba(51,34,16,0.32)] animate-in fade-in zoom-in-95 duration-300">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-popup-title"
+        className="relative max-h-[calc(100vh-32px)] w-full max-w-[520px] overflow-hidden rounded-[18px] border border-white/70 bg-[#fffdf7] text-primary-brown shadow-[0_24px_80px_rgba(51,34,16,0.32)] animate-in fade-in zoom-in-95 duration-300"
+      >
         <button
           type="button"
           onClick={onClose}
@@ -121,7 +130,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
           </div>
 
           <div className="mt-4 text-center">
-            <h2 className="ff-accia text-[clamp(34px,8vw,52px)] leading-[0.95] text-primary-brown">
+            <h2 id="auth-popup-title" className="ff-accia text-[clamp(34px,8vw,52px)] leading-[0.95] text-primary-brown">
               {signupNeedsEmailConfirmation ? "Check Email" : isLogin ? "Welcome Back" : "Join Kakeez"}
             </h2>
             <p className="mx-auto mt-3 max-w-[360px] ff-colville-light text-[15px] leading-relaxed text-primary-brown/70">

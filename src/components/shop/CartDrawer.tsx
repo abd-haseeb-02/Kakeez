@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Minus, Plus, Trash2, ChevronLeft, ChevronRight, ShoppingBag, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import UserAuthPopup from "./UserAuthPopup"
+import { useModalA11y } from "@/lib/use-modal-a11y"
 
 const DELIVERY_CHARGE = 99
 
@@ -41,6 +42,8 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
   const [popular, setPopular] = useState<PopularProduct[]>([])
   const [popIndex, setPopIndex] = useState(0)
   const router = useRouter()
+  // Escape to close, focus trapped inside the drawer, page behind locked.
+  const dialogRef = useModalA11y(isOpen && shouldRender, onClose)
 
   useEffect(() => {
     const renderTimer = window.setTimeout(() => {
@@ -131,12 +134,16 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
           />
 
           <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-drawer-title"
             className={`relative flex h-full w-[min(92vw,430px)] transform flex-col rounded-l-[14px] bg-white shadow-[0_0_18px_8px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out md:w-[clamp(390px,27vw,470px)] ${
               isVisible ? "translate-x-0" : "translate-x-full"
             }`}
           >
             <div className="flex items-end justify-between px-[clamp(18px,1.35vw,24px)] pt-[clamp(18px,1.35vw,24px)] pb-[clamp(14px,1vw,18px)]">
-              <h2 className="ff-accia text-[clamp(19px,1.05vw,22px)] text-black">Your Cart</h2>
+              <h2 id="cart-drawer-title" className="ff-accia text-[clamp(19px,1.05vw,22px)] text-black">Your Cart</h2>
               {items.length > 0 && (
                 <button
                   onClick={clearCart}
