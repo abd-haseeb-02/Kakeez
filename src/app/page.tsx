@@ -103,9 +103,9 @@ export default async function Home() {
 
           <div className="mx-auto max-w-[620px] text-center">
             <p className="ff-accia text-sm uppercase tracking-[0.08em] text-primary-brown">Welcome to</p>
-            <h2 className="ff-accia mt-2 text-[clamp(38px,4.4vw,72px)] leading-none">
+            <h1 className="ff-accia mt-2 text-[clamp(38px,4.4vw,72px)] leading-none">
               <span className="text-primary-brown">KAKEEZ</span> <span className="text-[#262729]">Bakeshop</span>
-            </h2>
+            </h1>
             <div className="ff-accia mt-5 space-y-3 text-[clamp(16px,1.2vw,20px)] leading-[1.45] text-[#262729]">
               <p>At Kakeez, we believe every celebration deserves a centerpiece as delicious as it is beautiful.</p>
               <p>We specialize in custom, artisanal baking - from grand wedding cakes to rich, fudgy brownies. We pour our passion into every recipe to craft unforgettable memories.</p>

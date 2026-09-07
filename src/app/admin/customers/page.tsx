@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
+import { formatPkr } from "@/lib/money"
 import { Mail, Calendar, Loader2, ArrowUpRight } from "lucide-react"
 
 type OrderCustomerRow = {
   customer_name: string
   customer_email: string
-  total_amount?: number | null
   total_minor?: number | null
   created_at: string
 }
@@ -17,30 +17,35 @@ type CustomerSummary = {
   customer_email: string
   created_at: string
   orderCount: number
-  totalSpent: number
+  // Kept in integer paisa; formatted once at render with formatPkr.
+  totalSpentMinor: number
 }
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
   const fetchCustomers = async () => {
     setLoading(true)
+    setError("")
     // Derive customers from the orders table, aggregating real order count + spend.
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('orders')
-      .select('customer_name, customer_email, total_amount, created_at')
+      .select('customer_name, customer_email, total_minor, created_at')
       .order('created_at', { ascending: false })
 
-    if (data) {
+    if (error) {
+      setError(error.message)
+    } else if (data) {
       const byEmail = new Map<string, CustomerSummary>()
       for (const order of data as OrderCustomerRow[]) {
         const key = order.customer_email
         const existing = byEmail.get(key)
-        const spent = order.total_minor != null ? order.total_minor / 100 : Number(order.total_amount) || 0
+        const spentMinor = order.total_minor ?? 0
         if (existing) {
           existing.orderCount += 1
-          existing.totalSpent += spent
+          existing.totalSpentMinor += spentMinor
           // keep the earliest order date as the "joined" date
           if (new Date(order.created_at) < new Date(existing.created_at)) {
             existing.created_at = order.created_at
@@ -51,7 +56,7 @@ export default function CustomersPage() {
             customer_email: order.customer_email,
             created_at: order.created_at,
             orderCount: 1,
-            totalSpent: spent,
+            totalSpentMinor: spentMinor,
           })
         }
       }
@@ -73,9 +78,19 @@ export default function CustomersPage() {
         <p className="text-white/50 ff-apfel mt-1">Manage your bakery&apos;s growing community.</p>
       </div>
 
+      {error && (
+        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 ff-apfel text-sm text-red-300">
+          Could not load customers: {error}
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin text-primary-brown" size={40} />
+        </div>
+      ) : customers.length === 0 && !error ? (
+        <div className="admin-card rounded-3xl p-10 text-center ff-apfel text-white/50">
+          No customers yet. They appear here once the first order is placed.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,7 +126,7 @@ export default function CustomersPage() {
                  </div>
                  <div className="flex-1 text-right">
                    <p className="text-[10px] uppercase tracking-widest text-white/30 ff-apfel mb-1">Spent</p>
-                   <p className="font-bold ff-accia text-primary-brown">Rs. {customer.totalSpent.toLocaleString()}</p>
+                   <p className="font-bold ff-accia text-primary-brown">{formatPkr(customer.totalSpentMinor)}</p>
                  </div>
               </div>
             </div>

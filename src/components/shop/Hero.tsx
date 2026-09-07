@@ -16,21 +16,21 @@ const SLIDES = [
   {
     id: "hero-1",
     image: "/hero%20banner%203.webp",
-    eyebrow: "Bite Ino The Bliss",
+    eyebrow: "Bite Into The Bliss",
     title: ["Paradise", "Awaits"],
     showText: false,
   },
   {
     id: "hero-2",
     image: "/hero%20banner%202.webp",
-    eyebrow: "Bite Ino The Bliss",
+    eyebrow: "Bite Into The Bliss",
     title: ["Paradise", "Awaits"],
     showText: false,
   },
   {
     id: "hero-3",
     image: "/assets/hero.webp",
-    eyebrow: "Bite Ino The Bliss",
+    eyebrow: "Bite Into The Bliss",
     title: ["Paradise", "Awaits"],
   },
 ]
