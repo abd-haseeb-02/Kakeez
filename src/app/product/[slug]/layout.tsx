@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { businessId } from '@/lib/structured-data'
 
 // Server-side metadata + JSON-LD for the product detail route. The page
 // itself stays a Client Component (it needs the variation picker + cart
@@ -114,10 +115,14 @@ export default async function ProductLayout({
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
-    name: p.name,
+    name: p.name.trim(),
     image: heroImg?.storage_path ?? undefined,
     description: p.description ?? undefined,
     url,
+    // Without a brand a Product is an anonymous cake -- nothing links it to
+    // the word "Kakeez" when someone searches for a product by brand name.
+    brand: { '@type': 'Brand', name: 'KAKEEZ Bakeshop' },
+    seller: { '@id': businessId() },
     offers: {
       '@type': 'Offer',
       url,

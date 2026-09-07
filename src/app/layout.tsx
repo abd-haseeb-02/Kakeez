@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Playfair_Display, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/site-url";
+import { businessSchema } from "@/lib/structured-data";
 
 const accia = Playfair_Display({
   subsets: ["latin"],
@@ -81,6 +82,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${accia.variable} ${colville.variable} ${apfel.variable}`}>
       <body>
+        {/* dangerouslySetInnerHTML keeps the JSON literal intact; React would
+            otherwise escape the quotes and break crawler parsers. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema()) }}
+        />
         {children}
       </body>
     </html>

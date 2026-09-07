@@ -11,9 +11,14 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const ARC = CIRCUMFERENCE * 0.25
 
 export default function BrandLoader({
-  label = "Just a moment",
+  label,
   fullScreen = true,
 }: {
+  // Deliberately unset by default. This renders as the streaming shell for
+  // every route, so any caption here is served inside the HTML of every page
+  // and reads as page content to a crawler that doesn't run JavaScript. The
+  // mark and the arc already say "loading"; screen readers get the sr-only
+  // text below.
   label?: string
   fullScreen?: boolean
 }) {
@@ -70,9 +75,11 @@ export default function BrandLoader({
         </div>
       </div>
 
-      <p className="ff-colville text-[clamp(13px,1vw,15px)] uppercase tracking-[0.22em] text-primary-brown/55">
-        {label}
-      </p>
+      {label && (
+        <p className="ff-colville text-[clamp(13px,1vw,15px)] uppercase tracking-[0.22em] text-primary-brown/55">
+          {label}
+        </p>
+      )}
       <span className="sr-only">Loading</span>
     </div>
   )
