@@ -252,9 +252,9 @@ double_confirm_changes = true
 # `authenticated` instead of `anon`, so RLS stops silently dropping them.
 #
 # The trade-off is real and worth naming: email addresses go unverified, so someone can
-# register under an address that isn't theirs. Turn this back to `true` the same day SMTP
-# lands — see [auth.email.smtp] below.
-enable_confirmations = false
+# register under an address that isn't theirs. Turned back on now that custom SMTP is
+# configured below — see [auth.email.smtp].
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or
@@ -272,14 +272,14 @@ otp_expiry = 3600
 # matter. The project already carries Google SMTP credentials for order notifications
 # (GOOGLE_SMTP_* in .env.example); pointing Auth at the same mailbox puts these emails on the
 # kakeez.com domain. Uncomment, export the vars, then `supabase config push`.
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.gmail.com"
-# port = 465
-# user = "env(GOOGLE_SMTP_USER)"
-# pass = "env(GOOGLE_SMTP_PASS)"
-# admin_email = "orders@kakeez.com"
-# sender_name = "Kakeez"
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 465
+user = "env(GOOGLE_SMTP_USER)"
+pass = "env(GOOGLE_SMTP_PASS)"
+admin_email = "orders@kakeez.com"
+sender_name = "Kakeez"
 
 # Branded transactional auth emails, rendered from supabase/templates/*.html.
 # Each one links to /auth/confirm with `{{ .TokenHash }}` rather than
@@ -300,29 +300,29 @@ otp_expiry = 3600
 # Until then Supabase sends its stock unbranded template. The links in it are
 # correct — that half is fixed by site_url + additional_redirect_urls.
 
-# [auth.email.template.confirmation]
-# subject = "Confirm your Kakeez account"
-# content_path = "./supabase/templates/confirm-signup.html"
+[auth.email.template.confirmation]
+subject = "Confirm your Kakeez account"
+content_path = "./supabase/templates/confirm-signup.html"
 
-# [auth.email.template.recovery]
-# subject = "Reset your Kakeez password"
-# content_path = "./supabase/templates/reset-password.html"
+[auth.email.template.recovery]
+subject = "Reset your Kakeez password"
+content_path = "./supabase/templates/reset-password.html"
 
-# [auth.email.template.magic_link]
-# subject = "Your Kakeez sign-in link"
-# content_path = "./supabase/templates/magic-link.html"
+[auth.email.template.magic_link]
+subject = "Your Kakeez sign-in link"
+content_path = "./supabase/templates/magic-link.html"
 
-# [auth.email.template.email_change]
-# subject = "Confirm your new Kakeez email"
-# content_path = "./supabase/templates/email-change.html"
+[auth.email.template.email_change]
+subject = "Confirm your new Kakeez email"
+content_path = "./supabase/templates/email-change.html"
 
-# [auth.email.template.invite]
-# subject = "You're invited to Kakeez"
-# content_path = "./supabase/templates/invite.html"
+[auth.email.template.invite]
+subject = "You're invited to Kakeez"
+content_path = "./supabase/templates/invite.html"
 
-# [auth.email.template.reauthentication]
-# subject = "Your Kakeez verification code"
-# content_path = "./supabase/templates/reauthentication.html"
+[auth.email.template.reauthentication]
+subject = "Your Kakeez verification code"
+content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

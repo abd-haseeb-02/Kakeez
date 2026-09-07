@@ -2,12 +2,15 @@ import { NextResponse, type NextRequest } from 'next/server'
 import nodemailer from 'nodemailer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatPkr } from '@/lib/money'
+import { renderOrderEmail, type OrderEmailData, type RenderedEmail } from '@/lib/notifications/email'
 
 // nodemailer needs the Node.js runtime (not Edge), and the queue drain must
 // never be statically cached.
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+type Admin = ReturnType<typeof createAdminClient>
 
 type NotificationRow = {
   id: number
@@ -19,56 +22,92 @@ type NotificationRow = {
   payload: Record<string, unknown>
 }
 
+type OrderRow = {
+  order_number: string
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  subtotal_minor: number
+  discount_minor: number
+  tax_minor: number
+  delivery_fee_minor: number
+  total_minor: number
+  is_gift: boolean
+  status: string
+  delivery_slot_date: string | null
+  delivery_slot_window: string | null
+  delivery_address_snapshot: Record<string, unknown> | null
+}
+
+type OrderItemRow = {
+  product_name_snapshot: string
+  variation_label_snapshot: string | null
+  quantity: number
+  unit_price_minor_snapshot: number
+  line_total_minor_snapshot: number
+}
+
 function textValue(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
-function moneyValue(value: unknown): string {
-  return formatPkr(typeof value === 'number' ? value : Number(value) || 0)
+function numValue(value: unknown): number {
+  return typeof value === 'number' ? value : Number(value) || 0
 }
 
-function renderMessage(notification: NotificationRow): { subject: string; text: string } {
-  const p = notification.payload
-  const orderNumber = textValue(p.order_number) || 'new order'
-  const customerName = textValue(p.customer_name) || 'Customer'
-  const status = textValue(p.status).replace(/_/g, ' ')
-  const total = moneyValue(p.total_minor)
-  const slot = [textValue(p.delivery_slot_date), textValue(p.delivery_slot_window)].filter(Boolean).join(' ')
+// Build the typed email data for an order-linked notification. Falls back to the
+// notification payload (order-level fields only, no line items) if the order or
+// its items can't be read — the customer still gets a correct, if terser, note.
+async function buildOrderEmailData(admin: Admin, n: NotificationRow): Promise<OrderEmailData> {
+  const p = n.payload
+  let order: OrderRow | null = null
+  let items: OrderItemRow[] = []
 
-  if (notification.template_key === 'admin_new_order') {
-    return {
-      subject: `New Kakeez order ${orderNumber}`,
-      text: [
-        `New order ${orderNumber}`,
-        `Customer: ${customerName}`,
-        `Phone: ${textValue(p.customer_phone)}`,
-        `Email: ${textValue(p.customer_email)}`,
-        `Total: ${total}`,
-        slot ? `Delivery slot: ${slot}` : '',
-        '',
-        'Please confirm the order and move it to preparing in the admin panel.',
-      ].filter(Boolean).join('\n'),
-    }
+  if (n.order_id) {
+    const [orderRes, itemsRes] = await Promise.all([
+      admin.from('orders')
+        .select('order_number, customer_name, customer_email, customer_phone, subtotal_minor, discount_minor, tax_minor, delivery_fee_minor, total_minor, is_gift, status, delivery_slot_date, delivery_slot_window, delivery_address_snapshot')
+        .eq('id', n.order_id).maybeSingle(),
+      admin.from('order_items')
+        .select('product_name_snapshot, variation_label_snapshot, quantity, unit_price_minor_snapshot, line_total_minor_snapshot')
+        .eq('order_id', n.order_id),
+    ])
+    order = (orderRes.data as OrderRow | null) ?? null
+    items = (itemsRes.data as OrderItemRow[] | null) ?? []
   }
 
-  if (notification.template_key === 'order_confirmed') {
-    return {
-      subject: `Kakeez order ${orderNumber} received`,
-      text: [
-        `Hi ${customerName},`,
-        '',
-        `We received your order ${orderNumber}.`,
-        `Total: ${total}`,
-        slot ? `Delivery slot: ${slot}` : '',
-        '',
-        'Kakeez will confirm and start preparing it shortly.',
-      ].filter(Boolean).join('\n'),
-    }
-  }
+  const addr = (order?.delivery_address_snapshot ?? {}) as Record<string, unknown>
 
   return {
-    subject: `Kakeez order ${orderNumber} update`,
-    text: `Order ${orderNumber} status changed to ${status || 'updated'}.`,
+    orderNumber: order?.order_number || textValue(p.order_number) || 'your order',
+    customerName: order?.customer_name || textValue(p.customer_name) || 'Customer',
+    customerEmail: order?.customer_email || textValue(p.customer_email),
+    customerPhone: order?.customer_phone || textValue(p.customer_phone),
+    status: textValue(p.status) || order?.status,
+    previousStatus: textValue(p.previous_status) || null,
+    subtotalMinor: order ? order.subtotal_minor : numValue(p.total_minor),
+    discountMinor: order ? order.discount_minor : 0,
+    taxMinor: order ? order.tax_minor : 0,
+    deliveryMinor: order ? order.delivery_fee_minor : 0,
+    totalMinor: order ? order.total_minor : numValue(p.total_minor),
+    isGift: order?.is_gift ?? false,
+    deliverySlotDate: order?.delivery_slot_date || textValue(p.delivery_slot_date) || null,
+    deliverySlotWindow: order?.delivery_slot_window || textValue(p.delivery_slot_window) || null,
+    address: {
+      recipient: textValue(addr.recipient_name) || null,
+      line1: textValue(addr.line1) || null,
+      line2: textValue(addr.line2) || null,
+      area: textValue(addr.area) || null,
+      city: textValue(addr.city) || null,
+      instructions: textValue(addr.instructions) || null,
+    },
+    items: items.map((it) => ({
+      name: it.product_name_snapshot,
+      variation: it.variation_label_snapshot,
+      quantity: it.quantity,
+      unitMinor: it.unit_price_minor_snapshot,
+      lineMinor: it.line_total_minor_snapshot,
+    })),
   }
 }
 
@@ -76,22 +115,20 @@ function adminEmail(): string | null {
   return process.env.KAKEEZ_ADMIN_EMAIL || process.env.GOOGLE_SMTP_FROM || null
 }
 
-function customerEmail(notification: NotificationRow): string | null {
-  return textValue(notification.payload.customer_email) || null
-}
-
-async function sendEmail(notification: NotificationRow): Promise<string> {
-  const to = notification.audience === 'admin' ? adminEmail() : customerEmail(notification)
+async function sendEmail(admin: Admin, notification: NotificationRow): Promise<string> {
+  const data = await buildOrderEmailData(admin, notification)
+  const to = notification.audience === 'admin' ? adminEmail() : (data.customerEmail || null)
   if (!to) throw new Error('No email recipient configured')
+
+  const rendered: RenderedEmail = renderOrderEmail(notification.template_key, notification.audience, data)
 
   const from = process.env.GOOGLE_SMTP_FROM || process.env.GOOGLE_SMTP_USER
   const user = process.env.GOOGLE_SMTP_USER
   const pass = process.env.GOOGLE_SMTP_PASS
   const dryRun = process.env.NOTIFICATIONS_DRY_RUN !== 'false'
-  const message = renderMessage(notification)
 
   if (dryRun || !from || !user || !pass) {
-    console.log('[KAKEEZ NOTIFICATION DRY RUN][email]', { to, from: from ?? 'missing', ...message })
+    console.log('[KAKEEZ NOTIFICATION DRY RUN][email]', { to, from: from ?? 'missing', subject: rendered.subject })
     return `dry-run-email-${notification.id}`
   }
 
@@ -102,21 +139,33 @@ async function sendEmail(notification: NotificationRow): Promise<string> {
     auth: { user, pass },
   })
 
-  const info = await transporter.sendMail({ from, to, subject: message.subject, text: message.text })
+  const info = await transporter.sendMail({
+    from: `Kakeez <${from}>`,
+    to,
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
+  })
   return String(info.messageId || `smtp-${notification.id}`)
 }
 
-async function sendWhatsApp(notification: NotificationRow): Promise<string> {
+async function sendWhatsApp(admin: Admin, notification: NotificationRow): Promise<string> {
   const token = process.env.WHATSAPP_API_TOKEN
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
   const to = process.env.KAKEEZ_ADMIN_WHATSAPP_E164
   const dryRun = process.env.NOTIFICATIONS_DRY_RUN !== 'false'
-  const message = renderMessage(notification)
 
   if (!to) throw new Error('No WhatsApp admin recipient configured')
 
+  const data = await buildOrderEmailData(admin, notification)
+  const body = [
+    `New Kakeez order ${data.orderNumber}`,
+    `${data.customerName} · ${data.customerPhone}`,
+    `Total: ${formatPkr(data.totalMinor)}`,
+  ].join('\n')
+
   if (dryRun || !token || !phoneNumberId) {
-    console.log('[KAKEEZ NOTIFICATION DRY RUN][whatsapp]', { to, text: message.text })
+    console.log('[KAKEEZ NOTIFICATION DRY RUN][whatsapp]', { to, text: body })
     return `dry-run-whatsapp-${notification.id}`
   }
 
@@ -130,13 +179,13 @@ async function sendWhatsApp(notification: NotificationRow): Promise<string> {
       messaging_product: 'whatsapp',
       to,
       type: 'text',
-      text: { preview_url: false, body: message.text },
+      text: { preview_url: false, body },
     }),
   })
 
-  const data = await response.json() as { messages?: { id?: string }[]; error?: { message?: string } }
-  if (!response.ok) throw new Error(data.error?.message || 'WhatsApp send failed')
-  return data.messages?.[0]?.id || `whatsapp-${notification.id}`
+  const payload = await response.json() as { messages?: { id?: string }[]; error?: { message?: string } }
+  if (!response.ok) throw new Error(payload.error?.message || 'WhatsApp send failed')
+  return payload.messages?.[0]?.id || `whatsapp-${notification.id}`
 }
 
 // Authorize the caller. Fails CLOSED: if no secret is configured at all the
@@ -156,7 +205,7 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 async function drainQueue() {
-  let admin: ReturnType<typeof createAdminClient>
+  let admin: Admin
   try {
     admin = createAdminClient()
   } catch (err) {
@@ -184,8 +233,8 @@ async function drainQueue() {
   for (const notification of rows) {
     try {
       const providerId = notification.channel === 'wa_template'
-        ? await sendWhatsApp(notification)
-        : await sendEmail(notification)
+        ? await sendWhatsApp(admin, notification)
+        : await sendEmail(admin, notification)
       await admin
         .from('notifications')
         .update({ status: 'sent', provider_id: providerId, sent_at: new Date().toISOString(), error: null })
