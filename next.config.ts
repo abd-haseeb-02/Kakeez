@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
     // browser based on Accept, and AVIF is typically 20-30% smaller than WebP
     // at the same visual quality -- worth it for a catalogue of photographs.
     formats: ["image/avif", "image/webp"],
+    // Product images in Supabase are ~3MB PNGs, and every optimizer cache miss
+    // pulls the whole file across to re-encode it. Their filenames carry an
+    // upload timestamp, so replacing a photo produces a new URL rather than
+    // mutating an existing one -- which means a long TTL can never serve stale
+    // art. 31 days instead of the 4-hour default, to keep that traffic off the
+    // Supabase egress quota.
+    minimumCacheTTL: 60 * 60 * 24 * 31,
     // Allow product images served from Supabase Storage to be used with next/image.
     remotePatterns: [
       {

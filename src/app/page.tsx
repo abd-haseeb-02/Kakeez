@@ -124,15 +124,6 @@ export default async function Home() {
 
         <BestSellers categories={categories} />
 
-        <section className="mx-auto w-[min(1390px,calc(100%_-_32px))] py-[clamp(56px,7vw,110px)] text-center">
-          <h2 className="ff-accia text-[clamp(38px,4vw,64px)] leading-none text-[#262729]">Follow @kakeezbakers</h2>
-          <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-5">
-            {[0, 1, 2, 3, 4].map((item) => (
-              <div key={item} className="aspect-[0.84] rounded-[12px] border border-primary-brown/10 bg-[#ece9e2]" />
-            ))}
-          </div>
-        </section>
-
         <div id="contact" className="scroll-mt-[120px] pb-6">
           <Footer variant="flow" />
         </div>
