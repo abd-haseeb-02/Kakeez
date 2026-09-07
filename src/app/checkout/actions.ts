@@ -90,6 +90,12 @@ function friendlyMessage(pgMessage: string): { code: string; message: string } {
       return { code: 'out_of_stock', message: 'Sorry — one of your items just sold out. Please remove it and try again.' }
     case 'payment_method_unsupported':
       return { code: 'payment_method_unsupported', message: 'Only Cash on Delivery is supported right now.' }
+    case 'account_blocked':
+      return { code: 'account_blocked', message: 'This account cannot place orders right now. Please contact us so we can help.' }
+    case 'cod_blocked':
+      return { code: 'cod_blocked', message: 'We cannot take a cash-on-delivery order for this number. Please contact us to arrange your order.' }
+    case 'too_many_orders_today':
+      return { code: 'too_many_orders_today', message: 'That phone number has reached today’s order limit. Please try again tomorrow or contact us.' }
     default:
       return { code: 'server_error', message: 'Could not place your order. Please try again.' }
   }
