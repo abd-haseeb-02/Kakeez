@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Playfair_Display, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/site-url";
 import { businessSchema } from "@/lib/structured-data";
@@ -89,6 +90,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema()) }}
         />
         {children}
+        {/* Page-view and Core Web Vitals collection. Cookieless and aggregated:
+            it does not profile individual visitors, which is what the cookies
+            page tells them. */}
+        <Analytics />
       </body>
     </html>
   );

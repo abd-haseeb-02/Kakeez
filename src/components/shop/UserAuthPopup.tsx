@@ -84,7 +84,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
             recipient_name: fullName,
             phone_e164: phone || '+92',
             line1: address.trim(),
-            city: 'Karachi',
+            city: 'Lahore',
             is_default_shipping: true,
           })
         }

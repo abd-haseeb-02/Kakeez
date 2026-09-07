@@ -1,16 +1,54 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
+import { ArrowRight, Check, Loader2 } from "lucide-react"
 import { CONTACT } from "@/lib/contact"
+import { supabase } from "@/lib/supabase"
 
 type FooterProps = {
   topOffset?: number | string
   variant?: "absolute" | "flow"
 }
 
+type SignupState = "idle" | "saving" | "done" | "error"
+
 export default function Footer(_props: FooterProps) {
   void _props
+
+  const [email, setEmail] = useState("")
+  const [state, setState] = useState<SignupState>("idle")
+  const [message, setMessage] = useState("")
+
+  // Was a styled <div> with a decorative arrow and no handler at all. Now it
+  // really subscribes: newsletter_subscribers accepts an insert from anon but
+  // has no SELECT policy, so the list cannot be read back from the browser.
+  const subscribe = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const value = email.trim()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+      setState("error")
+      setMessage("Enter a valid email address.")
+      return
+    }
+
+    setState("saving")
+    const { error } = await supabase
+      .from("newsletter_subscribers")
+      .insert({ email: value, source: "footer" })
+
+    // A duplicate means they are already on the list — that is a success from
+    // the subscriber's point of view, not an error to shout about.
+    if (error && !error.message.toLowerCase().includes("duplicate")) {
+      setState("error")
+      setMessage("Could not sign you up just now. Please try again.")
+      return
+    }
+
+    setState("done")
+    setMessage("You're on the list. We'll be in touch.")
+    setEmail("")
+  }
 
   return (
     <footer className="relative z-20 mx-auto w-[calc(100%_-_24px)] overflow-hidden border border-white bg-[#e1eab4] py-[clamp(24px,2.8vw,42px)] text-[#936939] lg:w-[calc(100%_-_40px)]">
@@ -19,10 +57,41 @@ export default function Footer(_props: FooterProps) {
           <div>
             <h2 className="ff-accia-bold text-[clamp(24px,2vw,30px)] leading-none">Stay in the Loop</h2>
             <p className="ff-colville-light mt-[clamp(12px,1.6vw,22px)] text-[clamp(14px,1vw,16px)]">We will not spam you, we promise.</p>
-            <div className="mt-[clamp(20px,2vw,28px)] flex h-[44px] max-w-[310px] items-center justify-between rounded-[10px] border border-[#936939]/40 bg-white/10 px-4">
-              <span className="ff-accia text-[15px] capitalize opacity-55">Your e-mail</span>
-              <Image src="/assets/email-arrow.svg" alt="" width={14} height={14} />
-            </div>
+
+            {state === "done" ? (
+              <p className="mt-[clamp(20px,2vw,28px)] flex max-w-[310px] items-center gap-2 rounded-[10px] border border-[#936939]/40 bg-white/40 px-4 py-3 ff-colville text-[15px]">
+                <Check className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {message}
+              </p>
+            ) : (
+              <form onSubmit={subscribe} className="mt-[clamp(20px,2vw,28px)] max-w-[310px]">
+                <label htmlFor="newsletter-email" className="sr-only">Your email address</label>
+                <div className="flex h-[44px] items-center justify-between rounded-[10px] border border-[#936939]/40 bg-white/10 pl-4 pr-2 focus-within:border-[#936939]">
+                  <input
+                    id="newsletter-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); if (state === "error") setState("idle") }}
+                    placeholder="Your e-mail"
+                    autoComplete="email"
+                    className="h-full w-full bg-transparent ff-accia text-[15px] text-[#936939] outline-none placeholder:text-[#936939]/55"
+                  />
+                  <button
+                    type="submit"
+                    disabled={state === "saving"}
+                    aria-label="Subscribe to the Kakeez newsletter"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] text-[#936939] transition-colors hover:bg-[#936939]/10 disabled:opacity-50"
+                  >
+                    {state === "saving"
+                      ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      : <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
+                {state === "error" && (
+                  <p role="alert" className="mt-2 ff-colville-light text-[13px] text-red-700">{message}</p>
+                )}
+              </form>
+            )}
           </div>
 
           <div className="md:ml-auto">
@@ -49,7 +118,14 @@ export default function Footer(_props: FooterProps) {
         <div className="mt-[clamp(24px,3vw,46px)] border-t border-[#936939]/20 pt-4 ff-colville text-[clamp(13px,0.9vw,15px)] capitalize">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <p>(c) 2022-{new Date().getFullYear()} Kakeez All rights reserved</p>
-            <p className="md:text-right">Terms & Conditions | Cookies | Privacy Policy</p>
+            {/* These were plain text pointing at pages that did not exist. */}
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 md:justify-end">
+              <Link href="/terms" className="transition-opacity hover:opacity-70">Terms &amp; Conditions</Link>
+              <span aria-hidden="true" className="opacity-40">|</span>
+              <Link href="/cookies" className="transition-opacity hover:opacity-70">Cookies</Link>
+              <span aria-hidden="true" className="opacity-40">|</span>
+              <Link href="/privacy" className="transition-opacity hover:opacity-70">Privacy Policy</Link>
+            </p>
           </div>
         </div>
       </div>

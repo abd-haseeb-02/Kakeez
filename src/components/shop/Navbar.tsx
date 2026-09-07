@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useSyncExternalStore } from "react"
 import type { Session } from "@supabase/supabase-js"
 import UserAuthPopup from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
@@ -19,7 +19,21 @@ export default function Navbar() {
   const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const totalItems = useCart(state => state.totalItems())
+  // The cart is persisted to localStorage, which the server cannot see. Reading
+  // it straight through `useCart(...)` meant the server rendered no badge while
+  // a returning customer's first client render drew one — a hydration mismatch
+  // on every page load with a non-empty cart.
+  //
+  // useSyncExternalStore fixes it at the source: `getServerSnapshot` (the third
+  // argument) is what React uses for SSR *and* for the hydration pass, so the
+  // first client render always matches the server at 0, then re-renders with
+  // the real count once hydration is done. No mounted flag, so no clash with
+  // the react-hooks/set-state-in-effect rule this repo enforces.
+  const totalItems = useSyncExternalStore(
+    useCart.subscribe,
+    () => useCart.getState().items.reduce((sum, item) => sum + item.quantity, 0),
+    () => 0
+  )
   const clearCart = useCart(state => state.clearCart)
 
   const applySession = async (session: Session | null) => {

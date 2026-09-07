@@ -82,7 +82,7 @@ export default function SearchDialog({ onClose }: { onClose: () => void }) {
       const { data, error } = await supabase
         .from("products")
         .select("id, slug, name, short_description, base_price_minor, is_best_seller, product_images(storage_path, position, is_featured)")
-        .or(`name.ilike.%${term}%,short_description.ilike.%${term}%`)
+        .or(`name.ilike.%${term}%,short_description.ilike.%${term}%,description.ilike.%${term}%`)
         .eq("status", "published")
         .is("deleted_at", null)
         .order("is_best_seller", { ascending: false })

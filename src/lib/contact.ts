@@ -6,7 +6,7 @@
 // address, a phone number or an email should read it from here.
 
 export const CONTACT = {
-  email: 'Hello@kakeez.com',
+  email: 'hello@kakeez.com',
 
   // Displayed in local format; `tel:` needs E.164 to dial correctly from
   // outside Pakistan, so the two are kept separate on purpose.

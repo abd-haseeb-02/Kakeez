@@ -102,6 +102,9 @@ export default function ProductsPage() {
       supabase
         .from('products')
         .select('id, name, slug, description, base_price_minor, status, type, is_best_seller, is_featured, is_perishable, product_images(storage_path, position, is_featured), product_categories(category_id, categories(name, slug))')
+        // Soft-deleted products stay in the table for order history; they
+        // should not clutter the catalog editor.
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
       supabase.from('categories').select('id, name, slug').order('name'),
     ])
@@ -296,9 +299,16 @@ export default function ProductsPage() {
   }
 
   // ── Delete product ────────────────────────────────────────────────────────
+  // Soft delete. The schema carries products.deleted_at and every public read
+  // path already filters on it, so stamping it retires the product from the
+  // storefront while keeping order history, its images and its slug intact. A
+  // hard DELETE also orphaned the uploaded image in the storage bucket.
   const deleteProduct = async (id: string) => {
-    if (!confirm('Delete this product? This cannot be undone.')) return
-    const { error } = await supabase.from('products').delete().eq('id', id)
+    if (!confirm('Remove this product from the store? It stays on past orders and can be restored by clearing its deleted date.')) return
+    const { error } = await supabase
+      .from('products')
+      .update({ deleted_at: new Date().toISOString(), status: 'archived' })
+      .eq('id', id)
     if (error) { setGlobalError(error.message); return }
     setProducts((prev) => prev.filter((p) => p.id !== id))
   }

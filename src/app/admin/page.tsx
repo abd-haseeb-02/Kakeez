@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 
 import {
   TrendingUp,
@@ -32,8 +33,30 @@ type RealtimeDashboardOrder = Partial<DashboardOrder> & {
   customer_name?: string | null
 }
 
+// The real order status enum (orders_status_check). The dashboard previously
+// coloured rows against 'baking' / 'pending', which are not statuses at all, so
+// everything except cancelled rendered green.
+const NON_REVENUE_STATUSES = new Set(['cancelled', 'failed_delivery', 'disputed'])
+const ACTIVE_STATUSES = new Set([
+  'pending_confirmation', 'confirmed', 'preparing', 'ready_for_dispatch', 'out_for_delivery',
+])
+
+function statusClass(status: string): string {
+  switch (status) {
+    case 'delivered':          return 'bg-emerald-500/10 text-emerald-400'
+    case 'cancelled':          return 'bg-red-500/10 text-red-400'
+    case 'failed_delivery':    return 'bg-amber-500/10 text-amber-400'
+    case 'disputed':           return 'bg-purple-500/10 text-purple-400'
+    case 'out_for_delivery':   return 'bg-blue-500/10 text-blue-400'
+    case 'preparing':
+    case 'ready_for_dispatch': return 'bg-orange-500/10 text-orange-400'
+    default:                   return 'bg-white/10 text-white/70'
+  }
+}
+
 export default function AdminDashboard() {
   const [liveOrders, setLiveOrders] = useState<DashboardOrder[]>([])
+  const [loadError, setLoadError] = useState<string>("")
   const toast = useToast()
   const [stats, setStats] = useState([
     { label: "Total Revenue", value: "Rs. 0", icon: DollarSign, trend: "Live", color: "text-green-400" },
@@ -90,21 +113,28 @@ export default function AdminDashboard() {
       supabase.from('products').select('id', { count: 'exact' })
     ])
 
+    if (ordersRes.error) {
+      setLoadError(ordersRes.error.message)
+      return
+    }
+
     if (ordersRes.data) {
-      // New schema: total_minor (paisa, integer). Project to total_amount
-      // (rupees, number) so the existing render code stays the same.
       const orders = (ordersRes.data as DashboardOrder[]).map((o) => ({
         ...o,
         total_amount: (o.total_minor ?? 0) / 100,
       }))
       setLiveOrders(orders.slice(0, 10))
 
-      const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0)
+      // Revenue is summed in integer paisa and formatted once — accumulating
+      // rupee floats drifts. Cancelled and failed orders are not revenue.
+      const revenueMinor = orders
+        .filter((o) => !NON_REVENUE_STATUSES.has(o.status))
+        .reduce((acc, o) => acc + (o.total_minor ?? 0), 0)
       const uniqueCustomers = new Set(orders.map(o => o.customer_email)).size
 
       setStats([
-        { label: "Total Revenue", value: `Rs. ${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "Live", color: "text-green-400" },
-        { label: "Active Orders", value: orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length.toString(), icon: ShoppingBag, trend: "Live", color: "text-blue-400" },
+        { label: "Total Revenue", value: formatPkr(revenueMinor), icon: DollarSign, trend: "Live", color: "text-green-400" },
+        { label: "Active Orders", value: orders.filter(o => ACTIVE_STATUSES.has(o.status)).length.toString(), icon: ShoppingBag, trend: "Live", color: "text-blue-400" },
         { label: "Total Customers", value: uniqueCustomers.toString(), icon: Users, trend: "Live", color: "text-purple-400" },
         { label: "Total Products", value: productsRes.count?.toString() || "0", icon: TrendingUp, trend: "Live", color: "text-orange-400" },
       ])
@@ -154,10 +184,16 @@ export default function AdminDashboard() {
             <Clock className="text-primary-brown" size={20} />
             Recent Orders
           </h2>
-          <button className="admin-pill text-sm rounded-full px-3 py-1.5 ff-apfel flex items-center gap-1">
+          <Link href="/admin/orders" className="admin-pill text-sm rounded-full px-3 py-1.5 ff-apfel flex items-center gap-1">
             View All <ArrowUpRight size={14} />
-          </button>
+          </Link>
         </div>
+
+        {loadError && (
+          <div className="border-b border-red-500/20 bg-red-500/10 px-6 py-3 ff-apfel text-sm text-red-300">
+            Could not load orders: {loadError}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -176,15 +212,10 @@ export default function AdminDashboard() {
                   <td className="px-6 py-4 font-medium ff-apfel text-primary-brown truncate max-w-[100px]">{order.id}</td>
                   <td className="px-6 py-4 ff-apfel">{order.customer_name}</td>
                   <td className="px-6 py-4 ff-apfel">{order.order_items?.length ?? 0}</td>
-                  <td className="px-6 py-4 ff-apfel">Rs. {order.total_amount}</td>
+                  <td className="px-6 py-4 ff-apfel">{formatPkr(order.total_minor ?? 0)}</td>
                   <td className="px-6 py-4">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ff-apfel
-                      ${order.status === 'baking' ? 'bg-orange-500/10 text-orange-400' :
-                        order.status === 'pending' ? 'bg-blue-500/10 text-blue-400' :
-                        order.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
-                        'bg-green-500/10 text-green-400'}
-                    `}>
-                      {order.status}
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ff-apfel ${statusClass(order.status)}`}>
+                      {order.status.replace(/_/g, ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-white/50 text-sm ff-apfel">
