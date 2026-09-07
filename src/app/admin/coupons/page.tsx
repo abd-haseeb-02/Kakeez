@@ -69,6 +69,36 @@ function typeLabel(c: CouponRow): string {
   return c.type
 }
 
+// `datetime-local` speaks local wall-clock time. Slicing the stored UTC string
+// fed a UTC instant into a local-time field, so every edit in PKT shifted the
+// window five hours earlier. Convert both ways explicitly instead.
+function toLocalInput(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Maps the RPC's error codes onto something an operator can act on.
+function couponErrorMessage(raw: string): string {
+  const head = raw.split(':')[0].trim()
+  switch (head) {
+    case 'admin_required':      return 'Only an admin can change coupons.'
+    case 'code_required':       return 'Enter a coupon code.'
+    case 'invalid_percent':     return 'Percent must be between 0 and 100.'
+    case 'invalid_amount':      return 'Enter a discount amount greater than zero.'
+    case 'negative_amount':     return 'Amounts cannot be negative.'
+    case 'negative_usage_limit':return 'Usage limits cannot be negative.'
+    case 'expiry_before_start': return 'The expiry date must come after the start date.'
+    case 'invalid_type':        return 'That coupon type is not supported.'
+    case 'invalid_status':      return 'That status is not supported.'
+    case 'coupon_not_found':    return 'That coupon no longer exists.'
+    default:
+      return raw.includes('duplicate key') ? 'A coupon with that code already exists.' : raw
+  }
+}
+
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<CouponRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -117,8 +147,8 @@ export default function CouponsPage() {
       maxDiscountRupees: c.max_discount_minor != null ? (c.max_discount_minor / 100).toFixed(2) : '',
       usageLimit: c.usage_limit?.toString() ?? '',
       usageLimitPerUser: c.usage_limit_per_user?.toString() ?? '',
-      startsAt: c.starts_at ? c.starts_at.slice(0, 16) : '',
-      expiresAt: c.expires_at ? c.expires_at.slice(0, 16) : '',
+      startsAt: toLocalInput(c.starts_at),
+      expiresAt: toLocalInput(c.expires_at),
       status: c.status,
     })
     setShowForm(true)
@@ -128,38 +158,53 @@ export default function CouponsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload: Record<string, unknown> = {
-        code: form.code.trim().toUpperCase(),
-        type: form.type,
-        status: form.status,
-        starts_at: form.startsAt ? new Date(form.startsAt).toISOString() : null,
-        expires_at: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
-        min_order_minor: form.minOrderRupees ? rupeesToMinor(form.minOrderRupees) : null,
-        max_discount_minor: form.maxDiscountRupees ? rupeesToMinor(form.maxDiscountRupees) : null,
-        usage_limit: form.usageLimit ? parseInt(form.usageLimit, 10) : null,
-        usage_limit_per_user: form.usageLimitPerUser ? parseInt(form.usageLimitPerUser, 10) : null,
-        percent_bp: null,
-        value_minor: null,
-      }
+      // coupons has INSERT/UPDATE/DELETE REVOKEd from `authenticated`, so a
+      // direct table write always failed with "permission denied". The
+      // SECURITY DEFINER RPC is the supported path: it re-validates every
+      // field server-side and records the change in admin_audit_log.
+      let percentBp: number | null = null
+      let valueMinor: number | null = null
+
       if (form.type === 'percent') {
         const n = Number(form.percentText)
         if (!Number.isFinite(n) || n <= 0 || n > 100) throw new Error('Percent must be between 0 and 100.')
-        payload.percent_bp = Math.round(n * 100)
+        percentBp = Math.round(n * 100)
       } else if (form.type === 'fixed_cart') {
         if (!form.valueRupees) throw new Error('Fixed-cart amount is required.')
-        payload.value_minor = rupeesToMinor(form.valueRupees)
+        valueMinor = rupeesToMinor(form.valueRupees)
+        if (valueMinor <= 0) throw new Error('Discount amount must be greater than zero.')
       }
       // free_shipping carries no value.
 
-      if (editing) {
-        const { error } = await supabase.from('coupons').update(payload).eq('id', editing.id)
-        if (error) throw error
-        toast.push({ kind: 'success', title: 'Coupon updated' })
-      } else {
-        const { error } = await supabase.from('coupons').insert(payload)
-        if (error) throw error
-        toast.push({ kind: 'success', title: 'Coupon created' })
+      const minOrder = form.minOrderRupees ? rupeesToMinor(form.minOrderRupees) : 0
+      const maxDiscount = form.maxDiscountRupees ? rupeesToMinor(form.maxDiscountRupees) : null
+      if (minOrder < 0 || (maxDiscount != null && maxDiscount < 0)) {
+        throw new Error('Amounts cannot be negative.')
       }
+
+      const usageLimit = form.usageLimit ? Number.parseInt(form.usageLimit, 10) : null
+      const usagePerUser = form.usageLimitPerUser ? Number.parseInt(form.usageLimitPerUser, 10) : null
+      if ((usageLimit != null && !Number.isFinite(usageLimit)) || (usagePerUser != null && !Number.isFinite(usagePerUser))) {
+        throw new Error('Usage limits must be whole numbers.')
+      }
+
+      const { error } = await supabase.rpc('admin_upsert_coupon', {
+        p_id: editing?.id ?? null,
+        p_code: form.code.trim().toUpperCase(),
+        p_type: form.type,
+        p_percent_bp: percentBp,
+        p_value_minor: valueMinor,
+        p_min_order_minor: minOrder,
+        p_max_discount_minor: maxDiscount,
+        p_usage_limit: usageLimit,
+        p_usage_limit_per_user: usagePerUser,
+        p_starts_at: form.startsAt ? new Date(form.startsAt).toISOString() : null,
+        p_expires_at: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
+        p_status: form.status,
+      })
+      if (error) throw new Error(couponErrorMessage(error.message))
+
+      toast.push({ kind: 'success', title: editing ? 'Coupon updated' : 'Coupon created' })
       setShowForm(false)
       await load()
     } catch (err) {
@@ -170,17 +215,21 @@ export default function CouponsPage() {
   }
 
   const remove = async (c: CouponRow) => {
-    if ((c.redemption_count ?? 0) > 0) {
-      if (!confirm(`${c.code} has ${c.redemption_count} historic redemption(s). Archive instead of delete?`)) return
-      const { error } = await supabase.from('coupons').update({ status: 'archived' }).eq('id', c.id)
-      if (error) { toast.push({ kind: 'warn', title: 'Could not archive', body: error.message }); return }
-      await load()
+    const redeemed = (c.redemption_count ?? 0) > 0
+    const question = redeemed
+      ? `${c.code} has ${c.redemption_count} historic redemption(s), so it will be archived rather than deleted. Continue?`
+      : `Delete coupon "${c.code}"? Cannot be undone.`
+    if (!confirm(question)) return
+
+    // The RPC decides delete-vs-archive server-side so redemption history keeps
+    // its foreign key either way.
+    const { data, error } = await supabase.rpc('admin_delete_coupon', { p_id: c.id })
+    if (error) {
+      toast.push({ kind: 'warn', title: 'Could not remove coupon', body: couponErrorMessage(error.message) })
       return
     }
-    if (!confirm(`Delete coupon "${c.code}"? Cannot be undone.`)) return
-    const { error } = await supabase.from('coupons').delete().eq('id', c.id)
-    if (error) { toast.push({ kind: 'warn', title: 'Could not delete', body: error.message }); return }
-    setCoupons((prev) => prev.filter((x) => x.id !== c.id))
+    toast.push({ kind: 'success', title: data === 'archived' ? 'Coupon archived' : 'Coupon deleted' })
+    await load()
   }
 
   const grouped = useMemo(() => ({

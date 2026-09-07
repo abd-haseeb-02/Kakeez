@@ -57,24 +57,68 @@ const DEFAULT_TAX_FORM: TaxForm = {
 }
 
 const DEFAULT_DELIVERY_FORM: DeliveryForm = {
-  zoneName: "Karachi",
-  city: "Karachi",
+  zoneName: "Lahore",
+  city: "Lahore",
   status: "active",
-  methodName: "Standard Karachi delivery",
+  methodName: "Standard Lahore delivery",
   baseFeeRupees: "99.00",
   etaHours: "24",
   methodStatus: "active",
 }
 
+// The DB-backed store settings the General tab edits. Shop address/phone live
+// in src/lib/contact.ts (code, not DB), so they are shown read-only there.
+type GeneralForm = {
+  brandName: string
+  supportEmail: string
+  supportWhatsapp: string
+  leadTimeHours: string
+  codOnly: boolean
+  reviewAutoPublish: boolean
+}
+
+const DEFAULT_GENERAL_FORM: GeneralForm = {
+  brandName: "Kakeez",
+  supportEmail: "",
+  supportWhatsapp: "",
+  leadTimeHours: "24",
+  codOnly: true,
+  reviewAutoPublish: false,
+}
+
+// store_settings.value is jsonb: strings arrive quoted, booleans/numbers raw.
+function settingText(value: unknown): string {
+  if (value == null) return ""
+  return typeof value === "string" ? value : String(value)
+}
+function settingBool(value: unknown): boolean {
+  return value === true || value === "true"
+}
+
+function settingsErrorMessage(raw: string): string {
+  const head = raw.split(":")[0].trim()
+  switch (head) {
+    case "admin_required": return "Only an admin can change store settings."
+    case "auth_required":  return "Your session expired. Sign in again."
+    case "invalid_rate":   return "Tax rate must be between 0 and 100%."
+    case "invalid_fee":    return "Delivery fee cannot be negative."
+    case "invalid_eta":    return "ETA hours cannot be negative."
+    case "invalid_status": return "That status is not supported."
+    case "key_required":   return "Setting key is missing."
+    default:               return raw
+  }
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("general")
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState<"tax" | "delivery" | null>(null)
+  const [saving, setSaving] = useState<"tax" | "delivery" | "general" | null>(null)
   const [taxRow, setTaxRow] = useState<TaxRateRow | null>(null)
   const [zoneRow, setZoneRow] = useState<DeliveryZoneRow | null>(null)
   const [methodRow, setMethodRow] = useState<DeliveryMethodRow | null>(null)
   const [taxForm, setTaxForm] = useState<TaxForm>(DEFAULT_TAX_FORM)
   const [deliveryForm, setDeliveryForm] = useState<DeliveryForm>(DEFAULT_DELIVERY_FORM)
+  const [generalForm, setGeneralForm] = useState<GeneralForm>(DEFAULT_GENERAL_FORM)
   const toast = useToast()
 
   const tabs: { id: TabId; label: string; icon: typeof Globe }[] = [
@@ -89,6 +133,23 @@ export default function SettingsPage() {
 
   const load = async () => {
     setLoading(true)
+
+    // store_settings is readable only through the admin RPC (the table's own
+    // SELECT policy exposes just a public allow-list of keys).
+    const { data: settingsData, error: settingsError } = await supabase.rpc('admin_list_store_settings')
+    if (settingsError) {
+      toast.push({ kind: "warn", title: "Could not load store settings", body: settingsError.message })
+    } else {
+      const map = new Map(((settingsData as { key: string; value: unknown }[] | null) ?? []).map((r) => [r.key, r.value]))
+      setGeneralForm({
+        brandName: settingText(map.get('brand_name')) || DEFAULT_GENERAL_FORM.brandName,
+        supportEmail: settingText(map.get('support_email')),
+        supportWhatsapp: settingText(map.get('support.whatsapp_e164')),
+        leadTimeHours: settingText(map.get('default_lead_time_hours')) || '24',
+        codOnly: settingBool(map.get('cod_only')),
+        reviewAutoPublish: settingBool(map.get('review.auto_publish')),
+      })
+    }
 
     const { data: taxData, error: taxError } = await supabase
       .from("tax_rates")
@@ -170,25 +231,54 @@ export default function SettingsPage() {
       return
     }
 
-    const payload = {
-      name: taxForm.name.trim() || "Default tax",
-      rate_bp: Math.round(rateNumber * 100),
-      applies_to: "all",
-      is_default: true,
-    }
+    // tax_rates has INSERT/UPDATE REVOKEd from `authenticated`; the RPC is the
+    // supported write path and re-validates the rate server-side.
+    const { data, error } = await supabase.rpc('admin_save_tax_rate', {
+      p_id: taxRow?.id ?? null,
+      p_name: taxForm.name.trim() || "Default tax",
+      p_rate_bp: Math.round(rateNumber * 100),
+    })
 
-    const result = taxRow
-      ? await supabase.from("tax_rates").update(payload).eq("id", taxRow.id).select("id, name, rate_bp, applies_to, is_default").single()
-      : await supabase.from("tax_rates").insert(payload).select("id, name, rate_bp, applies_to, is_default").single()
-
-    if (result.error) {
-      toast.push({ kind: "warn", title: "Could not save tax settings", body: result.error.message })
+    if (error) {
+      toast.push({ kind: "warn", title: "Could not save tax settings", body: settingsErrorMessage(error.message) })
     } else {
-      const row = result.data as TaxRateRow
+      const row = data as TaxRateRow
       setTaxRow(row)
       setTaxForm({ name: row.name, ratePercent: (row.rate_bp / 100).toString() })
       toast.push({ kind: "success", title: "Tax settings saved" })
     }
+    setSaving(null)
+  }
+
+  const saveGeneral = async () => {
+    setSaving("general")
+    const lead = Number(generalForm.leadTimeHours)
+    if (!Number.isInteger(lead) || lead < 0) {
+      toast.push({ kind: "warn", title: "Lead time must be a whole number of hours" })
+      setSaving(null)
+      return
+    }
+
+    // store_settings.value is jsonb, so strings are passed as JSON strings.
+    const entries: [string, unknown][] = [
+      ['brand_name', generalForm.brandName.trim()],
+      ['support_email', generalForm.supportEmail.trim()],
+      ['support.whatsapp_e164', generalForm.supportWhatsapp.trim()],
+      ['default_lead_time_hours', lead],
+      ['cod_only', generalForm.codOnly],
+      ['review.auto_publish', generalForm.reviewAutoPublish],
+    ]
+
+    for (const [key, value] of entries) {
+      const { error } = await supabase.rpc('admin_set_store_setting', { p_key: key, p_value: value })
+      if (error) {
+        toast.push({ kind: "warn", title: `Could not save ${key}`, body: settingsErrorMessage(error.message) })
+        setSaving(null)
+        return
+      }
+    }
+
+    toast.push({ kind: "success", title: "Store settings saved" })
     setSaving(null)
   }
 
@@ -203,43 +293,35 @@ export default function SettingsPage() {
       return
     }
 
-    const zonePayload = {
-      name: deliveryForm.zoneName.trim() || "Delivery zone",
-      city: deliveryForm.city.trim() || "Karachi",
-      status: deliveryForm.status,
-    }
-
-    const zoneResult = zoneRow
-      ? await supabase.from("delivery_zones").update(zonePayload).eq("id", zoneRow.id).select("id, name, city, status").single()
-      : await supabase.from("delivery_zones").insert(zonePayload).select("id, name, city, status").single()
-
-    if (zoneResult.error) {
-      toast.push({ kind: "warn", title: "Could not save delivery zone", body: zoneResult.error.message })
+    const etaHours = deliveryForm.etaHours ? Number(deliveryForm.etaHours) : null
+    if (etaHours != null && (!Number.isInteger(etaHours) || etaHours < 0)) {
+      toast.push({ kind: "warn", title: "ETA must be a whole number of hours" })
       setSaving(null)
       return
     }
 
-    const savedZone = zoneResult.data as DeliveryZoneRow
-    setZoneRow(savedZone)
+    // delivery_zones + delivery_methods are both REVOKEd from `authenticated`.
+    // One RPC saves the pair together so a half-save can't strand a method
+    // pointing at a zone that failed to write.
+    const { data, error } = await supabase.rpc('admin_save_delivery', {
+      p_zone_id: zoneRow?.id ?? null,
+      p_zone_name: deliveryForm.zoneName.trim() || "Delivery zone",
+      p_city: deliveryForm.city.trim() || "Lahore",
+      p_zone_status: deliveryForm.status,
+      p_method_id: methodRow?.id ?? null,
+      p_method_name: deliveryForm.methodName.trim() || "Standard delivery",
+      p_base_fee_minor: baseFeeMinor,
+      p_eta_hours: etaHours,
+      p_method_status: deliveryForm.methodStatus,
+    })
 
-    const methodPayload = {
-      zone_id: savedZone.id,
-      name: deliveryForm.methodName.trim() || "Standard delivery",
-      type: "flat" as const,
-      base_fee_minor: baseFeeMinor,
-      min_order_minor: 0,
-      eta_hours: deliveryForm.etaHours ? Number(deliveryForm.etaHours) : null,
-      status: deliveryForm.methodStatus,
-    }
-
-    const methodResult = methodRow
-      ? await supabase.from("delivery_methods").update(methodPayload).eq("id", methodRow.id).select("id, zone_id, name, type, base_fee_minor, min_order_minor, free_over_minor, eta_hours, status").single()
-      : await supabase.from("delivery_methods").insert(methodPayload).select("id, zone_id, name, type, base_fee_minor, min_order_minor, free_over_minor, eta_hours, status").single()
-
-    if (methodResult.error) {
-      toast.push({ kind: "warn", title: "Could not save delivery method", body: methodResult.error.message })
+    if (error) {
+      toast.push({ kind: "warn", title: "Could not save delivery settings", body: settingsErrorMessage(error.message) })
     } else {
-      const method = methodResult.data as DeliveryMethodRow
+      const result = data as { zone: DeliveryZoneRow; method: DeliveryMethodRow }
+      const savedZone = result.zone
+      const method = result.method
+      setZoneRow(savedZone)
       setMethodRow(method)
       setDeliveryForm((prev) => ({
         ...prev,
@@ -300,24 +382,60 @@ export default function SettingsPage() {
               <Loader2 className="animate-spin" size={34} />
             </div>
           ) : activeTab === "general" ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-              <h2 className="text-2xl font-bold ff-accia text-white">General Settings</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className={labelCls}>Shop Name</label>
-                  <input defaultValue="KAKEEZ Bakeshop" className={inputCls} />
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold ff-accia text-white">General Settings</h2>
+                  <p className="mt-1 ff-apfel text-sm text-white/45">Stored in the database and read by the storefront.</p>
                 </div>
-                <div className="space-y-2">
-                  <label className={labelCls}>Contact Email</label>
-                  <input defaultValue={CONTACT.email} className={inputCls} />
+                <button onClick={saveGeneral} disabled={saving === "general"} className="flex items-center justify-center gap-2 rounded-2xl bg-primary-brown px-6 py-3 text-white transition-all ff-apfel font-bold hover:bg-primary-brown/90 disabled:opacity-60">
+                  {saving === "general" ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  Save
+                </button>
+              </div>
+
+              <div className={panelCls}>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={labelCls}>Brand Name</label>
+                    <input value={generalForm.brandName} onChange={(e) => setGeneralForm((f) => ({ ...f, brandName: e.target.value }))} className={inputCls} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Support Email</label>
+                    <input value={generalForm.supportEmail} onChange={(e) => setGeneralForm((f) => ({ ...f, supportEmail: e.target.value }))} placeholder="hello@kakeez.com" className={inputCls} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Support WhatsApp (E.164)</label>
+                    <input value={generalForm.supportWhatsapp} onChange={(e) => setGeneralForm((f) => ({ ...f, supportWhatsapp: e.target.value }))} placeholder="923174304211" className={inputCls} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Default Lead Time (hours)</label>
+                    <input value={generalForm.leadTimeHours} onChange={(e) => setGeneralForm((f) => ({ ...f, leadTimeHours: e.target.value }))} inputMode="numeric" className={inputCls} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className={labelCls}>Contact Phone</label>
-                  <input defaultValue={CONTACT.phone} className={inputCls} />
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                    <input type="checkbox" checked={generalForm.codOnly} onChange={(e) => setGeneralForm((f) => ({ ...f, codOnly: e.target.checked }))} className="h-4 w-4 accent-primary-brown" />
+                    <span className="ff-apfel text-sm text-white/70">Cash on delivery only</span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                    <input type="checkbox" checked={generalForm.reviewAutoPublish} onChange={(e) => setGeneralForm((f) => ({ ...f, reviewAutoPublish: e.target.checked }))} className="h-4 w-4 accent-primary-brown" />
+                    <span className="ff-apfel text-sm text-white/70">Auto-publish new reviews</span>
+                  </label>
                 </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className={labelCls}>Shop Address</label>
-                  <textarea defaultValue={addressOneLine} className={`${inputCls} h-32 resize-none`} />
+              </div>
+
+              <div className={panelCls}>
+                <h3 className="mb-2 ff-accia text-xl text-white">Storefront contact</h3>
+                <p className="ff-apfel text-sm text-white/45">
+                  The public address and phone live in code (<code className="text-primary-brown">src/lib/contact.ts</code>) so they stay
+                  consistent across the footer, contact page and business schema. Edit them there and redeploy.
+                </p>
+                <div className="mt-4 space-y-1 ff-apfel text-sm text-white/70">
+                  <div>{CONTACT.email}</div>
+                  <div>{CONTACT.phone}</div>
+                  <div>{addressOneLine}</div>
                 </div>
               </div>
             </div>
