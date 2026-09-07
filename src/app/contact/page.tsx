@@ -1,5 +1,12 @@
+import type { Metadata } from "next"
 import SimplePage from "@/components/shop/SimplePage"
 import { CONTACT, addressOneLine } from "@/lib/contact"
+
+export const metadata: Metadata = {
+  title: "Contact | KAKEEZ Bakeshop",
+  description: "Call, email or visit Kakeez Bakeshop in Johar Town, Lahore.",
+  alternates: { canonical: "/contact" },
+}
 
 export default function ContactPage() {
   return (

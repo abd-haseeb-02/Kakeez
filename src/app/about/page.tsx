@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Our Story | KAKEEZ Bakeshop",
   description:
     "Founded in April 2023 by Mian Zain, KAKEEZ began with a simple belief — every special moment deserves something made with care.",
+  alternates: { canonical: "/about" },
 }
 
 // Three ways of looking at the same cake. Kept as data so the cards stay
