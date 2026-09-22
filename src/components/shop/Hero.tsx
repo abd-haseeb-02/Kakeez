@@ -11,9 +11,18 @@ import { useEffect, useState } from "react"
 // Scaling from the cusp line instead left ~160px of empty page under the hero.
 const HERO_PATH = "M1668 739.335H1667.04C1667.67 743.621 1668 747.994 1668 752.434C1668 807.342 1618.08 851.855 1556.5 851.855C1521.32 851.855 1489.95 837.329 1469.51 814.638C1449.68 851.387 1408.58 876.633 1361.09 876.633C1311.32 876.633 1268.56 848.894 1249.95 809.243C1232.05 820.431 1209.67 827.077 1185.4 827.077C1149.35 827.077 1117.49 812.425 1098.24 790.008C1077.8 812.615 1046.49 827.077 1011.39 827.077C976.209 827.077 944.837 812.551 924.401 789.86C904.565 826.609 863.465 851.855 815.979 851.855C766.205 851.855 723.447 824.117 704.839 784.466C686.933 795.653 664.557 802.299 640.282 802.299C618.643 802.299 598.513 797.018 581.712 787.947C565.679 825.317 525.085 851.855 477.537 851.855C442.36 851.855 410.987 837.329 390.552 814.638C370.715 851.387 329.615 876.633 282.13 876.633C232.355 876.633 189.597 848.894 170.989 809.243C153.083 820.431 130.707 827.077 106.433 827.077C47.652 827.077 0 788.112 0 740.045C0 739.808 0.004 739.571 0.006 739.335H0V0H1668V739.335Z"
 
-// Text-free WebP art. The two baked-in banners were re-exported from the
-// Figma source images (images/image-import-17 and 16+31 composited) so the
-// headline could move out of the bitmap and onto its own layer.
+// Text-free WebP art, re-exported from the Figma source images so the headline
+// could move out of the bitmap and onto its own layer. Three things about that
+// export are load-bearing and were each got wrong once, so they are written down
+// here; scripts/build-hero-slides.py reproduces them.
+//   * Slides 2 and 3 carry m00 = -1 in the .fig, i.e. the design MIRRORS both
+//     photos. Slide 1 is m00 = +1, which is why it alone never needed flipping.
+//   * Slide 2 sits under a white linear gradient (alpha 1 -> 0, reaching zero at
+//     66% of the width). Without it the brown script has no ground to sit on and
+//     is unreadable against the cakes. It is baked in rather than layered here so
+//     that it crops with the photo instead of drifting across it.
+//   * Slide 3's background is a CROP of a 1024x1024 source (rows 20.2%..76.3%),
+//     not a stretch. Scaling that square to the 1.785 frame squashed every cake.
 // Pre-compressed WebP rather than the original PNGs. These are drawn with raw
 // SVG <image href> elements inside the clipped hero shape, which never touches
 // next/image -- so whatever is referenced here ships to the browser untouched.
