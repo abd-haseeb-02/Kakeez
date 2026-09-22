@@ -146,7 +146,7 @@ export default function Hero() {
           height at every width: 33.5% on mobile, where preserveAspectRatio is
           "none" and the art stretches, and ~37% on desktop, where "xMidYMax
           slice" scales it off the width that also drives the hero's height. */}
-      <div className="absolute bottom-[36%] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(6px,0.5vw,9px)] lg:bottom-[38%]">
+      <div className="absolute bottom-[clamp(12px,1.55vw,24px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(6px,0.5vw,9px)]">
         {SLIDES.map((item, index) => (
           <button
             key={`${item.id}-dot`}
