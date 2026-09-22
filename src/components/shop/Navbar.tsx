@@ -166,7 +166,7 @@ export default function Navbar() {
         </button>
 
         {/* Left Links */}
-        <div className="hidden items-center gap-[clamp(28px,4vw,76px)] ff-colville-medium text-[clamp(16px,1.1vw,21px)] text-[#936939] uppercase lg:flex">
+        <div className="hidden items-center gap-[clamp(24px,2.3vw,40px)] ff-colville-medium text-[clamp(15px,1vw,18px)] tracking-[0.04em] text-[#936939] uppercase lg:flex">
           <Link href="/#menu" className="hover:opacity-70 transition-opacity">Menu</Link>
           <Link href="/about" className="hover:opacity-70 transition-opacity">About</Link>
           <Link href="/about#contact" className="hover:opacity-70 transition-opacity">Contact</Link>
@@ -180,7 +180,7 @@ export default function Navbar() {
         </div>
 
         {/* Right Actions */}
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 lg:ml-0 lg:gap-[clamp(18px,2.1vw,40px)]">
+        <div className="ml-auto flex items-center gap-1 sm:gap-1.5 lg:ml-0 lg:gap-2">
           {isAdmin && (
             <Link 
               href="/admin" 
@@ -195,9 +195,9 @@ export default function Navbar() {
             type="button"
             aria-label="Search"
             onClick={() => setIsSearchOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-11 lg:w-11"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-[42px] lg:w-[42px]"
           >
-            <Search className="h-5 w-5 lg:h-[22px] lg:w-[22px]" strokeWidth={2} />
+            <Search className="h-5 w-5 lg:h-[21px] lg:w-[21px]" strokeWidth={2} />
           </button>
           
           <div className="relative">
@@ -205,9 +205,9 @@ export default function Navbar() {
               type="button"
               aria-label={user ? "Open account menu" : "Sign in"}
               onClick={handleAccountClick}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-11 lg:w-11"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#936939] transition-colors hover:bg-[#936939]/10 lg:h-[42px] lg:w-[42px]"
             >
-              <UserIcon className="h-5 w-5 lg:h-[22px] lg:w-[22px]" strokeWidth={1.8} />
+              <UserIcon className="h-5 w-5 lg:h-[21px] lg:w-[21px]" strokeWidth={1.8} />
             </button>
 
             {user && isAccountOpen && (
@@ -246,12 +246,12 @@ export default function Navbar() {
             type="button"
             aria-label="Open cart"
             onClick={openCart}
-            className="relative flex h-11 w-12 items-center justify-center rounded-lg bg-[#936939] text-white transition-colors hover:bg-primary-brown/90 sm:w-14 lg:h-[50px] lg:w-[64px]"
+            className="relative flex h-10 w-[46px] items-center justify-center rounded-xl bg-[#936939] text-white transition-colors hover:bg-primary-brown/90 lg:h-[42px] lg:w-[54px]"
           >
-            <ShoppingCart className="h-[22px] w-[22px] lg:h-[25px] lg:w-[25px]" strokeWidth={2} />
+            <ShoppingCart className="h-5 w-5 lg:h-[21px] lg:w-[21px]" strokeWidth={2} />
             
             {totalItems > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold text-[#936939] shadow-sm ff-apfel">
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#936939]/15 bg-white px-1 text-[11px] font-bold leading-none text-[#936939] shadow-sm ff-apfel">
                 {totalItems}
               </span>
             )}
