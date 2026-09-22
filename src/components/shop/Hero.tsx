@@ -70,8 +70,14 @@ export default function Hero() {
     setActiveSlide((current) => (current + 1) % SLIDES.length)
   }
 
+  // Desktop hero fills whatever the navbar leaves of the viewport, so the nav +
+  // slider occupy exactly one screen. svh rather than vh: on mobile browsers vh
+  // is the *largest* viewport height, which overflows once the URL bar is shown.
+  // Mobile keeps its own shorter height — the art is drawn 1668x910 and a
+  // full-height phone hero would either crop it to a couple of lobes or, with
+  // preserveAspectRatio="none", stretch it badly.
   return (
-    <div className="relative z-10 mx-auto mb-[clamp(22px,3.5vw,56px)] h-[clamp(280px,74vw,350px)] w-[calc(100%_-_24px)] overflow-visible lg:h-[clamp(300px,48vw,900px)] lg:w-[calc(100%_-_40px)]">
+    <div className="relative z-10 mx-auto mb-[clamp(22px,3.5vw,56px)] h-[clamp(280px,74vw,350px)] w-[calc(100%_-_24px)] overflow-visible lg:h-[calc(100svh-var(--nav-h))] lg:min-h-[520px] lg:w-[calc(100%_-_40px)]">
         <svg className="relative z-10 block h-full w-full overflow-hidden" viewBox="0 0 1668 910" preserveAspectRatio={isMobile ? "none" : "xMidYMax slice"} xmlns="http://www.w3.org/2000/svg">
           <defs>
             <clipPath id="heroClip" clipPathUnits="userSpaceOnUse"><path d={HERO_PATH}/></clipPath>
@@ -151,7 +157,7 @@ export default function Hero() {
           height at every width: 33.5% on mobile, where preserveAspectRatio is
           "none" and the art stretches, and ~37% on desktop, where "xMidYMax
           slice" scales it off the width that also drives the hero's height. */}
-      <div className="absolute bottom-[clamp(12px,1.55vw,24px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(6px,0.5vw,9px)]">
+      <div className="absolute bottom-[clamp(9px,0.85vw,13px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(6px,0.5vw,9px)]">
         {SLIDES.map((item, index) => (
           <button
             key={`${item.id}-dot`}
