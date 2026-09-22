@@ -3,7 +3,12 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 
-const HERO_PATH = "M1668 627H1667.04C1667.67 634.793 1668 642.743 1668 650.816C1668 750.65 1618.08 831.582 1556.5 831.582C1521.32 831.582 1489.95 805.172 1469.51 763.915C1449.68 830.732 1408.58 876.633 1361.09 876.633C1311.32 876.633 1268.56 826.199 1249.95 754.106C1232.05 774.447 1209.67 786.531 1185.4 786.531C1149.35 786.531 1117.49 759.891 1098.24 719.133C1077.8 760.236 1046.49 786.531 1011.39 786.531C976.209 786.531 944.837 760.121 924.401 718.863C904.565 785.681 863.465 831.582 815.979 831.582C766.205 831.582 723.447 781.149 704.839 709.057C686.933 729.397 664.557 741.48 640.282 741.48C618.643 741.48 598.513 731.879 581.712 715.385C565.679 783.331 525.085 831.582 477.537 831.582C442.36 831.582 410.987 805.172 390.552 763.915C370.715 830.732 329.615 876.633 282.13 876.633C232.355 876.633 189.597 826.199 170.989 754.106C153.083 774.447 130.707 786.531 106.433 786.531C47.6518 786.531 4.16107e-06 715.685 0 628.291C0 627.86 0.00354853 627.43 0.00585938 627H0V0H1668V627Z"
+// Scalloped silhouette the hero photo is clipped to, and the green edge that
+// traces it. This is the original Figma curve with its scallop zone scaled to
+// 55% of its depth: same lobe rhythm, same alternating deep/shallow tabs, but
+// 175px instead of 318px, so it trims the photo instead of covering a third of
+// it. Everything at or above y=627 (the cusp line) is untouched.
+const HERO_PATH = "M1668 627H1667.04C1667.67 631.286 1668 635.659 1668 640.099C1668 695.007 1618.08 739.52 1556.5 739.52C1521.32 739.52 1489.95 724.995 1469.51 702.303C1449.68 739.053 1408.58 764.298 1361.09 764.298C1311.32 764.298 1268.56 736.559 1249.95 696.908C1232.05 708.096 1209.67 714.742 1185.4 714.742C1149.35 714.742 1117.49 700.09 1098.24 677.673C1077.8 700.28 1046.49 714.742 1011.39 714.742C976.209 714.742 944.837 700.217 924.401 677.525C904.565 714.275 863.465 739.52 815.979 739.52C766.205 739.52 723.447 711.782 704.839 672.131C686.933 683.318 664.557 689.964 640.282 689.964C618.643 689.964 598.513 684.683 581.712 675.612C565.679 712.982 525.085 739.52 477.537 739.52C442.36 739.52 410.987 724.995 390.552 702.303C370.715 739.053 329.615 764.298 282.13 764.298C232.355 764.298 189.597 736.559 170.989 696.908C153.083 708.096 130.707 714.742 106.433 714.742C47.652 714.742 0 675.777 0 627.71C0 627.473 0.004 627.236 0.006 627H0V0H1668V627Z"
 
 // Pre-compressed WebP rather than the original PNGs. These are drawn with raw
 // SVG <image href> elements inside the clipped hero shape, which never touches
@@ -72,7 +77,7 @@ export default function Hero() {
             <clipPath id="heroClip" clipPathUnits="userSpaceOnUse"><path d={HERO_PATH}/></clipPath>
             <clipPath id="heroBottomStrokeClip" clipPathUnits="userSpaceOnUse"><rect x="0" y="590" width="1668" height="320" /></clipPath>
           </defs>
-          <path d={HERO_PATH} fill="none" stroke="#E1EAB4" strokeWidth="44" strokeLinejoin="round" clipPath="url(#heroBottomStrokeClip)" />
+          <path d={HERO_PATH} fill="none" stroke="#E1EAB4" strokeWidth="34" strokeLinejoin="round" clipPath="url(#heroBottomStrokeClip)" />
           <g clipPath="url(#heroClip)">
             <g
               className="transition-transform duration-700 ease-in-out"
