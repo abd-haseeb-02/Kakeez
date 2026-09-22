@@ -127,7 +127,7 @@ export default function AdminLayout({
   const blockedForStaff = role !== 'admin' && !currentItem && pathname !== '/admin'
 
   return (
-    <ToastProvider>
+    <ToastProvider theme="admin">
     <div className="admin-modern">
     <div className="admin-shell overflow-hidden">
       {/* Sidebar */}

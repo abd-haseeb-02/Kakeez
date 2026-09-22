@@ -28,7 +28,13 @@ html, body {
   margin: 0;
   padding: 0;
   background: #fff;
-  overflow-x: hidden;
+  /* `clip`, not `hidden`. `overflow-x: hidden` forces overflow-y to compute as
+     `auto`, which turns <body> into a scroll container — and every
+     `position: sticky` element on the site then sticks relative to that box,
+     which never scrolls, so they silently behaved like `static`. That is why
+     the product image and the checkout order summary scrolled away. `clip`
+     suppresses the same horizontal overflow without creating a scroll port. */
+  overflow-x: clip;
 }
 
 * {
@@ -242,4 +248,19 @@ body {
   background:
     linear-gradient(135deg, #090806 0%, #13100c 55%, #1d1308 100%);
   color: #f7efe3;
+}
+
+/* Toast entrance. Slides in from the right edge, matching the stack's
+   top-right position. Respects a reduced-motion preference. */
+@keyframes kz-toast-in {
+  from { opacity: 0; transform: translateX(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.kz-toast-in {
+  animation: kz-toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-toast-in { animation: none; }
 }

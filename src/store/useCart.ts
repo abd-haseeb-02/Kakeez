@@ -148,3 +148,17 @@ export const useCart = create<CartStore>()(
     }
   )
 )
+
+// Whether the cart drawer is showing. Separate from the cart itself, and
+// deliberately not persisted: the drawer lived in Navbar's local state, so
+// nothing outside Navbar could open it — the product page could add an item but
+// not show the cart it went into.
+export const useCartDrawer = create<{
+  isOpen: boolean
+  open: () => void
+  close: () => void
+}>((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}))

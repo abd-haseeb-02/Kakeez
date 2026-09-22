@@ -9,7 +9,28 @@ import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, Che
 
 const MIN_PASSWORD = 8
 
-export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: () => void, onSuccess?: () => void }) {
+// Why the popup opened, so a gated action can say what it is gating instead of
+// dumping the customer somewhere with no explanation. Tapping the wishlist
+// heart used to redirect to the homepage: the action vanished, nothing said a
+// sign-in was needed, and the product they were looking at was gone.
+export type AuthReason = {
+  // Completes the sentence "Sign in to …" — keep it lowercase and specific.
+  action: string
+  // Optional line under the heading with any extra context.
+  detail?: string
+}
+
+export default function UserAuthPopup({
+  isOpen,
+  onClose,
+  onSuccess,
+  reason,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess?: () => void
+  reason?: AuthReason
+}) {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -135,8 +156,17 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
               {signupNeedsEmailConfirmation ? "Check Email" : isLogin ? "Welcome Back" : "Join Kakeez"}
             </h2>
             <p className="mx-auto mt-3 max-w-[360px] ff-colville-light text-[15px] leading-relaxed text-primary-brown/70">
-              {signupNeedsEmailConfirmation ? "Open the link we sent and you'll be signed in" : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
+              {signupNeedsEmailConfirmation
+                ? "Open the link we sent and you'll be signed in"
+                : reason
+                  ? (isLogin ? `Sign in to ${reason.action}` : `Create an account to ${reason.action}`)
+                  : isLogin ? "Sign in to manage your orders" : "Create an account to start ordering"}
             </p>
+            {reason?.detail && !signupNeedsEmailConfirmation && (
+              <p className="mx-auto mt-2 max-w-[360px] ff-apfel text-[13px] leading-relaxed text-primary-brown/55">
+                {reason.detail}
+              </p>
+            )}
           </div>
 
           {signupNeedsEmailConfirmation ? (

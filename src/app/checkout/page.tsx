@@ -408,7 +408,7 @@ export default function CheckoutPage() {
   const errorCls = "ff-apfel text-[13px] text-red-600"
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-white">
       <Navbar />
 
       {/* Green panel with form + summary */}

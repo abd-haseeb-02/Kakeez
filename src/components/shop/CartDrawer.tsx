@@ -10,7 +10,6 @@ import { formatPkr } from "@/lib/money"
 import { FALLBACK_DELIVERY_MINOR } from "@/lib/delivery"
 import UserAuthPopup from "./UserAuthPopup"
 import { useModalA11y } from "@/lib/use-modal-a11y"
-import { useToast } from "@/components/ui/Toast"
 
 type PopularProduct = {
   id: string
@@ -51,7 +50,6 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
   const [atEnd, setAtEnd] = useState(false)
   const trackRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
-  const toast = useToast()
   // Closing must also disarm "Clear cart", so reopening never lands on a primed
   // destructive button. Every exit — Escape, backdrop, the X, "Start shopping",
   // and the jump to checkout — goes through this rather than onClose directly.
@@ -171,6 +169,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
       <UserAuthPopup
         isOpen={showAuthPopup}
         onClose={() => setShowAuthPopup(false)}
+        reason={{ action: 'finish checking out', detail: 'Your cart is saved — you will come straight back to it.' }}
         onSuccess={() => {
           setShowAuthPopup(false)
           handleCheckoutClick()
@@ -336,10 +335,7 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                                   alone, so nothing said it added anything and a
                                   screen reader announced a bare number. */}
                               <button
-                                onClick={() => {
-                                  addItem({ id: p.id, name: p.name, priceMinor: p.priceMinor, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description || undefined })
-                                  toast.push({ kind: 'success', title: `Added to cart — ${p.name}`, durationMs: 4000 })
-                                }}
+                                onClick={() => addItem({ id: p.id, name: p.name, priceMinor: p.priceMinor, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description || undefined })}
                                 className="ff-accia-light mt-auto flex items-center gap-1.5 self-start rounded-md bg-accent-green px-3 py-1 text-[12px] uppercase tracking-wide text-primary-brown transition-colors hover:bg-accent-green/70"
                                 aria-label={`Add ${p.name} to cart`}
                               >

@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Gift, Loader2, Minus, Plus } from "lucide-react"
 import Navbar from "@/components/shop/Navbar"
+import UserAuthPopup from "@/components/shop/UserAuthPopup"
 import Footer from "@/components/shop/Footer"
 import { supabase } from "@/lib/supabase"
-import { useToast } from "@/components/ui/Toast"
-import { useCart } from "@/store/useCart"
+import { useCart, useCartDrawer } from "@/store/useCart"
 import { formatPkr } from "@/lib/money"
 import { Star, Heart } from "lucide-react"
 
@@ -94,7 +94,8 @@ export default function ProductDetailClient({
   const [picked, setPicked] = useState<Record<string, string>>({})
   const addItem = useCart((state) => state.addItem)
   const router = useRouter()
-  const toast = useToast()
+  const openCart = useCartDrawer((state) => state.open)
+  const [showAuth, setShowAuth] = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -234,15 +235,14 @@ export default function ProductDetailClient({
   // Wishlist toggle. Upserts the parent wishlist row (one per user) and
   // either inserts or deletes the wishlist_items row. RLS already scopes
   // both tables to the owner — no RPC needed.
-  const toggleWishlist = async () => {
+  // Signed-in half of the toggle. Kept separate so it can be re-run straight
+  // after a sign-in, instead of making the customer find the heart again.
+  const applyWishlist = async () => {
     if (!product) return
     setWishBusy(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/?next=' + encodeURIComponent(`/product/${product.slug}`))
-        return
-      }
+      if (!user) return
       // Make sure a wishlist row exists for this user.
       await supabase.from('wishlists').upsert({ user_id: user.id }, { onConflict: 'user_id' })
       const { data: wl } = await supabase.from('wishlists').select('id').eq('user_id', user.id).maybeSingle()
@@ -261,6 +261,18 @@ export default function ProductDetailClient({
     } finally {
       setWishBusy(false)
     }
+  }
+
+  const toggleWishlist = async () => {
+    if (!product) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      // Was `router.push('/?next=…')`: the heart appeared to do nothing except
+      // throw the customer back to the homepage, away from the product.
+      setShowAuth(true)
+      return
+    }
+    applyWishlist()
   }
 
   const handleAddToCart = () => {
@@ -285,12 +297,9 @@ export default function ProductDetailClient({
       variationLabel,
     })
 
-    toast.push({
-      kind: 'success',
-      title: `Added to cart — ${quantity} × ${product.name}`,
-      body: variationLabel ?? undefined,
-      durationMs: 4000,
-    })
+    // Show the cart it went into. The drawer is stronger feedback than a
+    // toast, and a toast would sit on top of it anyway — both live top-right.
+    openCart()
   }
 
   if (loading) {
@@ -314,8 +323,19 @@ export default function ProductDetailClient({
   const ratingCount = product.rating_count ?? 0
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-white">
       <Navbar />
+
+      <UserAuthPopup
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        reason={{ action: 'save this to your wishlist', detail: 'Your wishlist is tied to your account, so it follows you between devices.' }}
+        onSuccess={() => {
+          setShowAuth(false)
+          // Carry out what they actually asked for.
+          applyWishlist()
+        }}
+      />
 
       <main className="pt-[118px] lg:pt-[130px]">
         <section className="relative mx-auto w-[calc(100%_-_24px)] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)] lg:w-[calc(100%_-_40px)]">
@@ -323,12 +343,12 @@ export default function ProductDetailClient({
             <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
-          <div className="relative z-10 mx-auto grid w-[min(1390px,calc(100%_-_32px))] gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(360px,540px)_minmax(320px,430px)] lg:items-start lg:justify-center">
+          <div className="relative z-10 mx-auto grid w-[min(1390px,calc(100%_-_32px))] gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(320px,500px)_minmax(420px,600px)] lg:items-start lg:justify-center">
             <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm lg:sticky lg:top-[130px]">
               <Image src={hero} alt={product.name} fill className="object-cover" priority />
             </div>
 
-            <div className="w-full pt-[clamp(2px,0.625rem,10px)] lg:max-h-[calc(100vh-160px)] lg:overflow-y-auto lg:pr-2">
+            <div className="w-full pt-[clamp(2px,0.625rem,10px)]">
               <h1 className="ff-accia text-[clamp(34px,3rem,48px)] text-primary-brown leading-[1.02]">{product.name}</h1>
 
               {product.product_categories?.[0]?.categories?.name ? (

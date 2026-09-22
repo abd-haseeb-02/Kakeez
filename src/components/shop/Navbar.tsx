@@ -3,17 +3,52 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect, useSyncExternalStore } from "react"
+import { useRouter } from "next/navigation"
 import type { Session } from "@supabase/supabase-js"
-import UserAuthPopup from "./UserAuthPopup"
+import UserAuthPopup, { type AuthReason } from "./UserAuthPopup"
 import CartDrawer from "./CartDrawer"
 import SearchDialog from "./SearchDialog"
-import { useCart } from "@/store/useCart"
+import { useCart, useCartDrawer } from "@/store/useCart"
 import { supabase } from "@/lib/supabase"
 import { Menu, Search, ShieldAlert, LogOut, ShoppingCart, User as UserIcon, LayoutGrid, X } from "lucide-react"
 
+// src/proxy.ts sends signed-out visitors of a gated route to "/" with the
+// destination in `?next=`. Nothing acted on it, so the customer simply found
+// themselves on the homepage with no idea why. These turn that path back into
+// the sentence "Sign in to …".
+function reasonForNext(next: string | null): AuthReason | undefined {
+  if (!next) return undefined
+  if (next.startsWith('/checkout')) {
+    return { action: 'finish checking out', detail: 'Your cart is saved — you will come straight back to it.' }
+  }
+  if (next.startsWith('/account/orders')) {
+    return { action: 'see your orders', detail: 'Order history lives on your account.' }
+  }
+  if (next.startsWith('/account/wishlist')) {
+    return { action: 'open your wishlist', detail: 'Your wishlist is tied to your account, so it follows you between devices.' }
+  }
+  if (next.startsWith('/account/addresses')) {
+    return { action: 'manage your saved addresses' }
+  }
+  if (next.startsWith('/account')) {
+    return { action: 'open your account' }
+  }
+  return undefined
+}
+
 export default function Navbar() {
+  const router = useRouter()
   const [isAuthOpen, setIsAuthOpen] = useState(false)
-  const [isCartOpen, setIsCartOpen] = useState(false)
+  // Dismissing the redirect prompt is the only state needed: whether to SHOW it
+  // is derived, so nothing has to be set from an effect (which this repo lints
+  // against). Same useSyncExternalStore trick as the cart badge below — the
+  // server snapshot is null, so SSR and the hydration pass agree.
+  const [redirectPromptDismissed, setRedirectPromptDismissed] = useState(false)
+  const pendingNext = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get('next'),
+    () => null
+  )
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<{ email: string | null; name: string } | null>(null)
@@ -35,6 +70,10 @@ export default function Navbar() {
     () => 0
   )
   const clearCart = useCart(state => state.clearCart)
+  // Shared so any page can open the cart — see src/store/useCart.ts.
+  const isCartOpen = useCartDrawer(state => state.isOpen)
+  const openCart = useCartDrawer(state => state.open)
+  const closeCart = useCartDrawer(state => state.close)
 
   const applySession = async (session: Session | null) => {
     if (session?.user) {
@@ -90,10 +129,26 @@ export default function Navbar() {
     }
   }
 
+  const redirectReason = !user && !redirectPromptDismissed ? reasonForNext(pendingNext) : undefined
+  const authPopupOpen = isAuthOpen || !!redirectReason
+
   return (
     <>
-      <UserAuthPopup isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <UserAuthPopup
+        isOpen={authPopupOpen}
+        reason={redirectReason}
+        onClose={() => {
+          setIsAuthOpen(false)
+          setRedirectPromptDismissed(true)
+        }}
+        onSuccess={() => {
+          setIsAuthOpen(false)
+          setRedirectPromptDismissed(true)
+          // Take them where they were headed before the gate.
+          if (pendingNext) router.push(pendingNext)
+        }}
+      />
+      <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
       {/* Mounted only while open so each search starts from a clean slate. */}
       {isSearchOpen && <SearchDialog onClose={() => setIsSearchOpen(false)} />}
 
@@ -190,7 +245,7 @@ export default function Navbar() {
           <button
             type="button"
             aria-label="Open cart"
-            onClick={() => setIsCartOpen(true)}
+            onClick={openCart}
             className="relative flex h-11 w-12 items-center justify-center rounded-lg bg-[#936939] text-white transition-colors hover:bg-primary-brown/90 sm:w-14 lg:h-[50px] lg:w-[64px]"
           >
             <ShoppingCart className="h-[22px] w-[22px] lg:h-[25px] lg:w-[25px]" strokeWidth={2} />

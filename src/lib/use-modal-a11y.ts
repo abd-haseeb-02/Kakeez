@@ -78,12 +78,35 @@ export function useModalA11y(isOpen: boolean, onClose: () => void) {
     }
 
     document.addEventListener('keydown', onKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+
+    // Lock the page behind. This used to set overflow on <body> alone, which
+    // did nothing here: the scrolling element on this site is <html>
+    // (document.scrollingElement === documentElement), so the page kept
+    // scrolling underneath an open cart. Both elements are locked now.
+    //
+    // Hiding the scrollbar widens the viewport by its width and shifts the whole
+    // layout sideways, so the difference is added back as padding.
+    const html = document.documentElement
+    const body = document.body
+    const previous = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPaddingRight: body.style.paddingRight,
+    }
+    const scrollbarWidth = window.innerWidth - html.clientWidth
+
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      const current = parseFloat(window.getComputedStyle(body).paddingRight) || 0
+      body.style.paddingRight = `${current + scrollbarWidth}px`
+    }
 
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
+      html.style.overflow = previous.htmlOverflow
+      body.style.overflow = previous.bodyOverflow
+      body.style.paddingRight = previous.bodyPaddingRight
       previouslyFocused?.focus?.()
     }
   }, [isOpen])
