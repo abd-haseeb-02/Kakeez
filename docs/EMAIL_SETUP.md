@@ -173,6 +173,19 @@ whether or not the branded templates have been pushed:
 a session that arrives a tick late — fragment parsing, cookie hydration — no
 longer shows a spurious "Link expired".
 
+### The redirect allow-list
+
+`redirectTo` is only honoured if it matches Supabase's allow-list. Anything that
+does not match is **silently** replaced with the project's Site URL — no error,
+the mail just links somewhere else. `supabase/config.toml` lists
+`https://www.kakeez.com/**` and friends under `additional_redirect_urls`, and
+the `/**` covers `/auth/recover`.
+
+But that file only describes the hosted project once `supabase config push` has
+succeeded, and it never has. **Check the live list** in Dashboard →
+Authentication → URL Configuration → Redirect URLs before trusting reset in
+production, and confirm it includes a path wildcard rather than bare origins.
+
 Cross-device `code` links fail by design and say so in plain words: *"This link
 has to be opened in the same browser that asked for it."* Once the branded
 templates are pushed, links use `token_hash` and that limitation goes away.
@@ -184,6 +197,7 @@ templates are pushed, links use `token_hash` and that limitation goes away.
 | Symptom | Cause |
 | --- | --- |
 | Reset link lands on the homepage, signed in | Pre-fix behaviour. Confirm `redirectTo` is `authRecoverUrl()` and `/auth/recover` exists |
+| Reset link goes to the site root, not `/auth/recover` | `https://www.kakeez.com/**` is missing from the redirect allow-list, so Supabase fell back to Site URL |
 | "This link has to be opened in the same browser" | Stock template + different device. Push the branded templates (step 4) |
 | "Link expired" immediately | Genuinely spent (one hour, single use) — or the link was consumed by a corporate mail scanner that pre-fetches URLs |
 | Reset mail never arrives | Step 4 not done: Supabase's built-in sender only mails project team members |
