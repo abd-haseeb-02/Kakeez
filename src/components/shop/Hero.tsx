@@ -11,6 +11,9 @@ import { useEffect, useState } from "react"
 // Scaling from the cusp line instead left ~160px of empty page under the hero.
 const HERO_PATH = "M1668 739.335H1667.04C1667.67 743.621 1668 747.994 1668 752.434C1668 807.342 1618.08 851.855 1556.5 851.855C1521.32 851.855 1489.95 837.329 1469.51 814.638C1449.68 851.387 1408.58 876.633 1361.09 876.633C1311.32 876.633 1268.56 848.894 1249.95 809.243C1232.05 820.431 1209.67 827.077 1185.4 827.077C1149.35 827.077 1117.49 812.425 1098.24 790.008C1077.8 812.615 1046.49 827.077 1011.39 827.077C976.209 827.077 944.837 812.551 924.401 789.86C904.565 826.609 863.465 851.855 815.979 851.855C766.205 851.855 723.447 824.117 704.839 784.466C686.933 795.653 664.557 802.299 640.282 802.299C618.643 802.299 598.513 797.018 581.712 787.947C565.679 825.317 525.085 851.855 477.537 851.855C442.36 851.855 410.987 837.329 390.552 814.638C370.715 851.387 329.615 876.633 282.13 876.633C232.355 876.633 189.597 848.894 170.989 809.243C153.083 820.431 130.707 827.077 106.433 827.077C47.652 827.077 0 788.112 0 740.045C0 739.808 0.004 739.571 0.006 739.335H0V0H1668V739.335Z"
 
+// Text-free WebP art. The two baked-in banners were re-exported from the
+// Figma source images (images/image-import-17 and 16+31 composited) so the
+// headline could move out of the bitmap and onto its own layer.
 // Pre-compressed WebP rather than the original PNGs. These are drawn with raw
 // SVG <image href> elements inside the clipped hero shape, which never touches
 // next/image -- so whatever is referenced here ships to the browser untouched.
@@ -21,23 +24,27 @@ const HERO_PATH = "M1668 739.335H1667.04C1667.67 743.621 1668 747.994 1668 752.4
 const SLIDES = [
   {
     id: "hero-1",
-    image: "/hero%20banner%203.webp",
-    eyebrow: "Bite Into The Bliss",
-    title: ["Paradise", "Awaits"],
-    showText: false,
-  },
-  {
-    id: "hero-2",
-    image: "/hero%20banner%202.webp",
-    eyebrow: "Bite Into The Bliss",
-    title: ["Paradise", "Awaits"],
-    showText: false,
-  },
-  {
-    id: "hero-3",
     image: "/assets/hero.webp",
     eyebrow: "Bite Into The Bliss",
     title: ["Paradise", "Awaits"],
+    caption: null,
+    tone: "brown" as const,
+  },
+  {
+    id: "hero-2",
+    image: "/hero-slide-2.webp",
+    eyebrow: "Taste the Magic",
+    title: ["Because Every", "Bite Matters"],
+    caption: null,
+    tone: "light" as const,
+  },
+  {
+    id: "hero-3",
+    image: "/hero-slide-3.webp",
+    eyebrow: "Explore Our Sweets",
+    title: ["Artistry in", "Every Slice"],
+    caption: "From decadent fudgy brownies to delicate everyday desserts.",
+    tone: "light" as const,
   },
 ]
 
@@ -103,43 +110,68 @@ export default function Hero() {
                       height="876.633"
                       preserveAspectRatio="xMidYMid slice"
                     />
-                    {item.showText !== false && (
-                      <>
-                        <text
-                          x={offset + 834}
-                          y="340"
-                          textAnchor="middle"
-                          fill="#936939"
-                          fontFamily="var(--accia)"
-                          fontSize="34"
-                          fontWeight="300"
-                        >
-                          {item.eyebrow}
-                        </text>
-                        <text
-                          x={offset + 834}
-                          y="475"
-                          textAnchor="middle"
-                          fill="#936939"
-                          fontFamily="var(--accia)"
-                          fontSize="106"
-                          fontWeight="500"
-                          style={{ filter: "drop-shadow(5px 12px 14px rgba(0,0,0,0.25))" }}
-                        >
-                          {item.title.map((line, lineIndex) => (
-                            <tspan key={line} x={offset + 834} dy={lineIndex === 0 ? 0 : 92}>
-                              {line}
-                            </tspan>
-                          ))}
-                        </text>
-                      </>
-                    )}
                   </g>
                 )
               })}
             </g>
           </g>
         </svg>
+
+      {/* Copy layer — HTML above the artwork, NOT <text> inside the SVG.
+          The SVG scales with preserveAspectRatio="slice", so anything drawn
+          inside it is scaled by the same factor as the photo: on a wide screen
+          the headline was being blown up along with the image. Out here the
+          type is sized in CSS, so it stays put no matter how far the photo is
+          scaled or cropped. */}
+      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+        {SLIDES.map((item, index) => {
+          const light = item.tone === "light"
+          return (
+            <div
+              key={`${item.id}-copy`}
+              aria-hidden={index !== activeSlide}
+              className={`absolute inset-x-0 top-0 flex h-[62%] flex-col items-center justify-center px-6 text-center transition-opacity duration-700 ease-in-out ${
+                index === activeSlide ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <p
+                className={`ff-colville-light text-[clamp(15px,1.45vw,26px)] tracking-[0.04em] ${
+                  light ? "text-white" : "text-primary-brown"
+                }`}
+                style={light ? { textShadow: "0 2px 12px rgba(0,0,0,0.38)" } : undefined}
+              >
+                {item.eyebrow}
+              </p>
+              <h1
+                className={`ff-accia-medium mt-[clamp(6px,0.8vw,16px)] text-[clamp(38px,5.4vw,96px)] leading-[1.02] ${
+                  light ? "text-white" : "text-primary-brown"
+                }`}
+                style={{
+                  textShadow: light
+                    ? "0 6px 26px rgba(0,0,0,0.42)"
+                    : "0 8px 18px rgba(0,0,0,0.20)",
+                }}
+              >
+                {item.title.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </h1>
+              {item.caption && (
+                <p
+                  className={`ff-colville-light mt-[clamp(8px,1vw,20px)] max-w-[34ch] text-[clamp(13px,1.15vw,21px)] leading-snug ${
+                    light ? "text-white/90" : "text-primary-brown/80"
+                  }`}
+                  style={light ? { textShadow: "0 2px 12px rgba(0,0,0,0.42)" } : undefined}
+                >
+                  {item.caption}
+                </p>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
       <button type="button" onClick={goToNext} aria-label="Next hero slide" className="absolute right-[clamp(14px,1.7vw,28px)] top-1/2 z-20 h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 hover:opacity-80 transition-opacity">
         <Image src="/assets/arrow-right.svg" alt="next" width={50} height={100} className="block w-full h-full" />
