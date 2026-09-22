@@ -337,14 +337,14 @@ export default function ProductDetailClient({
         }}
       />
 
-      <main className="pt-[118px] lg:pt-[130px]">
+      <main className="pt-[calc(var(--nav-h)+28px)]">
         <section className="relative mx-auto w-[calc(100%_-_24px)] rounded-[clamp(16px,1.375rem,22px)] bg-accent-green pb-[clamp(54px,4.875rem,78px)] pt-[clamp(20px,2.375rem,38px)] lg:w-[calc(100%_-_40px)]">
           <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
             <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
           </div>
 
           <div className="relative z-10 mx-auto grid w-[min(1390px,calc(100%_-_32px))] gap-[clamp(24px,3.625rem,58px)] lg:grid-cols-[minmax(320px,500px)_minmax(420px,600px)] lg:items-start lg:justify-center">
-            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm lg:sticky lg:top-[130px]">
+            <div className="relative aspect-square overflow-hidden rounded-[clamp(14px,1.125rem,18px)] border border-primary-brown/15 bg-[#ece9e2] shadow-sm lg:sticky lg:top-[calc(var(--nav-h)+16px)]">
               <Image src={hero} alt={product.name} fill className="object-cover" priority />
             </div>
 

@@ -47,10 +47,10 @@ export function useToast(): ToastContextValue {
   return ctx
 }
 
-// Top-right, clear of the navbar: 76px tall on mobile, up to 118px on desktop
-// (see src/components/shop/Navbar.tsx), so the offsets sit just below each.
+// Top-right, just below the navbar. --nav-h is the navbar's own height (see
+// src/app/globals.css), so this follows it instead of restating it.
 const STACK_POSITION: Record<ToastTheme, string> = {
-  shop: 'right-4 top-[88px] lg:right-8 lg:top-[130px]',
+  shop: 'right-4 top-[calc(var(--nav-h)+12px)] lg:right-8',
   admin: 'right-4 top-20 sm:right-8 sm:top-24',
 }
 

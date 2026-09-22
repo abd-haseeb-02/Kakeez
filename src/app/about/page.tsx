@@ -64,7 +64,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <main className="pt-[clamp(76px,8vw,118px)]">
+      <main className="pt-[var(--nav-h)]">
         {/* ── Opening statement ─────────────────────────────────────────── */}
         <section className="mx-auto w-[min(980px,calc(100%_-_32px))] pb-[clamp(40px,5vw,72px)] pt-[clamp(40px,5vw,88px)] text-center">
           <p className="ff-accia text-sm uppercase tracking-[0.08em] text-primary-brown">- Our Story -</p>

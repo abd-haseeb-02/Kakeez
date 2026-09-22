@@ -26,7 +26,7 @@ export default function LegalPage({
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <main className="pt-[clamp(92px,8vw,126px)]">
+      <main className="pt-[calc(var(--nav-h)+16px)]">
         <article className="mx-auto w-[min(820px,calc(100%_-_32px))] pb-[clamp(56px,7vw,110px)]">
           <p className="ff-colville text-sm uppercase tracking-[0.14em] text-primary-brown/70">Kakeez Bakeshop</p>
           <h1 className="ff-accia mt-3 text-[clamp(38px,5vw,68px)] leading-[1.04] text-primary-brown">{title}</h1>

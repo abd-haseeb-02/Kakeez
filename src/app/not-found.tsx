@@ -28,7 +28,7 @@ export default function NotFound() {
     <div className="relative min-h-screen w-full overflow-x-hidden bg-white">
       <Navbar />
 
-      <main className="mx-auto w-[min(720px,calc(100%-32px))] pt-[140px] pb-20 text-center lg:pt-[170px]">
+      <main className="mx-auto w-[min(720px,calc(100%-32px))] pb-20 pt-[calc(var(--nav-h)+56px)] text-center">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-accent-green/50">
           <CakeSlice className="h-10 w-10 text-primary-brown" />
         </div>

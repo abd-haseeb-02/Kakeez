@@ -152,7 +152,7 @@ export default function Navbar() {
       {/* Mounted only while open so each search starts from a clean slate. */}
       {isSearchOpen && <SearchDialog onClose={() => setIsSearchOpen(false)} />}
 
-      <nav className="absolute top-0 left-0 z-50 flex h-[76px] w-full items-center justify-between bg-white px-4 md:px-5 lg:h-[clamp(84px,6.9vw,118px)] lg:px-[clamp(20px,2.5vw,48px)]">
+      <nav className="absolute top-0 left-0 z-50 flex h-[var(--nav-h)] w-full items-center justify-between bg-white px-4 md:px-5 lg:px-[clamp(20px,2.5vw,48px)]">
         
         {/* Mobile Menu Button */}
         <button
@@ -173,7 +173,7 @@ export default function Navbar() {
         </div>
 
         {/* Central Logo */}
-        <div className="absolute left-1/2 top-1/2 h-[72px] w-[52px] -translate-x-1/2 -translate-y-1/2 lg:h-[clamp(88px,6.2vw,112px)] lg:w-[clamp(62px,4.4vw,80px)]">
+        <div className="absolute left-1/2 top-1/2 h-[var(--nav-logo-h)] w-[var(--nav-logo-w)] -translate-x-1/2 -translate-y-1/2">
           <Link href="/" className="relative block h-full w-full hover:opacity-90 transition-opacity" aria-label="Kakeez home">
             <Image src="/assets/LOGO.png" alt="Kakeez" fill sizes="(max-width: 1024px) 52px, 80px" className="object-contain drop-shadow-sm" priority />
           </Link>
@@ -262,7 +262,7 @@ export default function Navbar() {
       {isMenuOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/15 lg:hidden" onClick={() => setIsMenuOpen(false)} />
-          <div className="absolute left-3 right-3 top-[84px] z-50 overflow-hidden rounded-[14px] border border-primary-brown/15 bg-white shadow-2xl lg:hidden">
+          <div className="absolute left-3 right-3 top-[calc(var(--nav-h)+8px)] z-50 overflow-hidden rounded-[14px] border border-primary-brown/15 bg-white shadow-2xl lg:hidden">
             <div className="grid divide-y divide-primary-brown/10 ff-colville-medium text-[18px] uppercase text-[#936939]">
               <Link href="/#menu" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">Menu</Link>
               <Link href="/about" onClick={() => setIsMenuOpen(false)} className="px-5 py-4 transition-colors hover:bg-primary-brown/5">About</Link>

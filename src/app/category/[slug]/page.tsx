@@ -129,7 +129,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <main className="pt-[clamp(92px,8vw,126px)]">
+      <main className="pt-[calc(var(--nav-h)+16px)]">
         <section className="mx-auto grid w-[min(1390px,calc(100%_-_32px))] gap-8 rounded-[18px] bg-accent-green p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(320px,1.1fr)] md:p-8 lg:gap-12 lg:p-10">
           <div className="relative min-h-[280px] overflow-hidden rounded-[14px] border border-primary-brown/15 bg-[#ece9e2] md:min-h-[420px]">
             <Image src={heroImage} alt={category.name} fill priority sizes="(max-width: 768px) 100vw, 45vw" className="object-cover" />

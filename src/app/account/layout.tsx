@@ -66,7 +66,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     <div className="min-h-screen bg-[#fffdf7] text-primary-brown">
       <Navbar />
 
-      <main className="pb-20 pt-[clamp(122px,8.8vw,150px)]">
+      <main className="pb-20 pt-[calc(var(--nav-h)+46px)]">
         <div className="mx-auto w-[min(1390px,calc(100%_-_32px))]">
           <div className="mb-8 rounded-[18px] border border-primary-brown/10 bg-accent-green/55 px-5 py-6 sm:px-8">
             <p className="ff-colville text-[15px] uppercase tracking-[0.12em] text-primary-brown/65">My account</p>

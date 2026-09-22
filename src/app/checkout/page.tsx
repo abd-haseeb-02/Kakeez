@@ -412,7 +412,7 @@ export default function CheckoutPage() {
       <Navbar />
 
       {/* Green panel with form + summary */}
-      <div className="relative mx-auto mt-[clamp(108px,8.8vw,150px)] w-[calc(100%_-_24px)] rounded-[18px] bg-accent-green pb-14 pt-7 lg:w-[calc(100%_-_40px)] lg:rounded-[clamp(16px,1.4vw,24px)] lg:pb-[clamp(56px,5vw,86px)] lg:pt-[clamp(42px,3.76vw,64px)]">
+      <div className="relative mx-auto mt-[calc(var(--nav-h)+32px)] w-[calc(100%_-_24px)] rounded-[18px] bg-accent-green pb-14 pt-7 lg:w-[calc(100%_-_40px)] lg:rounded-[clamp(16px,1.4vw,24px)] lg:pb-[clamp(56px,5vw,86px)] lg:pt-[clamp(42px,3.76vw,64px)]">
         {/* drip bottom edge */}
         <div className="pointer-events-none absolute bottom-[-118px] left-0 z-0 hidden h-[clamp(126px,11rem,176px)] w-full lg:block">
           <Image src="/assets/vector14.svg" alt="" fill className="block h-full w-full object-fill" />
@@ -564,7 +564,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* ===================== RIGHT: SUMMARY CARD ===================== */}
-          <div className="flex w-full flex-col self-start rounded-[16px] bg-white p-4 sm:p-5 lg:sticky lg:top-[130px] lg:w-[clamp(320px,26vw,390px)] lg:rounded-[clamp(12px,1vw,18px)] lg:p-[clamp(16px,1.2vw,24px)]">
+          <div className="flex w-full flex-col self-start rounded-[16px] bg-white p-4 sm:p-5 lg:sticky lg:top-[calc(var(--nav-h)+16px)] lg:w-[clamp(320px,26vw,390px)] lg:rounded-[clamp(12px,1vw,18px)] lg:p-[clamp(16px,1.2vw,24px)]">
             <h2 className="ff-accia text-[clamp(24px,1.45vw,28px)] text-black">Your cart</h2>
 
             {/* Items */}

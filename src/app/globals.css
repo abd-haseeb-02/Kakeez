@@ -37,6 +37,30 @@ html, body {
   overflow-x: clip;
 }
 
+/* Height of the storefront navbar, and the logo inside it.
+   Every page offsets its content below the navbar, and before this lived as
+   seven separately-tuned guesses at the same number (pt-[118px],
+   clamp(92px,8vw,126px), clamp(122px,8.8vw,150px) …) which had already drifted
+   apart. One variable, and `calc(var(--nav-h) + …)` wherever a page wants extra
+   breathing room.
+
+   The logo is sized off the same scale so the gap above and below it stays a
+   few pixels at every width — it used to be 88-112px tall inside an
+   84-118px bar, which is what made the navbar look so heavy. */
+:root {
+  --nav-h: 64px;
+  --nav-logo-h: 48px;
+  --nav-logo-w: 35px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --nav-h: clamp(68px, 5.2vw, 88px);
+    --nav-logo-h: clamp(52px, 3.9vw, 72px);
+    --nav-logo-w: clamp(38px, 2.85vw, 52px);
+  }
+}
+
 * {
   box-sizing: border-box;
 }

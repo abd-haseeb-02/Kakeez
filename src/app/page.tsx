@@ -93,7 +93,7 @@ export default async function Home() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <main className="pt-[clamp(76px,8vw,118px)]">
+      <main className="pt-[var(--nav-h)]">
         <Hero />
 
         <section className="mx-auto grid w-[min(1190px,calc(100%_-_32px))] items-center gap-[clamp(28px,4vw,64px)] py-[clamp(56px,7vw,118px)] lg:grid-cols-[minmax(220px,340px)_1fr_minmax(220px,340px)]">
