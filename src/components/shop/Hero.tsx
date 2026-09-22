@@ -138,7 +138,15 @@ export default function Hero() {
         </div>
       </button>
 
-      <div className="absolute bottom-[clamp(46px,4.8vw,78px)] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(8px,0.75vw,14px)]">
+      {/* Slide dots sit ABOVE the scalloped edge, not inside it. HERO_PATH's
+          image area ends at y=627 of the 910 viewBox and the wave runs from
+          there to y=877, so the old `bottom-[clamp(46px,4.8vw,78px)]` — 69px,
+          10% of the hero at 1440 — placed them in the middle of the decoration.
+          Percentages because the wave is a fixed fraction of the rendered
+          height at every width: 33.5% on mobile, where preserveAspectRatio is
+          "none" and the art stretches, and ~37% on desktop, where "xMidYMax
+          slice" scales it off the width that also drives the hero's height. */}
+      <div className="absolute bottom-[38%] left-1/2 z-20 flex -translate-x-1/2 items-center gap-[clamp(8px,0.7vw,12px)] lg:bottom-[40%]">
         {SLIDES.map((item, index) => (
           <button
             key={`${item.id}-dot`}

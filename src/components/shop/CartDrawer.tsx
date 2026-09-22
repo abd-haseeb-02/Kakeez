@@ -195,12 +195,12 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
             }`}
           >
             <div className="flex items-center justify-between gap-3 px-[clamp(18px,1.35vw,24px)] pt-[clamp(18px,1.35vw,24px)] pb-[clamp(14px,1vw,18px)]">
-              <h2 id="cart-drawer-title" className="ff-accia text-[clamp(19px,1.05vw,22px)] text-black">Your Cart</h2>
+              <h2 id="cart-drawer-title" className="ff-accia text-[clamp(17px,0.95vw,19px)] text-black">Your Cart</h2>
               <div className="flex items-center gap-4">
                 {items.length > 0 && (
                   <button
                     onClick={handleClearCart}
-                    className={`ff-accia text-[clamp(15px,0.9vw,17px)] underline decoration-solid transition-colors ${
+                    className={`ff-accia text-[13px] underline decoration-solid transition-colors ${
                       confirmingClear ? "text-red-600" : "text-primary-brown hover:opacity-70"
                     }`}
                   >
@@ -225,8 +225,8 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                   <div className="flex h-24 w-24 items-center justify-center rounded-full bg-accent-green/40">
                     <ShoppingBag size={36} className="text-primary-brown/40" />
                   </div>
-                  <p className="ff-accia-light text-[18px] text-black/50">Your cart is feeling a bit empty...</p>
-                  <button onClick={closeDrawer} className="ff-accia text-[17px] text-primary-brown underline underline-offset-4">
+                  <p className="ff-accia-light text-[16px] text-black/50">Your cart is feeling a bit empty...</p>
+                  <button onClick={closeDrawer} className="ff-accia text-[15px] text-primary-brown underline underline-offset-4">
                     Start shopping
                   </button>
                 </div>
@@ -234,19 +234,19 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                 <div className="space-y-6 pt-2">
                   {items.map((item) => (
                     <div key={item.key} className="relative flex gap-4">
-                      <div className="relative h-[78px] w-[78px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
+                      <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
                         {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" />}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="ff-accia text-[clamp(22px,1.3vw,26px)] leading-[0.98] text-black">{item.name}</h3>
+                        <h3 className="ff-accia text-[17px] leading-[1.12] text-black">{item.name}</h3>
                         {/* The picked size/flavour was stored but never shown, so
                             two variations of one cake looked like the same line. */}
                         {item.variationLabel && (
-                          <p className="ff-apfel mt-1 text-[13px] text-primary-brown">{item.variationLabel}</p>
+                          <p className="ff-apfel mt-0.5 text-[12px] text-primary-brown">{item.variationLabel}</p>
                         )}
                         {item.description && (
-                          <p className="ff-accia-light mt-1.5 line-clamp-2 text-[15px] capitalize leading-[1.25] text-black">
+                          <p className="ff-accia-light mt-1 line-clamp-2 text-[12.5px] capitalize leading-[1.3] text-black/70">
                             {item.description}
                           </p>
                         )}
@@ -256,30 +256,30 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                             printed the line total, so the same cake appeared to
                             jump from Rs. 2,550.00 to Rs. 10,200.00 between the
                             two screens. */}
-                        <p className="ff-accia mt-2 text-[18px] text-primary-brown">
+                        <p className="ff-accia mt-1.5 text-[15px] text-primary-brown">
                           {formatPkr(item.priceMinor * item.quantity)}
                         </p>
                         {item.quantity > 1 && (
-                          <p className="ff-apfel text-[12px] text-black/45">
+                          <p className="ff-apfel text-[11px] text-black/45">
                             {item.quantity} × {formatPkr(item.priceMinor)}
                           </p>
                         )}
 
-                        <div className="mt-2.5 inline-flex h-9 items-center justify-between gap-3 rounded-full border border-black px-3">
+                        <div className="mt-2 inline-flex h-[30px] items-center justify-between gap-2.5 rounded-full border border-black/70 px-2.5">
                           <button
                             onClick={() => updateQuantity(item.key, item.quantity - 1)}
                             className="text-primary-brown hover:opacity-60 transition-opacity"
                             aria-label={`Decrease quantity of ${item.name}`}
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-3.5 w-3.5" />
                           </button>
-                          <span className="ff-accia min-w-5 text-center text-[18px] leading-none text-primary-brown">{item.quantity}</span>
+                          <span className="ff-accia min-w-4 text-center text-[15px] leading-none text-primary-brown">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.key, item.quantity + 1)}
                             className="text-primary-brown hover:opacity-60 transition-opacity"
                             aria-label={`Increase quantity of ${item.name}`}
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -289,83 +289,88 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                         className="self-start pt-2 text-black/70 hover:text-red-500 transition-colors"
                         aria-label={`Remove ${item.name} from cart`}
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-[18px] w-[18px]" />
                       </button>
                     </div>
                   ))}
-
-                  {popular.length > 0 && (
-                    <div className="relative mt-6 overflow-hidden rounded-xl border border-primary-brown bg-accent-green">
-                      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                        <span className="ff-accia text-[19px] text-primary-brown">Popular Items</span>
-                        <div className="flex items-center gap-3 text-primary-brown">
-                          <button
-                            onClick={() => scrollRail(-1)}
-                            disabled={atStart}
-                            className="disabled:opacity-30 hover:opacity-60 transition-opacity"
-                            aria-label="Previous popular item"
-                          >
-                            <ChevronLeft className="h-5 w-4" />
-                          </button>
-                          <button
-                            onClick={() => scrollRail(1)}
-                            disabled={atEnd}
-                            className="disabled:opacity-30 hover:opacity-60 transition-opacity"
-                            aria-label="Next popular item"
-                          >
-                            <ChevronRight className="h-5 w-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div
-                        ref={trackRef}
-                        onScroll={syncArrows}
-                        className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                      >
-                        {popular.map((p) => (
-                          <div key={p.id} className="flex w-[min(300px,calc(92vw-52px))] shrink-0 snap-start gap-3 rounded-[10px] bg-white p-3">
-                            <div className="relative h-[82px] w-[82px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
-                              {p.image_url && <Image src={p.image_url} alt={p.name} fill className="object-cover" />}
-                            </div>
-                            <div className="flex min-w-0 flex-1 flex-col">
-                              <h4 className="ff-accia line-clamp-2 text-[18px] leading-[1.05] text-black">{p.name}</h4>
-                              <p className="ff-accia mt-0.5 text-[14px] text-primary-brown">{formatPkr(p.priceMinor, { trimDecimals: true })}</p>
-                              {/* The button used to be labelled with the price
-                                  alone, so nothing said it added anything and a
-                                  screen reader announced a bare number. */}
-                              <button
-                                onClick={() => addItem({ id: p.id, name: p.name, priceMinor: p.priceMinor, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description || undefined })}
-                                className="ff-accia-light mt-auto flex items-center gap-1.5 self-start rounded-md bg-accent-green px-3 py-1 text-[12px] uppercase tracking-wide text-primary-brown transition-colors hover:bg-accent-green/70"
-                                aria-label={`Add ${p.name} to cart`}
-                              >
-                                <ShoppingCart className="h-3 w-3" /> Add
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
 
             {items.length > 0 && (
               <div className="border-t border-primary-brown/10 bg-white px-[clamp(18px,1.35vw,24px)] pt-4 pb-[clamp(18px,1.35vw,24px)]">
+                {/* Sits directly above the totals rather than trailing the
+                    item list: down there it floated on whatever gap was
+                    left over, and on a short cart that was most of the
+                    drawer. Here it is always the last thing before the
+                    checkout details. */}
+                {popular.length > 0 && (
+                  <div className="relative mb-4 overflow-hidden rounded-xl border border-primary-brown bg-accent-green">
+                    <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                      <span className="ff-accia text-[16px] text-primary-brown">Popular Items</span>
+                      <div className="flex items-center gap-3 text-primary-brown">
+                        <button
+                          onClick={() => scrollRail(-1)}
+                          disabled={atStart}
+                          className="disabled:opacity-30 hover:opacity-60 transition-opacity"
+                          aria-label="Previous popular item"
+                        >
+                          <ChevronLeft className="h-5 w-4" />
+                        </button>
+                        <button
+                          onClick={() => scrollRail(1)}
+                          disabled={atEnd}
+                          className="disabled:opacity-30 hover:opacity-60 transition-opacity"
+                          aria-label="Next popular item"
+                        >
+                          <ChevronRight className="h-5 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      ref={trackRef}
+                      onScroll={syncArrows}
+                      className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {popular.map((p) => (
+                        <div key={p.id} className="flex w-[min(300px,calc(92vw-52px))] shrink-0 snap-start gap-3 rounded-[10px] bg-white p-3">
+                          <div className="relative h-[64px] w-[64px] shrink-0 overflow-hidden rounded-[10px] border border-primary-brown bg-[#ece9e2]">
+                            {p.image_url && <Image src={p.image_url} alt={p.name} fill className="object-cover" />}
+                          </div>
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <h4 className="ff-accia line-clamp-2 text-[15px] leading-[1.1] text-black">{p.name}</h4>
+                            <p className="ff-accia mt-0.5 text-[13px] text-primary-brown">{formatPkr(p.priceMinor, { trimDecimals: true })}</p>
+                            {/* The button used to be labelled with the price
+                                alone, so nothing said it added anything and a
+                                screen reader announced a bare number. */}
+                            <button
+                              onClick={() => addItem({ id: p.id, name: p.name, priceMinor: p.priceMinor, quantity: 1, image: p.image_url || "/assets/product.svg", description: p.description || undefined })}
+                              className="ff-accia-light mt-auto flex items-center gap-1.5 self-start rounded-md bg-accent-green px-2.5 py-0.5 text-[11px] uppercase tracking-wide text-primary-brown transition-colors hover:bg-accent-green/70"
+                              aria-label={`Add ${p.name} to cart`}
+                            >
+                              <ShoppingCart className="h-3 w-3" /> Add
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
-                  <span className="ff-accia-light text-[18px] text-black capitalize">Subtotal</span>
-                  <span className="ff-accia-light text-[18px] text-black">{formatPkr(subtotalMinor)}</span>
+                  <span className="ff-accia-light text-[14px] text-black capitalize">Subtotal</span>
+                  <span className="ff-accia-light text-[14px] text-black">{formatPkr(subtotalMinor)}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   {/* Named an estimate because it is one: the real fee depends on
                       the delivery zone and is quoted by the server at checkout. */}
-                  <span className="ff-accia-light text-[18px] text-black capitalize">Delivery (estimated)</span>
-                  <span className="ff-accia-light text-[18px] text-black">{formatPkr(deliveryMinor)}</span>
+                  <span className="ff-accia-light text-[14px] text-black capitalize">Delivery (estimated)</span>
+                  <span className="ff-accia-light text-[14px] text-black">{formatPkr(deliveryMinor)}</span>
                 </div>
                 <div className="mt-2.5 flex items-center justify-between">
-                  <span className="ff-accia-medium text-[19px] text-black">Grand total</span>
-                  <span className="ff-accia-medium text-[19px] text-black">{formatPkr(grandTotalMinor)}</span>
+                  <span className="ff-accia-medium text-[16px] text-black">Grand total</span>
+                  <span className="ff-accia-medium text-[16px] text-black">{formatPkr(grandTotalMinor)}</span>
                 </div>
                 <p className="ff-apfel mt-1.5 text-[11px] leading-snug text-black/45">
                   Delivery is confirmed against your address at checkout.
@@ -374,11 +379,11 @@ export default function CartDrawer({ isOpen, onClose }: { isOpen: boolean, onClo
                 <button
                   onClick={handleCheckoutClick}
                   disabled={loadingCheckout}
-                  className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-primary-brown hover:bg-primary-brown/90 transition-all disabled:opacity-60"
+                  className="mt-4 flex h-[46px] w-full items-center justify-center rounded-xl bg-primary-brown hover:bg-primary-brown/90 transition-all disabled:opacity-60"
                 >
                   {loadingCheckout
                     ? <Loader2 className="animate-spin text-white" size={22} />
-                    : <span className="ff-accia-medium text-[24px] text-white">Checkout</span>}
+                    : <span className="ff-accia-medium text-[18px] text-white">Checkout</span>}
                 </button>
               </div>
             )}
