@@ -46,6 +46,10 @@ type Item = {
   lh: number
   weight?: number
   wrap?: boolean
+  /** Renders as the <h1>. Marked per item rather than derived from the slide's
+      position, so the slides can be reordered without the eyebrow on the
+      "Paradise Awaits" slide being promoted to the heading. */
+  heading?: boolean
 }
 type Badge = { label: string; x: number; y: number; w: number; disc: string; color: string }
 
@@ -57,13 +61,13 @@ const SLIDES: {
   sparkles: { x: number; y: number; s: number }[]
 }[] = [
   {
-    id: "hero-1",
-    image: "/assets/hero.webp",
-    badge: null,
+    id: "hero-3",
+    image: "/hero-slide-3.webp",
+    badge: { label: "Explore Our Sweets", x: 62.0, y: 16.9, w: 15.4, disc: "#9369394d", color: "#ffffff" },
     sparkles: [],
     items: [
-      { text: ["Bite Into The Bliss"], x: 30.0, y: 34.9, w: 40.0, font: "var(--accia)", size: [13, 2.08, 35], color: "#936939", align: "center", lh: 0.84 },
-      { text: ["Paradise", "Awaits"], x: 35.3, y: 39.0, w: 28.1, font: "var(--accia)", size: [34, 7.19, 120], color: "#936939", align: "center", lh: 0.84, weight: 500 },
+      { text: ["Artistry in", "Every Slice"], x: 25.9, y: 27.4, w: 48.2, font: "var(--font-aladin)", size: [40, 9.17, 153], color: "#ffffff", align: "center", lh: 0.96, heading: true },
+      { text: ["From decadent fudgy brownies to delicate everyday desserts."], x: 32.6, y: 56.5, w: 36.3, font: "var(--font-edu)", size: [13, 2.42, 40], color: "#ffffff", align: "center", lh: 1.2, wrap: true },
     ],
   },
   {
@@ -76,17 +80,17 @@ const SLIDES: {
       { x: 31.1, y: 51.9, s: 6.1 },
     ],
     items: [
-      { text: ["Because Every", "Bite Matters"], x: 6.4, y: 25.5, w: 47.1, font: "var(--font-arizonia)", size: [40, 8.97, 150], color: "#8b5211", align: "center", lh: 0.92 },
+      { text: ["Because Every", "Bite Matters"], x: 6.4, y: 25.5, w: 47.1, font: "var(--font-arizonia)", size: [40, 8.97, 150], color: "#8b5211", align: "center", lh: 0.92, heading: true },
     ],
   },
   {
-    id: "hero-3",
-    image: "/hero-slide-3.webp",
-    badge: { label: "Explore Our Sweets", x: 62.0, y: 16.9, w: 15.4, disc: "#9369394d", color: "#ffffff" },
+    id: "hero-1",
+    image: "/assets/hero.webp",
+    badge: null,
     sparkles: [],
     items: [
-      { text: ["Artistry in", "Every Slice"], x: 25.9, y: 27.4, w: 48.2, font: "var(--font-aladin)", size: [40, 9.17, 153], color: "#ffffff", align: "center", lh: 0.96 },
-      { text: ["From decadent fudgy brownies to delicate everyday desserts."], x: 32.6, y: 56.5, w: 36.3, font: "var(--font-edu)", size: [13, 2.42, 40], color: "#ffffff", align: "center", lh: 1.2, wrap: true },
+      { text: ["Bite Into The Bliss"], x: 30.0, y: 34.9, w: 40.0, font: "var(--accia)", size: [13, 2.08, 35], color: "#936939", align: "center", lh: 0.84 },
+      { text: ["Paradise", "Awaits"], x: 35.3, y: 39.0, w: 28.1, font: "var(--accia)", size: [34, 7.19, 120], color: "#936939", align: "center", lh: 0.84, weight: 500, heading: true },
     ],
   },
 ]
@@ -218,7 +222,7 @@ export default function Hero() {
             )}
 
             {item.items.map((it, i) => {
-              const Tag = index === 0 && i === 1 ? "h1" : i === 0 && index !== 0 ? "h1" : "p"
+              const Tag = it.heading ? "h1" : "p"
               return (
                 <Tag
                   key={`${item.id}-t${i}`}
