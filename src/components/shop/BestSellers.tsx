@@ -5,6 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { ShoppingCart } from "lucide-react"
 import { useCart } from "@/store/useCart"
+import { formatPkr } from "@/lib/money"
+import { useToast } from "@/components/ui/Toast"
 import cakesIcon from "../../../cakes.png"
 import cookiesIcon from "../../../cookies.png"
 import cupcakesIcon from "../../../cupcakes.png"
@@ -32,7 +34,7 @@ export type HomeProduct = {
   slug: string | null
   name: string
   description: string | null
-  price: number
+  priceMinor: number
   image_url: string | null
 }
 
@@ -51,6 +53,7 @@ export default function BestSellers({ categories }: { categories: HomeCategory[]
   const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id ?? null)
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
   const addItem = useCart((state) => state.addItem)
+  const toast = useToast()
 
   return (
     <section className="relative mx-auto w-[calc(100%_-_24px)] bg-accent-green pb-[clamp(56px,10vw,72px)] pt-[clamp(56px,10vw,72px)] lg:w-[calc(100%_-_40px)] lg:pb-[clamp(88px,7rem,112px)] lg:pt-[clamp(168px,13rem,208px)]">
@@ -136,7 +139,7 @@ export default function BestSellers({ categories }: { categories: HomeCategory[]
                       <div className="px-4 py-5 text-center">
                         <Link href={`/product/${product.slug ?? product.id}`} className="block">
                           <h4 className="ff-accia text-[clamp(25px,2.3vw,34px)] leading-[1.04] text-primary-brown">{product.name}</h4>
-                          <p className="ff-colville mt-2 text-[clamp(18px,1.5vw,24px)] text-primary-brown">Rs. {Number(product.price).toLocaleString()}</p>
+                          <p className="ff-colville mt-2 text-[clamp(18px,1.5vw,24px)] text-primary-brown">{formatPkr(product.priceMinor, { trimDecimals: true })}</p>
                         </Link>
                         <div className="mt-4 grid grid-cols-2 gap-3">
                           <Link
@@ -147,7 +150,10 @@ export default function BestSellers({ categories }: { categories: HomeCategory[]
                           </Link>
                           <button
                             type="button"
-                            onClick={() => addItem({ id: product.id, name: product.name, price: product.price, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description ?? undefined })}
+                            onClick={() => {
+                              addItem({ id: product.id, name: product.name, priceMinor: product.priceMinor, quantity: 1, image: product.image_url || "/assets/product.svg", description: product.description ?? undefined })
+                              toast.push({ kind: 'success', title: `Added to cart — ${product.name}`, durationMs: 4000 })
+                            }}
                             className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary-brown px-3 ff-accia text-[15px] uppercase text-white transition-colors hover:bg-primary-brown/90"
                           >
                             <ShoppingCart className="h-4 w-4" /> Add

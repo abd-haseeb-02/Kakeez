@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/site-url";
 import { businessSchema } from "@/lib/structured-data";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const accia = Playfair_Display({
   subsets: ["latin"],
@@ -89,7 +90,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema()) }}
         />
-        {children}
+        {/* Storefront feedback (add-to-cart above all) used to have nowhere to
+            go: the provider was mounted only inside /admin, so tapping "Add to
+            cart" changed nothing on screen but a small badge. /admin mounts its
+            own provider inside this one and keeps its own styling. */}
+        <ToastProvider>{children}</ToastProvider>
         {/* Page-view and Core Web Vitals collection. Cookieless and aggregated:
             it does not profile individual visitors, which is what the cookies
             page tells them. */}

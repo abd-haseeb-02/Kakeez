@@ -129,8 +129,11 @@ export default function ResetPasswordPage() {
               <form onSubmit={submit} className="mt-6 space-y-4">
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-brown/50" />
+                  <label htmlFor="rp-password" className="sr-only">New password</label>
                   <input
+                    id="rp-password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -140,8 +143,11 @@ export default function ResetPasswordPage() {
                 </div>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-brown/50" />
+                  <label htmlFor="rp-confirm" className="sr-only">Confirm new password</label>
                   <input
+                    id="rp-confirm"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}

@@ -58,7 +58,7 @@ async function fetchHomeCategories(): Promise<HomeCategory[]> {
       slug: product.slug,
       name: product.name,
       description: product.description,
-      price: (product.base_price_minor ?? 0) / 100,
+      priceMinor: product.base_price_minor ?? 0,
       image_url: heroImage(product),
     }
     // A product can sit in several categories; it should appear under each.

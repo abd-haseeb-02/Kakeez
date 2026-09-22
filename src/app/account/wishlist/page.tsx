@@ -62,7 +62,7 @@ export default function WishlistPage() {
     addItem({
       id: it.product.id,
       name: it.product.name,
-      price: it.product.base_price_minor / 100,
+      priceMinor: it.product.base_price_minor,
       quantity: 1,
       image: hero?.storage_path ?? '/assets/product.svg',
       description: it.product.description ?? undefined,

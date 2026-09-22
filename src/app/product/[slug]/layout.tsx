@@ -65,7 +65,10 @@ export async function generateMetadata(
   if (!p) {
     return {
       title: 'Product not found · Kakeez',
-      robots: { index: false, follow: false },
+      // follow:true on purpose — it matches src/app/not-found.tsx, and a
+      // conflicting pair resolves to the most restrictive, which would stop
+      // crawlers following the recovery links that page offers.
+      robots: { index: false, follow: true },
     }
   }
   const heroImg = p.product_images?.find((i) => i.is_featured) ?? p.product_images?.[0]

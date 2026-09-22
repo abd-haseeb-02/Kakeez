@@ -42,7 +42,7 @@ export interface CheckoutPreviewInput {
 }
 
 export type CheckoutResult =
-  | { ok: true; orderId: string }
+  | { ok: true; orderId: string; orderNumber: string | null }
   | { ok: false; code: string; message: string }
 
 export type CheckoutPreviewResult =
@@ -259,5 +259,17 @@ export async function placeOrder(input: CheckoutInput): Promise<CheckoutResult> 
   if (typeof data !== 'string') {
     return { ok: false, code: 'server_error', message: 'Order was not created. Please try again.' }
   }
-  return { ok: true, orderId: data }
+
+  // The RPC hands back the order's uuid, but KKZ-000123 is the only reference a
+  // customer can quote back to us — and the confirmation screen had nothing to
+  // show them at all. Read it back under the caller's own session (RLS scopes
+  // this to their order). A failure here must not look like a failed order:
+  // the order exists either way, so fall through with a null number.
+  const { data: row } = await supabase
+    .from('orders')
+    .select('order_number')
+    .eq('id', data)
+    .maybeSingle()
+
+  return { ok: true, orderId: data, orderNumber: (row?.order_number as string | undefined) ?? null }
 }

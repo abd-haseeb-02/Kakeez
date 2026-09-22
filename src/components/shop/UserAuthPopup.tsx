@@ -5,7 +5,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { authConfirmUrl } from "@/lib/site-url"
 import { useModalA11y } from "@/lib/use-modal-a11y"
-import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2 } from "lucide-react"
+import { ArrowRight, X, Mail, Lock, Loader2, User, Phone, MapPin, CakeSlice, CheckCircle2, Eye, EyeOff } from "lucide-react"
 
 const MIN_PASSWORD = 8
 
@@ -17,6 +17,7 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
   const [phone, setPhone] = useState("")
   const [address, setAddress] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [signupNeedsEmailConfirmation, setSignupNeedsEmailConfirmation] = useState(false)
   // Escape to close, focus trapped inside, page behind locked.
@@ -214,15 +215,30 @@ export default function UserAuthPopup({ isOpen, onClose, onSuccess }: { isOpen: 
               </div>
               <div className="relative">
                 <Lock className={iconClass} />
+                <label htmlFor="auth-password" className="sr-only">Password</label>
+                {/* autocomplete tells a password manager whether to offer a
+                    saved credential or to save a new one; without it neither
+                    happened. */}
                 <input
+                  id="auth-password"
                   required
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   minLength={isLogin ? undefined : MIN_PASSWORD}
                   placeholder={isLogin ? "Password" : `Password (${MIN_PASSWORD}+ characters)`}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className={fieldClass}
+                  className={`${fieldClass} pr-12`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-primary-brown/50 transition-colors hover:text-primary-brown"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {isLogin && (
                 <div className="text-right">

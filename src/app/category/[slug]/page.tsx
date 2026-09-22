@@ -80,7 +80,10 @@ export async function generateMetadata(
   if (!data) {
     return {
       title: "Category not found · Kakeez",
-      robots: { index: false, follow: false },
+      // follow:true on purpose — it matches src/app/not-found.tsx, and a
+      // conflicting pair resolves to the most restrictive, which would stop
+      // crawlers following the recovery links that page offers.
+      robots: { index: false, follow: true },
     }
   }
 
@@ -111,6 +114,8 @@ export async function generateMetadata(
   }
 }
 
+// No loading.tsx here either — see the note in src/app/product/[slug]/page.tsx.
+// A Suspense boundary above notFound() turns a real 404 into a soft one.
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const data = await fetchCategoryPage(slug)

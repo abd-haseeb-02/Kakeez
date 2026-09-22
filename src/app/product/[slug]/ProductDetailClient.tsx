@@ -7,6 +7,7 @@ import { Gift, Loader2, Minus, Plus } from "lucide-react"
 import Navbar from "@/components/shop/Navbar"
 import Footer from "@/components/shop/Footer"
 import { supabase } from "@/lib/supabase"
+import { useToast } from "@/components/ui/Toast"
 import { useCart } from "@/store/useCart"
 import { formatPkr } from "@/lib/money"
 import { Star, Heart } from "lucide-react"
@@ -93,6 +94,7 @@ export default function ProductDetailClient({
   const [picked, setPicked] = useState<Record<string, string>>({})
   const addItem = useCart((state) => state.addItem)
   const router = useRouter()
+  const toast = useToast()
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -275,12 +277,19 @@ export default function ProductDetailClient({
     addItem({
       id: product.id,
       name: product.name,
-      price: finalPriceMinor / 100,
+      priceMinor: finalPriceMinor,
       quantity,
       image: hero,
       description: product.description ?? undefined,
       variationId: selectedVariation?.id ?? null,
       variationLabel,
+    })
+
+    toast.push({
+      kind: 'success',
+      title: `Added to cart — ${quantity} × ${product.name}`,
+      body: variationLabel ?? undefined,
+      durationMs: 4000,
     })
   }
 

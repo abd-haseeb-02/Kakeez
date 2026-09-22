@@ -45,6 +45,13 @@ function asProductRow(row: unknown): ProductRow {
   return row as ProductRow
 }
 
+// Deliberately no loading.tsx in this segment. It reads well — an instant
+// spinner instead of a pause on the previous page — but a loading.tsx is a
+// Suspense boundary, so Next flushes the shell (committing HTTP 200) before
+// this component runs. notFound() below then renders the 404 body under a 200
+// status: a soft 404, which keeps delisted product URLs in Google's index as
+// thin pages instead of dropping them. Measured both ways with curl against
+// `next start`; correct status wins for a catalogue that churns.
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const product = await fetchProduct(slug)
