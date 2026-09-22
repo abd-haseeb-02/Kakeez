@@ -34,9 +34,20 @@ export function absoluteUrl(path: string): string {
   return `${getSiteUrl()}${path.startsWith('/') ? path : `/${path}`}`
 }
 
-// The single landing point for every emailed auth link. Supabase templates
-// append `?token_hash=…&type=…&next=…` to it — see supabase/templates/*.html
-// and src/app/auth/confirm/route.ts.
+// Landing point for signup confirmation, magic link, email change and invite
+// links. Supabase templates append `?token_hash=…&type=…&next=…` to it — see
+// supabase/templates/*.html and src/app/auth/confirm/route.ts.
 export function authConfirmUrl(): string {
   return absoluteUrl('/auth/confirm')
+}
+
+// Landing point for password-recovery links only. Separate from the above on
+// purpose: Supabase's stock recovery template carries no `next`, so the
+// destination has to live in the path or it gets lost and the customer lands on
+// the homepage instead of the reset form. See src/app/auth/recover/route.ts.
+//
+// Keep this query-free. The branded templates append their own `?token_hash=…`,
+// and a `redirectTo` that already had a query string would produce two `?`.
+export function authRecoverUrl(): string {
+  return absoluteUrl('/auth/recover')
 }

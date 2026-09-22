@@ -6,10 +6,31 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Loader2, Lock, ArrowLeft, CheckCircle } from "lucide-react"
 
-// Lands here after /auth/confirm has already redeemed the recovery token and
-// written the short-lived session into cookies, so the browser client picks it
-// up on first read. All that's left is capturing the new password and
-// submitting it via auth.updateUser.
+// Lands here after /auth/recover has redeemed the recovery token and written
+// the session into cookies, so the browser client picks it up on first read.
+// All that's left is capturing the new password and submitting it via
+// auth.updateUser.
+//
+// The session isn't always there on the first read, which is why this doesn't
+// just call getSession() once and call it a day. Two cases arrive late:
+// GoTrue's implicit flow puts the session in the URL *fragment*, which the
+// server never sees and the browser client has to parse itself
+// (detectSessionInUrl); and the client's own cookie hydration is async. Both
+// resolve through onAuthStateChange a tick or two after mount. Declaring the
+// link dead before then is how a perfectly good reset link ends up showing
+// "Link expired".
+
+// Does the URL still carry something the Supabase client might turn into a
+// session? If so, a missing session means "not yet", not "expired".
+const urlHasAuthMaterial = () => {
+  if (typeof window === 'undefined') return false
+  return /access_token=|refresh_token=|token_hash=|[?&]code=/.test(
+    window.location.hash + window.location.search
+  )
+}
+
+// How long to let a pending sign-in land before showing the expired state.
+const HYDRATION_GRACE_MS = 2500
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -22,13 +43,40 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
-    // /auth/confirm set the session cookies before redirecting here.
-    const check = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSessionOk(!!session)
+    let cancelled = false
+    let graceTimer: ReturnType<typeof setTimeout> | undefined
+
+    const accept = () => {
+      if (cancelled) return
+      setSessionOk(true)
       setReady(true)
+      // Drop the recovery token out of the address bar now that it's spent, so
+      // a refresh doesn't replay it and it can't leak via the Referer header.
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
     }
-    check()
+
+    // Subscribe first: a fragment-borne session (PASSWORD_RECOVERY / SIGNED_IN)
+    // can land between this line and getSession() resolving.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) accept()
+    })
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return
+      if (session) { accept(); return }
+      if (!urlHasAuthMaterial()) { setReady(true); return }
+      // Something in the URL is still being redeemed. Give it a moment; if the
+      // subscription above hasn't fired by then, the link really is spent.
+      graceTimer = setTimeout(() => { if (!cancelled) setReady(true) }, HYDRATION_GRACE_MS)
+    })
+
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+      clearTimeout(graceTimer)
+    }
   }, [])
 
   const submit = async (e: React.FormEvent) => {

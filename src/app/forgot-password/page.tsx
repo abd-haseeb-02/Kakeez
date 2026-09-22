@@ -3,12 +3,13 @@
 import { useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
-import { authConfirmUrl } from "@/lib/site-url"
+import { authRecoverUrl } from "@/lib/site-url"
 import { Loader2, Mail, ArrowLeft } from "lucide-react"
 
 // Forgot-password request page. Sends Supabase Auth's recovery email; the
-// link in that email hits /auth/confirm, which verifies the one-time token
-// and forwards to /reset-password where we call updateUser.
+// link in that email hits /auth/recover, which verifies the one-time token,
+// writes the session to cookies and forwards to /reset-password where we call
+// updateUser.
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -20,13 +21,18 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
-    // Recovery links land on /auth/confirm, which redeems the token
+    // Recovery links land on /auth/recover, which redeems the token
     // server-side and forwards to /reset-password with a session in cookies.
-    // The template (supabase/templates/reset-password.html) supplies `next`.
+    // The destination is baked into that path rather than passed as `next`,
+    // because Supabase's stock template drops query params it didn't add.
     const { error: rErr } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: authConfirmUrl(),
+      redirectTo: authRecoverUrl(),
     })
     setLoading(false)
+    // Deliberately not surfacing "user not found": telling an anonymous visitor
+    // which addresses have accounts is free customer-list enumeration. Supabase
+    // already returns success for unknown addresses; the only errors that reach
+    // here are rate limits and transport failures, which are worth showing.
     if (rErr) { setError(rErr.message); return }
     setSent(true)
   }

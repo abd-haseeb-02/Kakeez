@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import nodemailer from 'nodemailer'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatPkr } from '@/lib/money'
 import { renderOrderEmail, type OrderEmailData, type RenderedEmail } from '@/lib/notifications/email'
+import { adminEmail, isDryRun, sendEmail as sendSmtp } from '@/lib/notifications/smtp'
 
-// nodemailer needs the Node.js runtime (not Edge), and the queue drain must
-// never be statically cached.
+// nodemailer (via @/lib/notifications/smtp) needs the Node.js runtime, not
+// Edge, and the queue drain must never be statically cached.
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -111,49 +111,21 @@ async function buildOrderEmailData(admin: Admin, n: NotificationRow): Promise<Or
   }
 }
 
-function adminEmail(): string | null {
-  return process.env.KAKEEZ_ADMIN_EMAIL || process.env.GOOGLE_SMTP_FROM || null
-}
-
 async function sendEmail(admin: Admin, notification: NotificationRow): Promise<string> {
   const data = await buildOrderEmailData(admin, notification)
   const to = notification.audience === 'admin' ? adminEmail() : (data.customerEmail || null)
   if (!to) throw new Error('No email recipient configured')
 
   const rendered: RenderedEmail = renderOrderEmail(notification.template_key, notification.audience, data)
-
-  const from = process.env.GOOGLE_SMTP_FROM || process.env.GOOGLE_SMTP_USER
-  const user = process.env.GOOGLE_SMTP_USER
-  const pass = process.env.GOOGLE_SMTP_PASS
-  const dryRun = process.env.NOTIFICATIONS_DRY_RUN !== 'false'
-
-  if (dryRun || !from || !user || !pass) {
-    console.log('[KAKEEZ NOTIFICATION DRY RUN][email]', { to, from: from ?? 'missing', subject: rendered.subject })
-    return `dry-run-email-${notification.id}`
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: process.env.GOOGLE_SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.GOOGLE_SMTP_PORT || 465),
-    secure: process.env.GOOGLE_SMTP_SECURE !== 'false',
-    auth: { user, pass },
-  })
-
-  const info = await transporter.sendMail({
-    from: `Kakeez <${from}>`,
-    to,
-    subject: rendered.subject,
-    text: rendered.text,
-    html: rendered.html,
-  })
-  return String(info.messageId || `smtp-${notification.id}`)
+  const { messageId } = await sendSmtp({ to, ...rendered }, String(notification.id))
+  return messageId
 }
 
 async function sendWhatsApp(admin: Admin, notification: NotificationRow): Promise<string> {
   const token = process.env.WHATSAPP_API_TOKEN
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
   const to = process.env.KAKEEZ_ADMIN_WHATSAPP_E164
-  const dryRun = process.env.NOTIFICATIONS_DRY_RUN !== 'false'
+  const dryRun = isDryRun()
 
   if (!to) throw new Error('No WhatsApp admin recipient configured')
 
