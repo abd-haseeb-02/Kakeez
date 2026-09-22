@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Playfair_Display, Space_Grotesk } from "next/font/google";
+import {
+  Aladin,
+  Allura,
+  Arizonia,
+  Cormorant_Garamond,
+  Edu_NSW_ACT_Foundation,
+  Playfair_Display,
+  Space_Grotesk,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { getSiteUrl } from "@/lib/site-url";
@@ -26,6 +34,14 @@ const apfel = Space_Grotesk({
   variable: "--font-apfel",
   display: "swap",
 });
+
+// Display faces the hero slides are set in. Each slide has its own in the
+// Figma file — a script for "Because Every Bite Matters", Aladin for "Artistry
+// in Every Slice" — and flattening them all to one serif lost that.
+const arizonia = Arizonia({ subsets: ["latin"], weight: "400", variable: "--font-arizonia", display: "swap" });
+const allura = Allura({ subsets: ["latin"], weight: "400", variable: "--font-allura", display: "swap" });
+const aladin = Aladin({ subsets: ["latin"], weight: "400", variable: "--font-aladin", display: "swap" });
+const eduNsw = Edu_NSW_ACT_Foundation({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-edu", display: "swap" });
 
 const SITE_NAME = "KAKEEZ Bakeshop";
 const DESCRIPTION =
@@ -82,7 +98,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${accia.variable} ${colville.variable} ${apfel.variable}`}>
+    <html
+      lang="en"
+      className={`${accia.variable} ${colville.variable} ${apfel.variable} ${arizonia.variable} ${allura.variable} ${aladin.variable} ${eduNsw.variable}`}
+    >
       <body>
         {/* dangerouslySetInnerHTML keeps the JSON literal intact; React would
             otherwise escape the quotes and break crawler parsers. */}

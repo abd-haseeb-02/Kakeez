@@ -21,32 +21,68 @@ const HERO_PATH = "M1668 739.335H1667.04C1667.67 743.621 1668 747.994 1668 752.4
 // downloaded all three, because all three slides are in the DOM at once.
 // Re-export from supabase/scripts if the art is ever changed, and keep the
 // output under a few hundred KB.
-const SLIDES = [
+// Every position below is lifted from the Figma frame and expressed as a
+// percentage of its 1668x1007 artboard, so the copy sits exactly where it was
+// composed rather than being generically centred. Font sizes carry the design
+// value as the vw term (e.g. 120px / 1668 = 7.19vw) with a floor and a ceiling.
+type Item = {
+  text: string[]
+  x: number
+  y: number
+  w: number
+  font: string
+  size: [number, number, number]
+  color: string
+  align: "left" | "center" | "right"
+  lh: number
+  weight?: number
+  wrap?: boolean
+}
+type Badge = { label: string; x: number; y: number; w: number; disc: string; color: string }
+
+const SLIDES: {
+  id: string
+  image: string
+  items: Item[]
+  badge: Badge | null
+  sparkles: { x: number; y: number; s: number }[]
+}[] = [
   {
     id: "hero-1",
     image: "/assets/hero.webp",
-    eyebrow: "Bite Into The Bliss",
-    title: ["Paradise", "Awaits"],
-    caption: null,
-    tone: "brown" as const,
+    badge: null,
+    sparkles: [],
+    items: [
+      { text: ["Bite Into The Bliss"], x: 30.0, y: 34.9, w: 40.0, font: "var(--accia)", size: [13, 2.08, 35], color: "#936939", align: "center", lh: 0.84 },
+      { text: ["Paradise", "Awaits"], x: 35.3, y: 39.0, w: 28.1, font: "var(--accia)", size: [34, 7.19, 120], color: "#936939", align: "center", lh: 0.84, weight: 500 },
+    ],
   },
   {
     id: "hero-2",
     image: "/hero-slide-2.webp",
-    eyebrow: "Taste the Magic",
-    title: ["Because Every", "Bite Matters"],
-    caption: null,
-    tone: "light" as const,
+    badge: { label: "Taste the Magic", x: 35.1, y: 44.0, w: 14.2, disc: "#e6b29373", color: "#ff8800" },
+    sparkles: [
+      { x: 9.8, y: 18.3, s: 6.1 },
+      { x: 23.1, y: 39.8, s: 6.1 },
+      { x: 31.1, y: 51.9, s: 6.1 },
+    ],
+    items: [
+      { text: ["Because Every", "Bite Matters"], x: 6.4, y: 25.5, w: 47.1, font: "var(--font-arizonia)", size: [40, 8.97, 150], color: "#8b5211", align: "center", lh: 0.92 },
+    ],
   },
   {
     id: "hero-3",
     image: "/hero-slide-3.webp",
-    eyebrow: "Explore Our Sweets",
-    title: ["Artistry in", "Every Slice"],
-    caption: "From decadent fudgy brownies to delicate everyday desserts.",
-    tone: "light" as const,
+    badge: { label: "Explore Our Sweets", x: 62.0, y: 16.9, w: 15.4, disc: "#9369394d", color: "#ffffff" },
+    sparkles: [],
+    items: [
+      { text: ["Artistry in", "Every Slice"], x: 25.9, y: 27.4, w: 48.2, font: "var(--font-aladin)", size: [40, 9.17, 153], color: "#ffffff", align: "center", lh: 0.96 },
+      { text: ["From decadent fudgy brownies to delicate everyday desserts."], x: 32.6, y: 56.5, w: 36.3, font: "var(--font-edu)", size: [13, 2.42, 40], color: "#ffffff", align: "center", lh: 1.2, wrap: true },
+    ],
   },
 ]
+
+const clampPx = ([min, vw, max]: [number, number, number]) => `clamp(${min}px, ${vw}vw, ${max}px)`
 
 export default function Hero() {
   const [activeSlide, setActiveSlide] = useState(0)
@@ -119,58 +155,91 @@ export default function Hero() {
 
       {/* Copy layer — HTML above the artwork, NOT <text> inside the SVG.
           The SVG scales with preserveAspectRatio="slice", so anything drawn
-          inside it is scaled by the same factor as the photo: on a wide screen
-          the headline was being blown up along with the image. Out here the
-          type is sized in CSS, so it stays put no matter how far the photo is
-          scaled or cropped. */}
+          inside it is scaled by the same factor as the photo: the headline was
+          being blown up along with the image. Out here the type is sized in
+          CSS, while the positions stay proportional to the artboard so the copy
+          still reads as part of the composition. */}
       <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
-        {SLIDES.map((item, index) => {
-          const light = item.tone === "light"
-          return (
-            <div
-              key={`${item.id}-copy`}
-              aria-hidden={index !== activeSlide}
-              className={`absolute inset-x-0 top-0 flex h-[62%] flex-col items-center justify-center px-6 text-center transition-opacity duration-700 ease-in-out ${
-                index === activeSlide ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <p
-                className={`ff-colville-light text-[clamp(15px,1.45vw,26px)] tracking-[0.04em] ${
-                  light ? "text-white" : "text-primary-brown"
-                }`}
-                style={light ? { textShadow: "0 2px 12px rgba(0,0,0,0.38)" } : undefined}
-              >
-                {item.eyebrow}
-              </p>
-              <h1
-                className={`ff-accia-medium mt-[clamp(6px,0.8vw,16px)] text-[clamp(38px,5.4vw,96px)] leading-[1.02] ${
-                  light ? "text-white" : "text-primary-brown"
-                }`}
+        {SLIDES.map((item, index) => (
+          <div
+            key={`${item.id}-copy`}
+            aria-hidden={index !== activeSlide}
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+              index === activeSlide ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {item.sparkles.map((sp, i) => (
+              <span
+                key={`sp-${i}`}
+                className="absolute block rounded-full"
                 style={{
-                  textShadow: light
-                    ? "0 6px 26px rgba(0,0,0,0.42)"
-                    : "0 8px 18px rgba(0,0,0,0.20)",
+                  left: `${sp.x}%`,
+                  top: `${sp.y}%`,
+                  width: `${sp.s}%`,
+                  aspectRatio: "1",
+                  background:
+                    "radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,240,200,0.45) 35%, rgba(255,255,255,0) 70%)",
+                }}
+              />
+            ))}
+
+            {item.badge && (
+              <div
+                className="absolute flex items-center justify-center rounded-full text-center"
+                style={{
+                  left: `${item.badge.x}%`,
+                  top: `${item.badge.y}%`,
+                  width: `${item.badge.w}%`,
+                  aspectRatio: "1",
+                  background: item.badge.disc,
+                  backdropFilter: "blur(2px)",
                 }}
               >
-                {item.title.map((line) => (
-                  <span key={line} className="block">
-                    {line}
-                  </span>
-                ))}
-              </h1>
-              {item.caption && (
-                <p
-                  className={`ff-colville-light mt-[clamp(8px,1vw,20px)] max-w-[34ch] text-[clamp(13px,1.15vw,21px)] leading-snug ${
-                    light ? "text-white/90" : "text-primary-brown/80"
-                  }`}
-                  style={light ? { textShadow: "0 2px 12px rgba(0,0,0,0.42)" } : undefined}
+                <span
+                  className="px-[8%] leading-[1.05]"
+                  style={{
+                    fontFamily: "var(--font-allura)",
+                    fontSize: clampPx([15, 3.1, 52]),
+                    color: item.badge.color,
+                  }}
                 >
-                  {item.caption}
-                </p>
-              )}
-            </div>
-          )
-        })}
+                  {item.badge.label}
+                </span>
+              </div>
+            )}
+
+            {item.items.map((it, i) => {
+              const Tag = index === 0 && i === 1 ? "h1" : i === 0 && index !== 0 ? "h1" : "p"
+              return (
+                <Tag
+                  key={`${item.id}-t${i}`}
+                  className="absolute m-0"
+                  style={{
+                    left: `${it.x}%`,
+                    top: `${it.y}%`,
+                    width: `${it.w}%`,
+                    fontFamily: it.font,
+                    fontSize: clampPx(it.size),
+                    fontWeight: it.weight ?? 400,
+                    lineHeight: it.lh,
+                    color: it.color,
+                    textAlign: it.align,
+                    textShadow:
+                      it.color === "#ffffff"
+                        ? "0 4px 22px rgba(0,0,0,0.45)"
+                        : "0 6px 16px rgba(0,0,0,0.18)",
+                  }}
+                >
+                  {it.text.map((line) => (
+                    <span key={line} className={it.wrap ? "block" : "block whitespace-nowrap"}>
+                      {line}
+                    </span>
+                  ))}
+                </Tag>
+              )
+            })}
+          </div>
+        ))}
       </div>
 
       <button type="button" onClick={goToNext} aria-label="Next hero slide" className="absolute right-[clamp(14px,1.7vw,28px)] top-1/2 z-20 h-[clamp(46px,5.787vw,84px)] w-[clamp(23px,2.8935vw,42px)] -translate-y-1/2 hover:opacity-80 transition-opacity">
